@@ -1,0 +1,624 @@
+# ER-diagramma
+
+> Holat: 0-bosqich — reja. Maydon nomlari kodlashda sal o'zgarishi mumkin, lekin jadvallar va bog'lanishlar shu.
+
+Umumiy kelishuvlar:
+
+- Har jadvalda `id` (BigAutoField), `created_at`, `updated_at` (diagrammada ko'rsatilmagan).
+- Pul: `decimal(20,4)`, kurs: `decimal(20,6)`, miqdor: `decimal(14,3)`.
+- `*_base` — asosiy hisob valyutasidagi summa (sozlama `currency.base_code`, hozir USD).
+- Moliyaviy hujjatlar `number` ga ega: `S-TSH1-26-000123` (tur-nuqta kodi-yil-tartib), `DocumentSequence` dan.
+- Hujjatlar o'chirilmaydi, `status` orqali bekor qilinadi.
+
+## 1. Umumiy ko'rinish (asosiy jadvallar)
+
+```mermaid
+erDiagram
+  User }o--o{ Branch : "UserBranch"
+  User }o--|| Role : ""
+  Product }o--|| Category : ""
+  Product }o--|| Unit : ""
+  Product ||--o{ ProductPrice : ""
+  ProductPrice }o--|| PriceType : ""
+  ProductPrice }o--|| Currency : ""
+  Currency ||--o{ ExchangeRate : ""
+
+  Branch ||--o{ StockLevel : ""
+  Product ||--o{ StockLevel : ""
+  Branch ||--o{ Batch : ""
+  Product ||--o{ Batch : ""
+  Batch ||--o{ StockMovement : ""
+
+  Supplier ||--o{ Purchase : ""
+  Purchase ||--|{ PurchaseItem : ""
+  Purchase ||--o{ PurchaseExpense : ""
+  PurchaseItem ||--o| Batch : "partiya yaratadi"
+
+  Branch ||--o{ Transfer : "from / to"
+  Transfer ||--|{ TransferItem : ""
+  Branch ||--o{ StockCount : ""
+  Branch ||--o{ WriteOff : ""
+
+  Customer ||--o{ Sale : ""
+  Branch ||--o{ Sale : ""
+  Sale ||--|{ SaleItem : ""
+  Sale ||--o{ SaleReturn : ""
+  Sale ||--o{ Payment : ""
+  Sale ||--o| Debt : ""
+  Customer ||--o{ Debt : ""
+  Customer ||--o{ Payment : ""
+  Payment }o--|| PaymentMethod : ""
+  Payment ||--o{ DebtAllocation : ""
+  Debt ||--o{ DebtAllocation : ""
+  Payment ||--o| CashTransaction : ""
+  Cashbox ||--o{ CashTransaction : ""
+  Branch ||--o{ Cashbox : ""
+  Customer ||--o{ CustomerLedgerEntry : ""
+```
+
+## 2. accounts, branches
+
+```mermaid
+erDiagram
+  Role {
+    int id PK
+    string code UK "owner, accountant, storekeeper, seller"
+    string name
+    json capabilities "['sales.create', ...]"
+    bool is_system "o'chirib bo'lmaydi"
+  }
+  User {
+    int id PK
+    string username UK
+    string password
+    string full_name
+    string phone
+    int role_id FK
+    bool is_active
+    datetime last_login
+  }
+  UserBranch {
+    int id PK
+    int user_id FK
+    int branch_id FK
+    bool is_default
+  }
+  Branch {
+    int id PK
+    string code UK "TSH1 — hujjat raqamida"
+    string name
+    string type "shop | warehouse"
+    string address
+    string phone
+    json settings "chek sarlavhasi va h.k."
+    bool is_active
+  }
+  Role ||--o{ User : ""
+  User ||--o{ UserBranch : ""
+  Branch ||--o{ UserBranch : ""
+```
+
+- `UserBranch` bo'sh + rolda `branches.view_all` → barcha nuqtalar (rahbar, buxgalter).
+- Sotuvchi/omborchi kamida bitta `UserBranch` ga ega bo'lishi shart.
+
+## 3. catalog, currency
+
+```mermaid
+erDiagram
+  Category {
+    int id PK
+    int parent_id FK "null = ildiz"
+    string name
+    int sort_order
+    bool is_active
+  }
+  Unit {
+    int id PK
+    string code UK "dona, kg, m, litr"
+    string name
+    int decimal_places "0 = faqat butun"
+  }
+  Product {
+    int id PK
+    string sku UK
+    string barcode "indeks, null bo'lishi mumkin"
+    string name
+    int category_id FK
+    int unit_id FK
+    decimal min_quantity "null = sozlamadagi default"
+    string description
+    bool is_active
+  }
+  PriceType {
+    int id PK
+    string code UK "retail, wholesale"
+    string name
+    bool is_default
+  }
+  ProductPrice {
+    int id PK
+    int product_id FK
+    int price_type_id FK
+    int currency_id FK
+    int branch_id FK "null = hamma nuqta"
+    decimal amount
+    datetime valid_from
+  }
+  Currency {
+    int id PK
+    string code UK "USD, UZS"
+    string name
+    string symbol
+    int decimal_places
+    bool is_active
+  }
+  ExchangeRate {
+    int id PK
+    int currency_id FK
+    decimal rate "1 birlik = N UZS"
+    date date
+    string source "cbu | manual"
+    int created_by_id FK
+  }
+  Category ||--o{ Category : "parent"
+  Category ||--o{ Product : ""
+  Unit ||--o{ Product : ""
+  Product ||--o{ ProductPrice : ""
+  PriceType ||--o{ ProductPrice : ""
+  Currency ||--o{ ProductPrice : ""
+  Currency ||--o{ ExchangeRate : ""
+```
+
+- `ProductPrice` da `UNIQUE (product, price_type, currency, branch, valid_from)`; amaldagi narx — eng so'nggi `valid_from <= now`. Narx tarixi shu jadvalning o'zida.
+- `ExchangeRate` da `UNIQUE (currency, date, source)`. UZS ning o'zi uchun kurs yozilmaydi (1).
+
+## 4. inventory
+
+```mermaid
+erDiagram
+  StockLevel {
+    int id PK
+    int branch_id FK
+    int product_id FK
+    decimal quantity
+    decimal min_quantity "null = Product.min_quantity"
+    bool below_minimum "chegaradan o'tishni aniqlash uchun"
+  }
+  Batch {
+    int id PK
+    int branch_id FK
+    int product_id FK
+    int purchase_item_id FK "null = ko'chirish, inventarizatsiya, boshlang'ich qoldiq"
+    int source_batch_id FK "ko'chirishda asl partiya"
+    datetime received_at "FIFO tartibi"
+    decimal quantity_initial
+    decimal quantity_remaining "CHECK >= 0"
+    decimal unit_cost_base
+    int cost_currency_id FK
+    decimal unit_cost_original
+    decimal rate
+  }
+  StockMovement {
+    int id PK
+    int branch_id FK
+    int product_id FK
+    int batch_id FK
+    string type "purchase_in, sale_out, sale_return_in, transfer_out, transfer_in, count_surplus, count_shortage, write_off, opening"
+    decimal quantity "ishorali: kirim +, chiqim -"
+    decimal unit_cost_base
+    decimal balance_after "nuqta bo'yicha shu tovar qoldig'i"
+    string document_type
+    int document_id
+    int created_by_id FK
+    datetime created_at
+  }
+  Transfer {
+    int id PK
+    string number UK
+    int from_branch_id FK
+    int to_branch_id FK
+    string status "draft, sent, received, cancelled"
+    int created_by_id FK
+    int sent_by_id FK
+    datetime sent_at
+    int received_by_id FK
+    datetime received_at
+    string note
+  }
+  TransferItem {
+    int id PK
+    int transfer_id FK
+    int product_id FK
+    decimal quantity_sent
+    decimal quantity_received "qabulda kiritiladi"
+    decimal unit_cost_base "jo'natishda FIFO dan"
+    json batch_allocations "[{batch_id, quantity, unit_cost_base}]"
+  }
+  StockCount {
+    int id PK
+    string number UK
+    int branch_id FK
+    string status "draft, in_progress, completed, cancelled"
+    int created_by_id FK
+    int completed_by_id FK
+    datetime completed_at
+    string note
+  }
+  StockCountItem {
+    int id PK
+    int stock_count_id FK
+    int product_id FK
+    decimal expected_quantity "boshlanganda qotiriladi"
+    decimal counted_quantity
+    decimal difference
+    decimal unit_cost_base
+  }
+  WriteOffReason {
+    int id PK
+    string code UK
+    string name
+  }
+  WriteOff {
+    int id PK
+    string number UK
+    int branch_id FK
+    int reason_id FK
+    string status "draft, completed, cancelled"
+    int created_by_id FK
+    datetime completed_at
+    decimal total_cost_base
+    string note
+  }
+  WriteOffItem {
+    int id PK
+    int write_off_id FK
+    int product_id FK
+    decimal quantity
+    decimal unit_cost_base
+  }
+  Batch ||--o{ StockMovement : ""
+  Transfer ||--|{ TransferItem : ""
+  StockCount ||--|{ StockCountItem : ""
+  WriteOff ||--|{ WriteOffItem : ""
+  WriteOffReason ||--o{ WriteOff : ""
+```
+
+- `StockLevel`: `UNIQUE (branch, product)`, `CHECK (quantity >= 0)` (sozlama `allow_negative_stock=false` bo'lsa; `true` bo'lsa constraint migratsiya bilan olib tashlanmaydi — bu sozlama faqat servicedagi tekshiruvni yumshatadi, demak hozircha MVP da manfiy qoldiq **yo'q**).
+- `StockLevel.quantity` doim `SUM(Batch.quantity_remaining)` ga teng — bu invariantni test tekshiradi.
+- `StockMovement` — faqat `INSERT`; har qoldiq o'zgarishi bitta qator. Hisobotlar va "tovar kartasi" shu jadvaldan.
+- Ko'chirish qabul qilinganda qabul qiluvchi nuqtada yangi `Batch` lar yaratiladi (`source_batch_id` bilan), tannarx saqlanib qoladi. Jo'natilgan va qabul qilingan miqdor farqi — "yo'lda yo'qolgan" sifatida `write_off` (sabab `transfer_shortage`) yoziladi va rahbarga xabar ketadi.
+
+## 5. purchasing
+
+```mermaid
+erDiagram
+  Supplier {
+    int id PK
+    string name
+    string phone
+    string contact_person
+    string note
+    bool is_active
+  }
+  Purchase {
+    int id PK
+    string number UK
+    int branch_id FK
+    int supplier_id FK
+    string status "draft, received, cancelled"
+    string invoice_number
+    date invoice_date
+    int currency_id FK
+    decimal rate
+    decimal subtotal
+    decimal expenses_total_base
+    decimal total_base
+    int created_by_id FK
+    int received_by_id FK
+    datetime received_at
+    string note
+  }
+  PurchaseItem {
+    int id PK
+    int purchase_id FK
+    int product_id FK
+    decimal quantity
+    decimal unit_price "kirim valyutasida"
+    decimal line_total
+    decimal allocated_expense_base
+    decimal landed_unit_cost_base "tannarx = (narx + xarajat ulushi) / miqdor"
+  }
+  ExpenseType {
+    int id PK
+    string code UK "transport, customs, loading"
+    string name
+    string default_allocation "by_value | by_quantity"
+  }
+  PurchaseExpense {
+    int id PK
+    int purchase_id FK
+    int expense_type_id FK
+    int currency_id FK
+    decimal amount
+    decimal rate
+    decimal amount_base
+    string allocation_method
+    string note
+  }
+  Supplier ||--o{ Purchase : ""
+  Purchase ||--|{ PurchaseItem : ""
+  Purchase ||--o{ PurchaseExpense : ""
+  ExpenseType ||--o{ PurchaseExpense : ""
+```
+
+- `draft` → `received` o'tishida: xarajatlar taqsimlanadi, `landed_unit_cost_base` hisoblanadi, `inventory.services.receive_stock()` har qator uchun `Batch` yaratadi, `purchase.received` hodisasi.
+- `received` dan `cancelled` ga faqat partiyadan hali hech narsa sotilmagan bo'lsa (`quantity_remaining == quantity_initial`).
+- Yetkazib beruvchiga qarz/to'lov hisobi MVP da yo'q, keyin `SupplierPayment` qo'shilishi uchun joy qoldirilgan (`payments` da `direction` va `counterparty_type` maydonlari).
+
+## 6. sales
+
+```mermaid
+erDiagram
+  Sale {
+    int id PK
+    string number UK
+    int branch_id FK
+    int seller_id FK
+    int customer_id FK "nasiya uchun majburiy"
+    int price_type_id FK
+    string status "draft, completed, cancelled"
+    int currency_id FK
+    decimal rate
+    decimal subtotal
+    decimal discount_amount
+    decimal total
+    decimal total_base
+    decimal cost_base "FIFO tannarx yig'indisi"
+    decimal paid_total "savdo valyutasida"
+    decimal debt_amount
+    datetime completed_at
+    int cancelled_by_id FK
+    string cancel_reason
+    string note
+  }
+  SaleItem {
+    int id PK
+    int sale_id FK
+    int product_id FK
+    decimal quantity
+    decimal unit_price
+    decimal discount_amount
+    decimal line_total
+    decimal cost_base "shu qator tannarxi"
+    json batch_allocations "[{batch_id, quantity, unit_cost_base}]"
+  }
+  SaleReturn {
+    int id PK
+    string number UK
+    int sale_id FK
+    int branch_id FK
+    string status "draft, completed, cancelled"
+    decimal total
+    decimal total_base
+    string refund_type "cash | debt_reduction | none"
+    int refund_payment_id FK
+    int created_by_id FK
+    datetime completed_at
+    string reason
+  }
+  SaleReturnItem {
+    int id PK
+    int sale_return_id FK
+    int sale_item_id FK
+    decimal quantity
+    decimal amount
+    bool restock "omborga qaytadimi"
+  }
+  Sale ||--|{ SaleItem : ""
+  Sale ||--o{ SaleReturn : ""
+  SaleReturn ||--|{ SaleReturnItem : ""
+  SaleItem ||--o{ SaleReturnItem : ""
+```
+
+- Savdo `completed` bo'lganda bitta tranzaksiyada: FIFO chiqim, `StockMovement`, to'lovlar (`payments.services.receive_payment`), nasiya (`payments.services.register_debt`), `sale.completed` hodisasi.
+- Qaytarish: `restock=true` bo'lsa asl partiyaga qaytadi (`sale_return_in` harakati, tannarx saqlanadi); pul kassadan chiqadi (`Payment direction=out`) yoki qarz kamayadi.
+
+## 7. payments
+
+```mermaid
+erDiagram
+  PaymentMethod {
+    int id PK
+    string code UK "cash, card_terminal, transfer, click, payme"
+    string name
+    string provider "manual | click | payme"
+    bool is_cash "kassa qoldig'iga ta'sir qiladimi"
+    bool is_active
+    int sort_order
+  }
+  Cashbox {
+    int id PK
+    int branch_id FK
+    int currency_id FK
+    string name
+    decimal balance "CashTransaction dan hisoblanadi, kesh"
+    bool is_active
+  }
+  CashFlowCategory {
+    int id PK
+    string code UK "sale, debt_payment, refund, expense, deposit, withdrawal, transfer"
+    string name
+    string direction "in | out | both"
+  }
+  CashTransaction {
+    int id PK
+    int cashbox_id FK
+    int shift_id FK
+    string direction "in | out"
+    int category_id FK
+    decimal amount
+    decimal balance_after
+    int payment_id FK "null = qo'lda kirim/chiqim"
+    string document_type
+    int document_id
+    int created_by_id FK
+    string note
+  }
+  CashShift {
+    int id PK
+    int cashbox_id FK
+    int opened_by_id FK
+    datetime opened_at
+    decimal opening_balance
+    int closed_by_id FK
+    datetime closed_at
+    decimal expected_balance
+    decimal actual_balance
+    decimal difference
+    string status "open | closed"
+  }
+  Customer {
+    int id PK
+    string name
+    string phone
+    string address
+    decimal credit_limit_base "null = sozlamadagi default"
+    int default_due_days
+    bool is_active
+    string note
+  }
+  Payment {
+    int id PK
+    string number UK
+    int branch_id FK
+    int customer_id FK
+    int sale_id FK "savdo paytidagi to'lov"
+    int method_id FK
+    string direction "in | out"
+    int currency_id FK
+    decimal amount
+    decimal rate
+    decimal amount_base
+    string status "completed, refunded, failed"
+    string provider_reference "Click/Payme tranzaksiya id"
+    int received_by_id FK
+    datetime received_at
+    string note
+  }
+  Debt {
+    int id PK
+    int customer_id FK
+    int sale_id FK
+    int branch_id FK
+    int currency_id FK
+    decimal amount
+    decimal paid_amount
+    date due_date
+    string status "open, partially_paid, paid, overdue"
+    datetime settled_at
+  }
+  DebtAllocation {
+    int id PK
+    int payment_id FK
+    int debt_id FK
+    decimal amount "qarz valyutasida"
+    decimal rate "to'lov valyutasi boshqa bo'lsa"
+  }
+  CustomerLedgerEntry {
+    int id PK
+    int customer_id FK
+    int currency_id FK
+    string type "debt, payment, refund, adjustment"
+    decimal amount "ishorali"
+    decimal balance_after
+    string document_type
+    int document_id
+    int created_by_id FK
+  }
+  Cashbox ||--o{ CashTransaction : ""
+  Cashbox ||--o{ CashShift : ""
+  CashShift ||--o{ CashTransaction : ""
+  CashFlowCategory ||--o{ CashTransaction : ""
+  PaymentMethod ||--o{ Payment : ""
+  Payment ||--o| CashTransaction : ""
+  Customer ||--o{ Payment : ""
+  Customer ||--o{ Debt : ""
+  Payment ||--o{ DebtAllocation : ""
+  Debt ||--o{ DebtAllocation : ""
+  Customer ||--o{ CustomerLedgerEntry : ""
+```
+
+- Kassa: har nuqta × valyuta uchun alohida `Cashbox` (TSH1-USD, TSH1-UZS). Faqat `PaymentMethod.is_cash=true` to'lovlar kassa qoldig'ini o'zgartiradi; terminal/Click/Payme alohida "bank" hisobida ko'rinadi (hisobotda).
+- Mijoz balansi `CustomerLedgerEntry` dan valyuta kesimida; kredit limiti tekshiruvida barcha ochiq qarzlar asosiy valyutaga joriy kurs bilan o'tkazilib yig'iladi.
+- Qarz to'lovi FIFO: eng eski ochiq qarzdan boshlab yopiladi (`DebtAllocation`), foydalanuvchi aniq qarzni tanlashi ham mumkin.
+
+## 8. core, audit, reports
+
+```mermaid
+erDiagram
+  OutboxEvent {
+    int id PK
+    string name
+    string aggregate_type
+    int aggregate_id
+    json payload
+    int actor_id
+    int branch_id
+    string status "pending, dispatched, failed"
+    int attempts
+    string last_error
+    datetime occurred_at
+    datetime dispatched_at
+  }
+  SystemSetting {
+    int id PK
+    string key UK
+    json value
+    string description
+    int updated_by_id FK
+  }
+  DocumentSequence {
+    int id PK
+    string doc_type "S, P, T, R, PM, WO, SC"
+    int branch_id FK
+    int year
+    int last_number
+  }
+  IdempotencyRecord {
+    int id PK
+    string key
+    int user_id FK
+    string method
+    string path
+    int response_status
+    json response_body
+    datetime created_at
+  }
+  AuditLog {
+    int id PK
+    int actor_id FK
+    int branch_id FK
+    string event_name
+    string aggregate_type
+    int aggregate_id
+    json payload
+    string ip
+    string user_agent
+    string request_id
+    datetime created_at
+  }
+  ReportJob {
+    int id PK
+    string report_key
+    json params
+    string format "pdf | xlsx"
+    string status "pending, running, ready, failed"
+    file file
+    int requested_by_id FK
+    datetime finished_at
+    string error
+  }
+```
+
+- `IdempotencyRecord`: `UNIQUE (key, user_id)`; 24 soatdan keyin tozalanadi.
+- `DocumentSequence`: `UNIQUE (doc_type, branch_id, year)`.
