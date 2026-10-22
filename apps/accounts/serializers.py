@@ -1,5 +1,6 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.branches import selectors as branch_selectors
@@ -68,6 +69,9 @@ class CapabilitySerializer(serializers.Serializer):
 
 class RoleSerializer(serializers.ModelSerializer):
     users_count = serializers.IntegerField(read_only=True)
+    capabilities = serializers.ListField(
+        child=serializers.CharField(), required=False, default=list
+    )
 
     class Meta:
         model = Role
@@ -92,6 +96,13 @@ class RoleSerializer(serializers.ModelSerializer):
         return sorted(set(value))
 
 
+class UserBranchLinkSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    code = serializers.CharField()
+    name = serializers.CharField()
+    is_default = serializers.BooleanField()
+
+
 class UserSerializer(serializers.ModelSerializer):
     role_detail = RoleBriefSerializer(source="role", read_only=True)
     branches = serializers.SerializerMethodField()
@@ -113,6 +124,7 @@ class UserSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    @extend_schema_field(UserBranchLinkSerializer(many=True))
     def get_branches(self, user) -> list[dict]:
         return [
             {

@@ -1234,7 +1234,11 @@ components:
           type: string
           minLength: 1
           maxLength: 100
-        capabilities: {}
+        capabilities:
+          type: array
+          items:
+            type: string
+            minLength: 1
     PatchedUserWriteRequest:
       type: object
       properties:
@@ -1287,7 +1291,10 @@ components:
         name:
           type: string
           maxLength: 100
-        capabilities: {}
+        capabilities:
+          type: array
+          items:
+            type: string
         is_system:
           type: boolean
           readOnly: true
@@ -1332,7 +1339,11 @@ components:
           type: string
           minLength: 1
           maxLength: 100
-        capabilities: {}
+        capabilities:
+          type: array
+          items:
+            type: string
+            minLength: 1
       required:
       - code
       - name
@@ -1430,8 +1441,7 @@ components:
         branches:
           type: array
           items:
-            type: object
-            additionalProperties: {}
+            $ref: '#/components/schemas/UserBranchLink'
           readOnly: true
         is_active:
           type: boolean
@@ -1486,6 +1496,22 @@ components:
       - is_default
       - name
       - type
+    UserBranchLink:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        is_default:
+          type: boolean
+      required:
+      - code
+      - id
+      - is_default
+      - name
     UserWrite:
       type: object
       properties:
