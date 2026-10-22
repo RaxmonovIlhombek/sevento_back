@@ -1,0 +1,8 @@
+-r base.txt
+pytest>=8.3,<9
+pytest-django>=4.11,<5
+pytest-asyncio>=1.0,<2
+factory_boy>=3.3,<4
+ruff>=0.12,<0.15
+import-linter>=2.3,<3
+freezegun>=1.5,<2

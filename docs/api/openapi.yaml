@@ -1,0 +1,1560 @@
+openapi: 3.0.3
+info:
+  title: Sevento API
+  version: 1.0.0
+  description: Savdo, ombor, nasiya va kassa hisobi tizimi. Endpointlar /api/v1/ ostida.
+paths:
+  /api/v1/audit/:
+    get:
+      operationId: audit_list
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: query
+        name: actor
+        schema:
+          type: integer
+      - in: query
+        name: aggregate_id
+        schema:
+          type: integer
+      - in: query
+        name: aggregate_type
+        schema:
+          type: string
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: event_name
+        schema:
+          type: string
+      - in: query
+        name: event_prefix
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - audit
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogList'
+          description: ''
+  /api/v1/audit/{id}/:
+    get:
+      operationId: audit_retrieve
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this audit log.
+        required: true
+      tags:
+      - audit
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLog'
+          description: ''
+  /api/v1/auth/capabilities/:
+    get:
+      operationId: auth_capabilities_list
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Capability'
+          description: ''
+  /api/v1/auth/change-password/:
+    post:
+      operationId: auth_change_password_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/auth/login/:
+    post:
+      operationId: auth_login_create
+      summary: 'Kirish: access token + httpOnly refresh cookie'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      summary: Chiqish
+      tags:
+      - auth
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: ''
+  /api/v1/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      summary: Refresh cookie orqali yangi access (refresh aylantiriladi)
+      tags:
+      - auth
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/branches/:
+    get:
+      operationId: branches_list
+      description: 'Nuqtalar: ro''yxat — har kim o''zi ko''ra oladiganlarini; o''zgartirish
+        — branches.manage.'
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: type
+        schema:
+          type: string
+          enum:
+          - shop
+          - warehouse
+        description: |-
+          * `shop` - Do'kon
+          * `warehouse` - Ombor
+      tags:
+      - branches
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBranchList'
+          description: ''
+    post:
+      operationId: branches_create
+      description: 'Nuqtalar: ro''yxat — har kim o''zi ko''ra oladiganlarini; o''zgartirish
+        — branches.manage.'
+      tags:
+      - branches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BranchRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+  /api/v1/branches/{id}/:
+    get:
+      operationId: branches_retrieve
+      description: 'Nuqtalar: ro''yxat — har kim o''zi ko''ra oladiganlarini; o''zgartirish
+        — branches.manage.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this branch.
+        required: true
+      tags:
+      - branches
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+    put:
+      operationId: branches_update
+      description: 'Nuqtalar: ro''yxat — har kim o''zi ko''ra oladiganlarini; o''zgartirish
+        — branches.manage.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this branch.
+        required: true
+      tags:
+      - branches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BranchRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+    patch:
+      operationId: branches_partial_update
+      description: 'Nuqtalar: ro''yxat — har kim o''zi ko''ra oladiganlarini; o''zgartirish
+        — branches.manage.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this branch.
+        required: true
+      tags:
+      - branches
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBranchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBranchRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+  /api/v1/health/:
+    get:
+      operationId: health_retrieve
+      tags:
+      - system
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: ''
+  /api/v1/roles/:
+    get:
+      operationId: roles_list
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - roles
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRoleList'
+          description: ''
+    post:
+      operationId: roles_create
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      tags:
+      - roles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+  /api/v1/roles/{id}/:
+    get:
+      operationId: roles_retrieve
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this role.
+        required: true
+      tags:
+      - roles
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+    put:
+      operationId: roles_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this role.
+        required: true
+      tags:
+      - roles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+    patch:
+      operationId: roles_partial_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this role.
+        required: true
+      tags:
+      - roles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+    delete:
+      operationId: roles_destroy
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this role.
+        required: true
+      tags:
+      - roles
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/settings/:
+    get:
+      operationId: settings_list
+      tags:
+      - settings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SystemSetting'
+          description: ''
+  /api/v1/settings/{key}/:
+    get:
+      operationId: settings_retrieve
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - settings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemSetting'
+          description: ''
+    put:
+      operationId: settings_update
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - settings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemSettingUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SystemSettingUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemSetting'
+          description: ''
+    delete:
+      operationId: settings_destroy
+      description: Qiymatni default ga qaytaradi.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - settings
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/users/:
+    get:
+      operationId: users_list
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: role
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+    post:
+      operationId: users_create
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/users/{id}/:
+    get:
+      operationId: users_retrieve
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: users_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: users_partial_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWrite'
+          description: ''
+  /api/v1/users/{id}/set-password/:
+    post:
+      operationId: users_set_password_create
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetPasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SetPasswordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        event_name:
+          type: string
+          readOnly: true
+        aggregate_type:
+          type: string
+          readOnly: true
+        aggregate_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        actor:
+          type: integer
+          readOnly: true
+          nullable: true
+        actor_username:
+          type: string
+          readOnly: true
+        actor_full_name:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+          nullable: true
+        branch_name:
+          type: string
+          readOnly: true
+        payload:
+          readOnly: true
+        ip:
+          type: string
+          readOnly: true
+        request_id:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actor
+      - actor_full_name
+      - actor_username
+      - aggregate_id
+      - aggregate_type
+      - branch
+      - branch_name
+      - created_at
+      - event_name
+      - id
+      - ip
+      - payload
+      - request_id
+    Branch:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          description: Hujjat raqamlarida ishlatiladi
+          maxLength: 10
+        name:
+          type: string
+          maxLength: 100
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        address:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          maxLength: 30
+        settings: {}
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - name
+      - updated_at
+    BranchRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          description: Hujjat raqamlarida ishlatiladi
+          maxLength: 10
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        address:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          maxLength: 30
+        settings: {}
+        is_active:
+          type: boolean
+      required:
+      - code
+      - name
+    Capability:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        group:
+          type: string
+      required:
+      - code
+      - group
+      - name
+    ChangePasswordRequest:
+      type: object
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - current_password
+      - new_password
+    ErrorBody:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        request_id:
+          type: string
+      required:
+      - code
+      - details
+      - message
+      - request_id
+    ErrorDetail:
+      type: object
+      properties:
+        field:
+          type: string
+          nullable: true
+        code:
+          type: string
+        message:
+          type: string
+      required:
+      - code
+      - field
+      - message
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+      required:
+      - error
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+        db:
+          type: boolean
+        redis:
+          type: boolean
+      required:
+      - db
+      - redis
+      - status
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    LoginResponse:
+      type: object
+      properties:
+        access:
+          type: string
+        user:
+          $ref: '#/components/schemas/Me'
+      required:
+      - access
+      - user
+    Me:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        full_name:
+          type: string
+        phone:
+          type: string
+        is_superuser:
+          type: boolean
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleBrief'
+          nullable: true
+        capabilities:
+          type: array
+          items:
+            type: string
+        branches:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserBranch'
+        all_branches:
+          type: boolean
+      required:
+      - all_branches
+      - branches
+      - capabilities
+      - full_name
+      - id
+      - is_superuser
+      - phone
+      - role
+      - username
+    PaginatedAuditLogList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+    PaginatedBranchList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Branch'
+    PaginatedRoleList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    PatchedBranchRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          description: Hujjat raqamlarida ishlatiladi
+          maxLength: 10
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        address:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          maxLength: 30
+        settings: {}
+        is_active:
+          type: boolean
+    PatchedRoleRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        capabilities: {}
+    PatchedUserWriteRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        phone:
+          type: string
+          default: ''
+          maxLength: 30
+        role:
+          type: integer
+          nullable: true
+        branch_ids:
+          type: array
+          items:
+            type: integer
+        default_branch_id:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+          default: true
+    RefreshResponse:
+      type: object
+      properties:
+        access:
+          type: string
+      required:
+      - access
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 100
+        capabilities: {}
+        is_system:
+          type: boolean
+          readOnly: true
+        users_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - is_system
+      - name
+      - updated_at
+      - users_count
+    RoleBrief:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+      required:
+      - code
+      - name
+    RoleRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        capabilities: {}
+      required:
+      - code
+      - name
+    SetPasswordRequest:
+      type: object
+      properties:
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - new_password
+    SystemSetting:
+      type: object
+      properties:
+        key:
+          type: string
+          readOnly: true
+        type:
+          type: string
+          readOnly: true
+        choices:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        default:
+          readOnly: true
+        value: {}
+        is_overridden:
+          type: boolean
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        updated_by:
+          type: string
+          readOnly: true
+          nullable: true
+      required:
+      - choices
+      - default
+      - description
+      - is_overridden
+      - key
+      - type
+      - updated_at
+      - updated_by
+      - value
+    SystemSettingUpdateRequest:
+      type: object
+      properties:
+        value: {}
+      required:
+      - value
+    TypeEnum:
+      enum:
+      - shop
+      - warehouse
+      type: string
+      description: |-
+        * `shop` - Do'kon
+        * `warehouse` - Ombor
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+        full_name:
+          type: string
+          readOnly: true
+          title: F.I.O.
+        phone:
+          type: string
+          readOnly: true
+        role:
+          type: integer
+          readOnly: true
+          nullable: true
+        role_detail:
+          allOf:
+          - $ref: '#/components/schemas/RoleBrief'
+          readOnly: true
+        branches:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+          title: Active
+          description: Designates whether this user should be treated as active. Unselect
+            this instead of deleting accounts.
+        is_superuser:
+          type: boolean
+          readOnly: true
+          title: Superuser status
+          description: Designates that this user has all permissions without explicitly
+            assigning them.
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Oxirgi kirish
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branches
+      - date_joined
+      - full_name
+      - id
+      - is_active
+      - is_superuser
+      - last_login
+      - phone
+      - role
+      - role_detail
+      - username
+    UserBranch:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        is_default:
+          type: boolean
+      required:
+      - code
+      - id
+      - is_default
+      - name
+      - type
+    UserWrite:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 150
+        full_name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          default: ''
+          maxLength: 30
+        role:
+          type: integer
+          nullable: true
+        branch_ids:
+          type: array
+          items:
+            type: integer
+        default_branch_id:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+          default: true
+      required:
+      - full_name
+      - role
+      - username
+    UserWriteRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        phone:
+          type: string
+          default: ''
+          maxLength: 30
+        role:
+          type: integer
+          nullable: true
+        branch_ids:
+          type: array
+          items:
+            type: integer
+        default_branch_id:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+          default: true
+      required:
+      - full_name
+      - password
+      - role
+      - username
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

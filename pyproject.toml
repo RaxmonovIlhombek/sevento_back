@@ -1,0 +1,76 @@
+[project]
+name = "sevento-backend"
+version = "0.1.0"
+description = "Sevento — savdo, ombor, nasiya va kassa hisobi (backend)"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["migrations", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ", "T20"]
+ignore = ["DJ001"]
+
+[tool.ruff.lint.per-file-ignores]
+"config/settings/*.py" = ["F403", "F405"]
+"**/tests/**" = ["S", "B011"]
+"conftest.py" = ["T20"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["config", "core", "apps"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+testpaths = ["core", "apps"]
+addopts = "-ra -q --strict-markers"
+asyncio_mode = "auto"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.importlinter]
+root_packages = ["config", "core", "apps"]
+include_external_packages = false
+
+# core — umumiy yadro: biznes app lariga bog'lanmaydi
+[[tool.importlinter.contracts]]
+name = "core apps ga bog'lanmaydi"
+type = "forbidden"
+source_modules = ["core"]
+forbidden_modules = ["apps"]
+
+# App lar bir-birining models/serializers/views qatlamiga yopishmaydi:
+# faqat services, selectors, events orqali gaplashadi.
+[[tool.importlinter.contracts]]
+name = "accounts boshqa app ichki qatlamini import qilmaydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.accounts"]
+forbidden_modules = [
+    "apps.branches.models", "apps.branches.serializers", "apps.branches.views",
+    "apps.audit.models", "apps.audit.serializers", "apps.audit.views",
+]
+
+[[tool.importlinter.contracts]]
+name = "branches boshqa app ichki qatlamini import qilmaydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.branches"]
+forbidden_modules = [
+    "apps.accounts.models", "apps.accounts.serializers", "apps.accounts.views",
+    "apps.audit.models", "apps.audit.serializers", "apps.audit.views",
+]
+
+[[tool.importlinter.contracts]]
+name = "audit boshqa app ichki qatlamini import qilmaydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.audit"]
+forbidden_modules = [
+    "apps.accounts.models", "apps.accounts.serializers", "apps.accounts.views",
+    "apps.branches.models", "apps.branches.serializers", "apps.branches.views",
+]

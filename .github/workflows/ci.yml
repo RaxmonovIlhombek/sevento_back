@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: sevento
+          POSTGRES_USER: sevento
+          POSTGRES_PASSWORD: sevento
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sevento"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: ci-secret-key
+      DATABASE_URL: postgres://sevento:sevento@127.0.0.1:5432/sevento
+      REDIS_URL: redis://127.0.0.1:6379/1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements/*.txt
+      - run: pip install -r requirements/dev.txt
+      - name: Lint (ruff)
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Modul chegaralari (import-linter)
+        run: lint-imports
+      - name: Testlar
+        run: pytest -q
+      - name: OpenAPI sxema yangiligi
+        run: |
+          python manage.py spectacular --file /tmp/openapi.yaml --validate
+          diff -u docs/api/openapi.yaml /tmp/openapi.yaml
