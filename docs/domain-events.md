@@ -1,6 +1,6 @@
 # Domen hodisalari
 
-> Holat: 0-bosqich — reja.
+> Holat: mexanizm va accounts/branches/core hodisalari 1-bosqichda amalga oshirildi; qolgan jadvallar reja.
 
 ## 1. Mexanizm
 
@@ -71,13 +71,16 @@ Ustunlar: **Audit** — audit jurnaliga yoziladimi; **WS** — WebSocket ga chiq
 |---|---|---|---|---|---|
 | `user.logged_in` | muvaffaqiyatli login | user_id, ip, user_agent | ✔ | — | — |
 | `user.login_failed` | noto'g'ri parol | username, ip | ✔ | — | throttle hisoblagichi |
-| `user.created` / `user.updated` / `user.deactivated` | admin amali | user_id, changes | ✔ | — | `user.deactivated` → realtime shu user sessiyalarini yopadi |
+| `user.created` / `user.updated` / `user.deactivated` | admin amali | user_id, username, changes {maydon: {old, new}} | ✔ | — | `user.deactivated` → realtime shu user sessiyalarini yopadi (2-bosqich) |
+| `user.password_changed` | o'zi yoki admin parolni almashtirdi | user_id, by_self | ✔ | — | |
+| `role.created` / `role.updated` / `role.deleted` | rol boshqaruvi | role_id, code, capabilities / changes | ✔ | — | |
+| `setting.changed` (core) | tizim sozlamasi o'zgardi | key, old_value, new_value | ✔ | — | kesh tozalanadi |
 
 ### branches / catalog / currency
 
 | Hodisa | Qachon | Payload | Audit | WS | Boshqa |
 |---|---|---|---|---|---|
-| `branch.created` / `branch.updated` | | branch_id, changes | ✔ | — | |
+| `branch.created` / `branch.updated` | | branch_id, code, branch_name, type / changes | ✔ | — | |
 | `product.created` / `product.updated` | | product_id, changes | ✔ | — | |
 | `product.price_changed` | narx o'zgardi | product_id, price_type, old, new, currency, branch_id | ✔ | — | |
 | `currency.rate_updated` | Celery kursni yangiladi yoki qo'lda kiritildi | rates: [{currency, rate, date}], source | ✔ | ✔ hammaga | kesh tozalash |

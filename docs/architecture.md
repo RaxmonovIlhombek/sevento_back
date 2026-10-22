@@ -1,7 +1,11 @@
 # Arxitektura (backend)
 
-> Holat: **0-bosqich — reja**. Bu hujjat kodlashdan oldin tasdiqlash uchun yozilgan.
-> Tasdiqlangandan keyin har bosqichda haqiqiy holatga moslab yangilanadi.
+> Holat: 1-bosqich amalga oshirildi (`config/`, `core/`, `apps/accounts`, `apps/branches`, `apps/audit`).
+> Rejadan farqlar: (1) `OutboxEvent` so'rov kontekstini (`request_id`, `ip`, `user_agent`) ham saqlaydi —
+> audit Celery orqali qayta tarqatilganda ham to'g'ri yoziladi; (2) `HasCapability` ViewSet da
+> `capability_map` bilan ishlaydi, ro'yxatda bo'lmagan action rad etiladi (`"*"` — hammasi uchun);
+> (3) sozlama ta'riflari har app ning `settings_defs.py` faylida ro'yxatga olinadi (`core.settings_registry`);
+> (4) DRF ning o'z xabarlari `LANGUAGE_CODE="uz"` bilan allaqachon o'zbekcha.
 
 ## 1. Umumiy ko'rinish
 
