@@ -54,11 +54,12 @@ def test_owner_creates_branch_with_audit(owner_client, owner, django_capture_on_
 
 
 def test_duplicate_or_invalid_code(owner_client, branch):
-    response = owner_client.post(URL, {"code": "tsh1", "name": "X"})
-    assert response.status_code == 400
-    assert response.json()["error"]["details"] == [
-        {"field": "code", "code": "unique", "message": "Bu kod band"}
-    ]
+    for code in ("tsh1", "TSH1"):
+        response = owner_client.post(URL, {"code": code, "name": "X"})
+        assert response.status_code == 400
+        assert response.json()["error"]["details"] == [
+            {"field": "code", "code": "unique", "message": "Bu kod band"}
+        ]
     response = owner_client.post(URL, {"code": "TS H", "name": "X"})
     assert response.json()["error"]["details"][0]["code"] == "invalid"
 

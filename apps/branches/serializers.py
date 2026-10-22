@@ -19,6 +19,8 @@ class BranchSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+        # unique tekshiruvi validate_code da (katta harfga o'tkazib, o'zbekcha xabar bilan)
+        extra_kwargs = {"code": {"validators": []}}
 
     def validate_code(self, value):
         value = value.strip().upper()

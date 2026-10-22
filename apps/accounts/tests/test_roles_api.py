@@ -38,6 +38,14 @@ def test_create_role(owner_client, django_capture_on_commit_callbacks):
     assert AuditLog.objects.get(event_name="role.created").payload["code"] == "cashier"
 
 
+def test_duplicate_code_rejected(owner_client, roles):
+    response = owner_client.post(URL, {"code": "seller", "name": "X", "capabilities": []})
+    assert response.status_code == 400
+    assert response.json()["error"]["details"] == [
+        {"field": "code", "code": "unique", "message": "Bu kod band"}
+    ]
+
+
 def test_unknown_capability_rejected(owner_client):
     response = owner_client.post(URL, {"code": "x", "name": "X", "capabilities": ["sales.fly"]})
     assert response.status_code == 400

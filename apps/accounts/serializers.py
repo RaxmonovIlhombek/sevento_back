@@ -86,6 +86,15 @@ class RoleSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["is_system", "created_at", "updated_at"]
+        extra_kwargs = {"code": {"validators": []}}
+
+    def validate_code(self, value):
+        qs = Role.objects.filter(code=value)
+        if self.instance is not None:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("Bu kod band", code="unique")
+        return value
 
     def validate_capabilities(self, value):
         unknown = validate_codes(value)
