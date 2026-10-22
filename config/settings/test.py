@@ -28,6 +28,14 @@ JWT_REFRESH_COOKIE = {
     "path": "/api/v1/auth/",
 }
 
+REALTIME = {
+    "TICKET_TTL": 30,
+    "AUTH_TIMEOUT": 0.3,
+    "MAX_CONNECTIONS_PER_USER": 10,
+    "USER_RECHECK_INTERVAL": 900,
+    "ALLOWED_ORIGINS": ["*"],
+}
+
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},

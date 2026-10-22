@@ -65,6 +65,18 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "realtime boshqa app ichki qatlamini import qilmaydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.realtime"]
+forbidden_modules = [
+    "apps.accounts.serializers", "apps.accounts.views",
+    "apps.branches.models", "apps.branches.serializers", "apps.branches.views",
+    "apps.audit.models", "apps.audit.serializers", "apps.audit.views",
+]
+
+[[tool.importlinter.contracts]]
 name = "audit boshqa app ichki qatlamini import qilmaydi"
 type = "forbidden"
 allow_indirect_imports = true

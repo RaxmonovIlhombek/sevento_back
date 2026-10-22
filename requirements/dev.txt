@@ -6,3 +6,4 @@ factory_boy>=3.3,<4
 ruff>=0.12,<0.15
 import-linter>=2.3,<3
 freezegun>=1.5,<2
+daphne>=4.1,<5  # faqat channels.testing uchun (server uvicorn)

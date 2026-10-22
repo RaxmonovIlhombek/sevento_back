@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.branches",
     "apps.audit",
+    "apps.realtime",
 ]
 
 MIDDLEWARE = [
@@ -191,6 +192,19 @@ SPECTACULAR_SETTINGS = {
     "POSTPROCESSING_HOOKS": [
         "drf_spectacular.hooks.postprocess_schema_enums",
     ],
+}
+
+# --- WebSocket (apps.realtime) ---
+REALTIME = {
+    "TICKET_TTL": env.int("REALTIME_TICKET_TTL", default=30),
+    "AUTH_TIMEOUT": env.float("REALTIME_AUTH_TIMEOUT", default=5.0),
+    "MAX_CONNECTIONS_PER_USER": env.int("REALTIME_MAX_CONNECTIONS_PER_USER", default=10),
+    "USER_RECHECK_INTERVAL": env.int("REALTIME_USER_RECHECK_INTERVAL", default=900),
+    # Brauzer Origin ro'yxati (Tauri oynasi ham). "*" — hammasi (faqat dev)
+    "ALLOWED_ORIGINS": env.list(
+        "REALTIME_ALLOWED_ORIGINS",
+        default=CSRF_TRUSTED_ORIGINS + ["tauri://localhost", "http://tauri.localhost"],
+    ),
 }
 
 # --- Boshlang'ich foydalanuvchi (bootstrap buyrug'i) ---

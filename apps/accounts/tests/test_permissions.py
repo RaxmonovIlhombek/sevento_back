@@ -38,12 +38,14 @@ def test_realtime_groups(owner, seller, branch, branch2):
         f"user_{seller.id}",
         "role_seller",
         f"branch_{branch.id}",
+        "broadcast",
     ]
     assert get_realtime_groups(owner) == [
         f"user_{owner.id}",
         "role_owner",
         f"branch_{branch.id}",
         f"branch_{branch2.id}",
+        "broadcast",
     ]
 
 

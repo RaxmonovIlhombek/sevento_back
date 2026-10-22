@@ -18,3 +18,5 @@ JWT_REFRESH_COOKIE = {
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+REALTIME = {**REALTIME, "ALLOWED_ORIGINS": ["*"]}  # noqa: F405

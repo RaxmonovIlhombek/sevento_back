@@ -68,6 +68,7 @@ def get_realtime_groups(user: User) -> list[str]:
     if ids is None:
         ids = [b.id for b in branch_selectors.active_branches()]
     groups.extend(f"branch_{i}" for i in sorted(ids))
+    groups.append("broadcast")  # hammaga: kurs yangilandi, tizim xabari
     return groups
 
 

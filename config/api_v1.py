@@ -10,4 +10,5 @@ urlpatterns = [
     path("", include("apps.accounts.urls")),
     path("", include("apps.branches.urls")),
     path("", include("apps.audit.urls")),
+    path("", include("apps.realtime.urls")),
 ]

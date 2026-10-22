@@ -402,6 +402,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
           description: ''
+  /api/v1/realtime/notice/:
+    post:
+      operationId: realtime_notice_create
+      summary: Barcha ulangan foydalanuvchilarga xabar
+      tags:
+      - realtime
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoticeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NoticeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/realtime/ticket/:
+    post:
+      operationId: realtime_ticket_create
+      summary: WebSocket uchun bir martalik ticket (30 s)
+      tags:
+      - realtime
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
   /api/v1/roles/:
     get:
       operationId: roles_list
@@ -1038,6 +1073,16 @@ components:
       - db
       - redis
       - status
+    LevelEnum:
+      enum:
+      - info
+      - warning
+      - error
+      type: string
+      description: |-
+        * `info` - info
+        * `warning` - warning
+        * `error` - error
     LoginRequest:
       type: object
       properties:
@@ -1099,6 +1144,19 @@ components:
       - phone
       - role
       - username
+    NoticeRequest:
+      type: object
+      properties:
+        level:
+          allOf:
+          - $ref: '#/components/schemas/LevelEnum'
+          default: info
+        message:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required:
+      - message
     PaginatedAuditLogList:
       type: object
       required:
@@ -1404,6 +1462,16 @@ components:
         value: {}
       required:
       - value
+    Ticket:
+      type: object
+      properties:
+        ticket:
+          type: string
+        expires_in:
+          type: integer
+      required:
+      - expires_in
+      - ticket
     TypeEnum:
       enum:
       - shop
