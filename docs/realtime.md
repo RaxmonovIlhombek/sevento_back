@@ -1,6 +1,12 @@
 # Real vaqt (WebSocket)
 
-> Holat: 0-bosqich — reja. 2-bosqichda (Channels asosi) va keyingi bosqichlarda haqiqiy holatga moslanadi.
+> Holat: 2-bosqich amalga oshirildi — `apps/realtime` (consumer, ticket, guruhlar, router, notice API)
+> va frontend `shared/realtime` (RealtimeClient, invalidate xaritasi, indikator, polling).
+> Keyingi bosqichlar faqat `router.route(...)` qatorlari va `invalidationRules` yozuvlarini qo'shadi.
+>
+> Kod joylari: backend `apps/realtime/{consumers,tickets,router,subscribers}.py`,
+> `config/asgi.py` (OriginValidator, `REALTIME_ALLOWED_ORIGINS`); frontend
+> `src/shared/realtime/{client,invalidation,store,api}.ts`, `src/app/providers/RealtimeProvider.tsx`.
 
 ## 1. Prinsip
 
@@ -64,8 +70,8 @@ Guruhlarga a'zolikni **server** hal qiladi, mijoz "obuna bo'laman" deb so'ramayd
 
 | Guruh | Kim a'zo | Nima keladi |
 |---|---|---|
-| `user_{id}` | shu foydalanuvchi (barcha ulanishlari) | `report.ready`, `session.revoked`, shaxsiy bildirishnomalar |
-| `role_{code}` | shu roldagi hamma (`role_owner`, `role_accountant`, `role_storekeeper`, `role_seller`) | rolga qaratilgan: `payment.received` (buxgalter), `debt.overdue`, `dashboard.updated` (rahbar) |
+| `user_{id}` | shu foydalanuvchi (barcha ulanishlari) | `report.ready`, `session.revoked` (o'chirildi, rol/nuqta/parol o'zgardi), shaxsiy bildirishnomalar |
+| `role_{code}` | shu roldagi hamma (`role_owner`, `role_accountant`, `role_storekeeper`, `role_seller`) | rolga qaratilgan: `payment.received` (buxgalter), `debt.overdue`, `dashboard.updated` (rahbar); rol huquqlari o'zgarsa `session.revoked` |
 | `branch_{id}` | `UserBranch` orqali shu nuqtaga biriktirilganlar; `branches.view_all` huquqi borlar **barcha** faol nuqtalarga | `stock.changed`, `stock.below_minimum`, `transfer.*` |
 | `broadcast` | hamma autentifikatsiyadan o'tganlar | `currency.rate_updated`, `system.notice` |
 
@@ -106,8 +112,8 @@ Boshqa hech qanday mijoz xabari qabul qilinmaydi (noma'lum `type` → e'tiborsiz
 | `auth.ok` | ulanish | `{user_id, groups: []}` | — | 2 |
 | `auth.error` | ulanish | `{code, message}` | — (keyin close) | 2 |
 | `pong` | ulanish | `{}` | — | 2 |
-| `session.revoked` | `user_{id}` | `{reason}` | hammasi; `me` qayta | 2 |
-| `system.notice` | `broadcast` | `{level, message}` | — (toast) | 2 |
+| `session.revoked` | `user_{id}` / `role_{code}` | `{reason: "deactivated" \| "permissions_changed" \| "password_changed"}` — keyin server 4403 bilan yopadi | `deactivated` → logout; aks holda `me` qayta o'qiladi, yangi ticket bilan qayta ulanadi | 2 ✅ |
+| `system.notice` | `broadcast` | `{level: "info" \| "warning" \| "error", message}` (`POST /api/v1/realtime/notice/`, `settings.manage`) | — (toast) | 2 ✅ |
 | `currency.rate_updated` | `broadcast` | `{rates: [{currency, rate, date}], source}` | `['currency']`, `['products']` (narx UZS da ko'rsatilsa) + toast | 3 |
 | `stock.changed` | `branch_{id}` | `{branch_id, product_id, quantity, delta, movement_type, document: {type, id, number}}` | `['stock', branch_id]`, `['stock', branch_id, product_id]`, `['products', product_id]` | 5 |
 | `stock.below_minimum` | `branch_{id}` (omborchi, sotuvchi ko'radi), `role_owner` | `{branch_id, product_id, product_name, quantity, min_quantity, unit}` | `['stock','alerts']` + ogohlantirish toast | 5 |
@@ -146,10 +152,21 @@ domen hodisasi (on_commit) → realtime.subscribers → realtime.router (hodisa 
 - **Invalidate xaritasi** — `shared/realtime/invalidation.ts` da `type → queryKey[]` jadvali (yuqoridagi ustun). Xabar ishlovchilari komponent ichida emas, shu bitta joyda.
 - Tez-tez keladigan `stock.changed` / `dashboard.updated` uchun 1–2 s debounce (bir vaqtda 20 ta sotuv → 1 ta qayta o'qish).
 
-## 8. Testlar (2-bosqichdan boshlab)
+## 8. Testlar
 
-- ticket siz ulanib `auth` yubormaslik → 4408; yaroqsiz ticket → 4401; ticketni ikki marta ishlatish → ikkinchisi 4401.
-- sotuvchi `branch_3` da bo'lsa `branch_5` xabarini **olmaydi**; rahbar ikkalasini oladi.
-- `stock.changed` savdo tranzaksiyasi commit bo'lgandan keyin keladi; tranzaksiya rollback bo'lsa kelmaydi (`django_capture_on_commit_callbacks`).
-- `user.deactivated` → ochiq ulanish 4403 bilan yopiladi.
-- Celery vazifasidan chiqqan `currency.rate_updated` `broadcast` ga yetib keladi.
+Backend (`apps/realtime/tests/`, `WebsocketCommunicator`, ✅):
+- ticket siz ulanib `auth` yubormaslik → 4408; auth dan oldin boshqa xabar → 4401; yaroqsiz ticket → `auth.error` + 4401; ticketni ikki marta ishlatish → ikkinchisi 4401; faol bo'lmagan foydalanuvchi → 4403.
+- sotuvchi `branch_1` da bo'lsa `branch_2` xabarini **olmaydi**; rahbar ikkalasini oladi.
+- hodisa tranzaksiya commit bo'lgandan keyin keladi; rollback bo'lsa kelmaydi.
+- `user.deactivated` → `session.revoked` + 4403 (boshqalarga ta'sir yo'q); rol huquqi o'zgarsa `role_{code}` guruhi; ism o'zgarsa jim.
+- ulanish limiti (4429) va yopilgach hisob kamayishi; `POST /realtime/notice/` → `broadcast`.
+- Keyingi bosqichlar: Celery vazifasidan chiqqan `currency.rate_updated` `broadcast` ga yetib kelishi (3), `stock.changed` savdodan keyin (5).
+
+Frontend (`src/shared/realtime/*.test.ts`, soxta WebSocket + fake timers, ✅):
+- ticket → `auth` birinchi xabar → `auth.ok` → online; `pong` uzatilmaydi; buzuq JSON e'tiborsiz.
+- uzilganda backoff (eksponensial, chegarali, jitter) bilan **yangi ticket** olib qayta ulanadi; `auth.ok` dan keyin backoff nolga qaytadi.
+- 4401/4408/4403 → kutmasdan; ticket olib bo'lmasa offline + keyinroq.
+- ping har 25 s; 2 ta pong kelmasa yopib qayta ochadi; `close()` → 1000, qayta ulanmaydi.
+- invalidate xaritasi: noma'lum tur jim; debounce li turlar bir xil kalitlarni yig'adi.
+
+Brauzerda (Playwright, qo'lda): ikki oyna — rahbar `system.notice` yuboradi → sotuvchida darhol toast; rolni o'zgartirish → sotuvchida `me` yangilanadi va qayta ulanadi; o'chirish → sotuvchi login sahifasiga chiqariladi.
