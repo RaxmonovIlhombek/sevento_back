@@ -188,6 +188,12 @@ class InventoryCancelSerializer(serializers.Serializer):
     reason = serializers.CharField(max_length=255)
 
 
+class BranchBriefSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    code = serializers.CharField()
+    name = serializers.CharField()
+
+
 class DocumentRefSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     number = serializers.CharField()

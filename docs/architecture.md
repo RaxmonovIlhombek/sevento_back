@@ -210,10 +210,10 @@ Strelka = "shu modulning service/selector funksiyasini chaqiradi". Teskari yo'na
 | `branches` | Branch | `selectors.get_branch()`, `selectors.active_branches()` |
 | `catalog` | Category, Unit, Product, PriceType, ProductPrice | `selectors.get_product()`, `selectors.get_price()` |
 | `currency` | Currency, ExchangeRate | `selectors.get_rate()`, `services.convert()`, `selectors.base_currency()` |
-| `inventory` | StockLevel, Batch, StockMovement, Transfer(+Item), StockCount(+Item), WriteOff(+Item), WriteOffReason | `services.receive_stock()`, `services.issue_stock()`, `services.reverse_receipt()`, `selectors.get_quantity()`, `selectors.is_source_untouched()`; `types.DocRef`, `types.MovementType` (boshqa app lar `models` ni emas, shularni import qiladi) |
+| `inventory` | StockLevel, Batch, StockMovement, Transfer(+Item), StockCount(+Item), WriteOff(+Item), WriteOffReason | `services` paketi: `stock.py` (`receive_stock()`, `issue_stock()`, `restore_stock()`, `reverse_receipt()`, `adjust_to_counted()` — qoldiqni o'zgartiradigan yagona joy), `transfers.py`, `counts.py`, `writeoffs.py`; `selectors.get_quantity()`, `selectors.is_source_untouched()`; `types.DocRef`, `types.MovementType`, `types.allocations_to_json/from_json` (boshqa app lar `models` ni emas, shularni import qiladi) |
 | `purchasing` | Supplier, Purchase, PurchaseItem, PurchaseExpense, ExpenseType | `selectors.*` (hisobotlar uchun) |
-| `payments` | PaymentMethod, Cashbox, CashTransaction, CashFlowCategory, CashShift(+Balance), Customer, Payment, Debt, DebtAllocation, CustomerLedgerEntry | `services` paketi (`payments.py`, `credit.py`, `cash.py`): `receive_payment()`, `give_change()`, `reverse_document_payments()`, `register_debt()`, `cancel_document_debts()`, `receive_debt_payment()`, `credit_status()`; `selectors.payments_for_document()`, `document_debt()`; `types.PaymentDoc` |
-| `sales` | Sale, SaleItem, SaleReturn, SaleReturnItem | `selectors.*` (hisobotlar uchun) |
+| `payments` | PaymentMethod, Cashbox, CashTransaction, CashFlowCategory, CashShift(+Balance), Customer, Payment, Debt, DebtAllocation, CustomerLedgerEntry | `services` paketi (`payments.py`, `credit.py`, `cash.py`): `receive_payment()`, `give_change()`, `refund_to_customer()`, `reverse_document_payments()`, `register_debt()`, `cancel_document_debts()`, `reduce_document_debt()`, `receive_debt_payment()`, `credit_status()`; `selectors.payments_for_document()`, `document_debt()`; `types.PaymentDoc` |
+| `sales` | Sale, SaleItem, SaleReturn, SaleReturnItem | `selectors.*` (hisobotlar uchun); qaytarish `services.create_return()` — `inventory.restore_stock()` + `payments.reduce_document_debt()` / `refund_to_customer()` |
 | `reports` | ReportJob | — |
 | `audit` | AuditLog | — |
 | `realtime` | — (ticket Redis da) | `services.issue_ticket()` |
@@ -256,7 +256,7 @@ class CostingStrategy(Protocol):
         Partiyalarni select_for_update bilan qulflaydi. Yetmasa InsufficientStock."""
 ```
 
-`inventory.services.issue_stock()` strategiyani chaqiradi, harakatlar jurnaliga yozadi va `StockLevel` ni yangilaydi — savdo, ko'chirish, hisobdan chiqarish hammasi shu bitta funksiyadan o'tadi.
+`inventory.services.issue_stock()` strategiyani chaqiradi, harakatlar jurnaliga yozadi va `StockLevel` ni yangilaydi — savdo, ko'chirish, hisobdan chiqarish, inventarizatsiya kamomadi hammasi shu bitta funksiyadan o'tadi. Teskari amallar (savdo/ko'chirish/hisobdan chiqarishni bekor qilish, savdo qaytarish) — `restore_stock()`: tovar hujjatda saqlangan `batch_allocations` bo'yicha **asl partiyalarga** qaytadi, tannarx saqlanadi.
 O'rtacha tannarxga o'tish uchun yangi strategiya klassi va bir martalik "partiyalarni o'rtachaga o'tkazish" service i yoziladi; savdo/ko'chirish kodi o'zgarmaydi.
 
 ## 7. API qoidalari

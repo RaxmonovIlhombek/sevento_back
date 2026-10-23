@@ -70,7 +70,7 @@ class SaleViewSet(
         user = self.request.user
         context["can_view_cost"] = user.has_capability("inventory.view_cost")
         context["can_cancel"] = user.has_capability("sales.cancel")
-        context["can_return"] = user.has_capability("sales.returns.create")
+        context["can_return"] = lambda sale: services.can_return_sale(user, sale)
         return context
 
     def _detail(self, sale_id: int) -> dict:

@@ -2332,6 +2332,91 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Xato
+  /api/v1/inventory/transfers/destinations/:
+    get:
+      operationId: inventory_transfers_destinations_list
+      description: 'Qabul qiluvchi nuqta tanlovi: barcha faol nuqtalar (begona nuqtalar
+        ham).'
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - in
+          - out
+        description: |-
+          * `in` - in
+          * `out` - out
+      - in: query
+        name: from_branch
+        schema:
+          type: number
+      - in: query
+        name: has_discrepancy
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - cancelled
+            - draft
+            - received
+            - sent
+        description: |-
+          * `draft` - Qoralama
+          * `sent` - Jo'natildi
+          * `received` - Qabul qilindi
+          * `cancelled` - Bekor qilindi
+        explode: true
+        style: form
+      - in: query
+        name: to_branch
+        schema:
+          type: number
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BranchBrief'
+          description: ''
   /api/v1/inventory/transfers/incoming/:
     get:
       operationId: inventory_transfers_incoming_retrieve
@@ -5364,6 +5449,19 @@ components:
       - id
       - name
       - updated_at
+    BranchBrief:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+      required:
+      - code
+      - id
+      - name
     BranchRequest:
       type: object
       properties:

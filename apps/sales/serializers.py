@@ -222,9 +222,11 @@ class SaleDetailSerializer(SaleListSerializer):
         )
 
     def get_can_return(self, sale) -> bool:
+        can_return = self.context.get("can_return")
         return (
             sale.status == Sale.Status.COMPLETED
-            and self.context.get("can_return", False)
+            and can_return is not None
+            and can_return(sale)
             and any(i.returned_quantity < i.quantity for i in sale.items.all())
         )
 

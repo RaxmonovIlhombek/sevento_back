@@ -249,3 +249,9 @@ def test_realtime_routes(owner, sk_client, sk2_client, branch, branch2, goods, s
     draft = create(sk_client, branch, branch2, [(goods["cola"], "1")])
     sk_client.post(f"{URL}{draft['id']}/cancel/", {"reason": "x"}, format="json")
     assert {o.group for o in resolve(_event("transfer.cancelled"))} == {f"branch_{branch.id}"}
+
+
+def test_destinations_lists_all_active_branches(sk_client, seller_client, branch, branch2):
+    rows = sk_client.get(f"{URL}destinations/").json()
+    assert {r["code"] for r in rows} == {"TSH1", "SAM1"}  # omborchi faqat TSH1 da
+    assert seller_client.get(f"{URL}destinations/").status_code == 403

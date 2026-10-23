@@ -106,11 +106,16 @@ Ustunlar: **Audit** — audit jurnaliga yoziladimi; **WS** — WebSocket ga chiq
 | `stock.changed` | har qanday qoldiq o'zgarishi (kirim, kirim bekor qilish; keyin savdo, qaytarish, ko'chirish, inventarizatsiya, hisobdan chiqarish) | branch_id, product_id, quantity_before, quantity_after, delta, movement_type, document_type, document_id, document_number | — (`audit=False`: harakat jurnali o'zi tarix) | ✔ `branch_{id}` (tannarxsiz) | 4 ✅ (kirim); `stock.below_minimum` tekshiruvi shu joyda |
 | `stock.below_minimum` | qoldiq kamayib minimaldan **pastga o'tganda** (har chiqimda emas: `StockLevel.below_minimum` bayrog'i bilan) | branch_id, product_id, product_name, quantity, min_quantity, unit | ✔ | ✔ `branch_{id}` | 4 ✅. Minimal: nuqta bo'yicha → tovar → sozlama `inventory.default_min_quantity` |
 | `stock.min_quantity_changed` | nuqta bo'yicha minimal qoldiq o'zgartirildi | product_id, old_value, new_value; branch_id (meta) | ✔ | — | 4 ✅ |
-| `transfer.sent` | ko'chirish jo'natildi | transfer_id, number, from_branch_id, to_branch_id, items_count | ✔ | ✔ `branch_{to}` | |
-| `transfer.received` | qabul qilindi (qisman farq bilan ham) | transfer_id, number, from_branch_id, to_branch_id, has_discrepancy | ✔ | ✔ `branch_{from}`, `branch_{to}` | farq bo'lsa `role_owner` ga ham |
-| `transfer.cancelled` | | transfer_id, reason | ✔ | ✔ ikkala nuqta | |
-| `stock_count.completed` | inventarizatsiya yakunlandi, farqlar qo'llandi | stock_count_id, branch_id, surplus_count, shortage_count, difference_base | ✔ | — | |
-| `write_off.completed` | hisobdan chiqarish | write_off_id, branch_id, reason, total_cost_base | ✔ | — | |
+| `transfer.created` | ko'chirish qoralamasi yaratildi | transfer_id, number, from_branch_id, to_branch_id; branch_id (meta) = jo'natuvchi | ✔ | — | 7 ✅ |
+| `transfer.sent` | jo'natildi (manbadan FIFO chiqim) | transfer_id, number, from/to_branch_id, from/to_branch_name, items_count, total_cost_base | ✔ | ✔ `branch_{from}` va `branch_{to}` — **bitta xabar** (id bilan, ikkala guruhdagi foydalanuvchiga bir marta); payload tannarxsiz | 7 ✅. Qabul qiluvchi omborchiga toast |
+| `transfer.received` | qabul qilindi (qisman farq bilan ham) | transfer_id, number, from/to_branch_*, has_discrepancy, shortage_cost_base, discrepancies [{product_id, product_name, quantity, quantity_received}]; branch_id (meta) = qabul qiluvchi | ✔ | ✔ ikkala nuqta; farq bo'lsa `dashboard.view` huquqi borlarning `user_{id}` lari ham (o'sha xabar) | 7 ✅. Kam kelgan qism avtomatik `write_off` (sabab `transfer_shortage`) |
+| `transfer.cancelled` | qoralama yoki jo'natilgani bekor qilindi | transfer_id, number, from/to_branch_*, previous_status, reason | ✔ | ✔ jo'natilgan bo'lsa ikkala nuqta, qoralama — faqat `branch_{from}` | 7 ✅. Jo'natilgani — tovar manbadagi asl partiyalarga |
+| `stock_count.created` | inventarizatsiya ochildi | count_id, number, items_count | ✔ | — | 7 ✅ |
+| `stock_count.completed` | yakunlandi, farqlar qo'llandi | count_id, number, items_counted, surplus_items, shortage_items, surplus_cost_base, shortage_cost_base | ✔ | — (qoldiq `stock.changed` bilan) | 7 ✅ |
+| `stock_count.cancelled` | yakunlanmagan inventarizatsiya bekor qilindi | count_id, number | ✔ | — | 7 ✅ |
+| `write_off_reason.saved` | sabab yaratildi/o'zgardi | reason_id, code, created, changes | ✔ | — | 7 ✅ |
+| `write_off.completed` | hisobdan chiqarildi (yoki ko'chirish kamomadi) | write_off_id, number, reason, total_cost_base, items_count, transfer_id | ✔ | — (qoldiq `stock.changed` bilan) | 7 ✅ |
+| `write_off.cancelled` | bekor qilindi — tovar asl partiyalarga | write_off_id, number, total_cost_base, reason | ✔ | — | 7 ✅. Ko'chirish kamomadi hujjati alohida bekor qilinmaydi |
 
 ### sales
 
@@ -118,19 +123,20 @@ Ustunlar: **Audit** — audit jurnaliga yoziladimi; **WS** — WebSocket ga chiq
 |---|---|---|---|---|---|
 | `sale.completed` | savdo yakunlandi | sale_id, number, seller_id, currency, total, total_base, cost_base, discount_total, items_count, payments [{method, currency, amount}], customer_id, debt_amount; branch_id (meta) | ✔ | ✔ `dashboard.updated` — `dashboard.view` huquqi borlarning `user_{id}` guruhlariga | 5–6 ✅ |
 | `sale.cancelled` | yakunlangan savdo bekor qilindi (`sales.cancel`) | sale_id, number, total, currency, reason | ✔ | ✔ `dashboard.updated` | 5 ✅ |
-| `sale_return.completed` | qaytarish yakunlandi | return_id, sale_id, branch_id, total, refund_method | ✔ | ✔ dashboard | |
+| `sale_return.completed` | qaytarish yakunlandi (tovar omborga, summa qarzdan ayirildi va/yoki pul qaytarildi) | return_id, number, sale_id, sale_number, currency, total, total_base, cost_base, debt_reduction, refund_amount, items_count, customer_id, reason | ✔ | ✔ `branch_{id}` + `dashboard.updated` | 7 ✅ |
 
 ### payments
 
 | Hodisa | Qachon | Payload | Audit | WS | Boshqa |
 |---|---|---|---|---|---|
 | `payment.received` | mijozdan to'lov qabul qilindi (savdo paytida va qarz to'lovi) | payment_id, number, method, currency, amount, amount_base, is_cash, cashbox_id, customer_id, allocated [{debt_id, amount, currency}], document_type, document_id, document_number; branch_id (meta) | ✔ | ✔ `branch_{id}` (buxgalter/rahbar `branches.view_all` orqali hamma nuqtada) + `dashboard.updated` | 5–6 ✅. Qarz to'lovida hodisa taqsimotdan keyin chiqadi. Qaytim alohida hodisa chiqarmaydi |
-| `payment.refunded` | mijozga pul qaytarildi (savdo bekor qilinganda, qarz to'lovi qaytarilganda) | payment_id, original_payment_id, number, method, currency, amount, is_cash, cashbox_id, customer_id, document_type, document_id, reason | ✔ | ✔ `branch_{id}` | 5–6 ✅ |
+| `payment.refunded` | mijozga pul qaytarildi (savdo bekor qilinganda, qarz to'lovi qaytarilganda, tovar qaytarilganda — `original_payment_id` bo'sh) | payment_id, original_payment_id, number, method, currency, amount, is_cash, cashbox_id, customer_id, document_type, document_id, reason | ✔ | ✔ `branch_{id}` | 5–6 ✅ |
 | `payment_method.saved` | to'lov turi yaratildi/o'zgardi | payment_method_id, code, created, changes | ✔ | — | 5 ✅ |
 | `customer.saved` | mijoz yaratildi/o'zgardi | customer_id, customer_name, created, changes | ✔ | — | 6 ✅ |
 | `debt.registered` | nasiya yozildi | debt_id, customer_id, amount, currency, due_date, document_type, document_id, document_number | ✔ | ✔ `debt.changed` → `branch_{id}` | 6 ✅ |
 | `debt.settled` | qarz to'liq yopildi | debt_id, customer_id | ✔ | ✔ `debt.changed` | 6 ✅ |
 | `debt.cancelled` | savdo bekor qilinib qarz bekor bo'ldi | debt_id, customer_id, amount, currency, reason | ✔ | ✔ `debt.changed` | 6 ✅ |
+| `debt.reduced` | tovar qaytarilib qarz shu summaga kamaydi (`Debt.returned_amount`) | debt_id, customer_id, amount, currency, remaining, document_type, document_id, document_number | ✔ | ✔ `debt.changed` | 7 ✅. Qoldiq 0 bo'lsa `debt.settled` ham |
 | `debt.overdue` | Celery (`payments.detect_overdue_debts`, default 08:05) muddati o'tganini aniqladi — har qarz uchun bir marta | debt_id, customer_id, customer_name, amount_remaining, currency, due_date, days_overdue | ✔ | ✔ `debts.manage` huquqi borlar (`user_{id}`) | 6 ✅ |
 | `customer.credit_limit_warning` | qarz limitning N% (`payments.credit_limit_warning_percent`) chegarasidan o'tdi | customer_id, customer_name, used_base, limit_base, percent, base_currency | ✔ | ✔ `debts.manage` huquqi borlar | 6 ✅ |
 | `cash_shift.opened` / `cash_shift.closed` | kassa smenasi ochildi / yopildi | shift_id, balances [{currency, opening, expected, actual, difference}] | ✔ | ✔ `cash.updated` → `branch_{id}` | 6 ✅ |

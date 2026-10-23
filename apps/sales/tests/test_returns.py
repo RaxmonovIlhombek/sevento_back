@@ -240,6 +240,14 @@ def test_permissions(
         [{"method": cash.id, "currency": uzs.id, "amount": "10000"}],
     )
     assert ret(as_user(storekeeper), sale, [(0, "1")]).status_code == 403
+    # shu nuqtadagi boshqa sotuvchi — faqat o'z savdosini (sales.cancel siz)
+    colleague = User.objects.create_user(
+        username="sotuvchi3", password="parol12345", full_name="S3", role=roles["seller"]
+    )
+    UserBranch.objects.create(user=colleague, branch=branch, is_default=True)
+    other = ret(as_user(colleague), sale, [(0, "1")])
+    assert other.status_code == 403 and other.json()["error"]["code"] == "return_forbidden"
+    assert as_user(colleague).get(f"{SALES}{sale['id']}/").json()["can_return"] is False
     alien = User.objects.create_user(
         username="sotuvchi2", password="parol12345", full_name="S2", role=roles["seller"]
     )

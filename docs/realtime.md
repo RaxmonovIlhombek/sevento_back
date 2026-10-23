@@ -83,12 +83,14 @@ Barcha xabarlar (ikkala yo'nalishda) bir xil konvert:
 
 ```json
 {
+  "id": "5f0c2d7e9b1a4c3e8d6f0a1b2c3d4e5f",
   "type": "stock.changed",
   "payload": { "...": "..." },
   "timestamp": "2026-10-22T14:03:11.512+05:00"
 }
 ```
 
+- `id` — xabar identifikatori (7-bosqichdan). Bitta marshrut xabari bir nechta guruhga yuboriladi (masalan ko'chirish — ikkala nuqtaga); ikkala guruhda bo'lgan foydalanuvchi (rahbar) uni ikki marta oladi — mijoz `id` bo'yicha takrorni tashlab yuboradi (oxirgi 200 ta id).
 - `type` — hodisa nomi bilan bir xil (`<aggregat>.<fe'l>`), kichik harf.
 - `payload` — faqat identifikatorlar va ekranni yangilash uchun yetarli minimal maydonlar. To'liq ma'lumot REST dan olinadi.
 - `timestamp` — server vaqti, ISO 8601, `Asia/Tashkent`.
@@ -117,16 +119,18 @@ Boshqa hech qanday mijoz xabari qabul qilinmaydi (noma'lum `type` → e'tiborsiz
 | `currency.rate_updated` | `broadcast` | `{rates: [{currency, rate, date}], source}` | `['currency']`, `['products']` + toast "USD = 12 650,45 so'm" | 3 ✅ |
 | `stock.changed` | `branch_{id}` | `{branch_id, product_id, quantity, delta, movement_type, document: {type, id, number}}` — tannarx yo'q | `['inventory']`, `['sales','pos']` (kassa qidiruvidagi qoldiq; debounce 1,5 s) | 4 ✅ (kirim), 5 ✅ (savdo, bekor qilish) |
 | `stock.below_minimum` | `branch_{id}` (omborchi, sotuvchi; rahbar `branches.view_all` orqali barcha nuqtalar guruhida) | `{branch_id, product_id, product_name, quantity, min_quantity, unit}` | `['inventory']` + ogohlantirish toast "Kam qoldi: …" | 4 ✅ |
-| `dashboard.updated` | `dashboard.view` huquqi borlarning `user_{id}` guruhlari (rollar MB da o'zgaradi — rol nomi emas, huquq) | `{branch_id, reason: "sale.completed" \| "sale.cancelled"}` (keyin `sale_return.completed`) | `['sales','summary']`, `['sales','list']` (debounce 2 s) | 5 ✅, 8 |
+| `dashboard.updated` | `dashboard.view` huquqi borlarning `user_{id}` guruhlari (rollar MB da o'zgaradi — rol nomi emas, huquq) | `{branch_id, reason: "sale.completed" \| "sale.cancelled" \| "payment.received" \| "sale_return.completed"}` | `['sales','summary']`, `['sales','list']` (debounce 2 s) | 5 ✅, 8 |
 | `payment.received` | `branch_{id}` | `{branch_id, payment_id, method, currency, amount, is_cash, cashbox_id, customer_id, document: {type, id}}` | `['payments']` (kassa, jurnal, mijoz kartasi, qarzlar), `['sales','list']`, `['sales','summary']` (debounce 1 s) | 5–6 ✅ |
 | `debt.changed` | `branch_{id}` | `{branch_id, debt_id, customer_id}` (nasiya yozildi, yopildi, bekor qilindi) | `['payments']`, `['sales','list']` (debounce 1 s) | 6 ✅ |
 | `cash.updated` | `branch_{id}` | `{branch_id, reason: "shift_opened" \| "shift_closed" \| "manual_entry"}` | `['payments']` (debounce 0,5 s) | 6 ✅ |
 | `payment.refunded` | `branch_{id}` | xuddi shunday | xuddi shunday | 5 ✅ |
 | `debt.overdue` | `debts.manage` huquqi borlar (`user_{id}`) | `{branch_id, debt_id, customer_id, customer_name, amount_remaining, currency, due_date, days_overdue}` | `['payments']` + ogohlantirish toast | 6 ✅ |
 | `customer.credit_limit_warning` | `debts.manage` huquqi borlar | `{customer_id, customer_name, used_base, limit_base, percent, base_currency}` | `['payments','customer', id]` + toast | 6 ✅ |
-| `transfer.sent` | `branch_{to}` | `{transfer_id, number, from_branch_id, from_branch_name, to_branch_id, items_count}` | `['transfers']` + bildirishnoma (omborchi) | 7 |
-| `transfer.received` | `branch_{from}`, `branch_{to}`, farq bo'lsa `role_owner` | `{transfer_id, number, from_branch_id, to_branch_id, has_discrepancy}` | `['transfers']`, `['stock', from]`, `['stock', to]` | 7 |
-| `transfer.cancelled` | ikkala nuqta | `{transfer_id, number, reason}` | `['transfers']` | 7 |
+| `debt.changed` (`debt.reduced`) | `branch_{id}` | `{branch_id, debt_id, customer_id}` — tovar qaytarilib qarz kamaydi | `['payments']`, `['sales','list']` | 7 ✅ |
+| `transfer.sent` | `branch_{from}` + `branch_{to}` (bitta xabar) | `{transfer_id, number, status, from_branch_id, from_branch_name, to_branch_id, to_branch_name, items_count, actor_id}` — tannarxsiz | `['inventory']` (ro'yxat, hujjat, menyudagi "kutilmoqda" nishoni) + toast **qabul qiluvchi** nuqta omborchisiga (`inventory.transfers.receive`, o'zi jo'natgan bo'lsa yo'q) | 7 ✅ |
+| `transfer.received` | ikkala nuqta; farq bo'lsa `dashboard.view` huquqi borlar ham (o'sha xabar) | `{..., status, has_discrepancy, discrepancies: [{product_name, quantity, quantity_received}]}` | `['inventory']` + jo'natuvchiga toast (farq bo'lsa — ogohlantirish, rahbarga ham) | 7 ✅ |
+| `transfer.cancelled` | jo'natilgan bo'lsa ikkala nuqta, qoralama — `branch_{from}` | `{..., status, previous_status, reason}` | `['inventory']` + qabul qiluvchiga ogohlantirish toast | 7 ✅ |
+| `sale_return.completed` | `branch_{id}` (+ `dashboard.updated` `dashboard.view` larga) | `{branch_id, return_id, number, sale_id, customer_id}` | `['sales']`, `['payments']` (debounce 0,5 s) | 7 ✅ |
 | `report.ready` | `user_{id}` | `{job_id, report_key, format, download_url}` | `['reports','jobs']` + toast "yuklab olish" | 8 |
 | `report.failed` | `user_{id}` | `{job_id, report_key, error}` | `['reports','jobs']` + xato toast | 8 |
 

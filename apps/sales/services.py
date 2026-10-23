@@ -492,6 +492,13 @@ def _validate_return_lines(lines: list[dict], items: dict[int, SaleItem]) -> Non
         raise _validation_error("Qaytarish qatorlarida xato bor", errors)
 
 
+def can_return_sale(actor, sale: Sale) -> bool:
+    """Sotuvchi — faqat o'z savdosini; `sales.cancel` huquqi borlar — nuqtadagi istalganini."""
+    return actor.has_capability("sales.returns.create") and (
+        sale.seller_id == actor.pk or actor.has_capability("sales.cancel")
+    )
+
+
 def create_return(
     *, actor, sale: Sale, items: list[dict], reason: str, refund_method=None
 ) -> SaleReturn:
@@ -508,6 +515,10 @@ def create_return(
         )
         if sale.status != Sale.Status.COMPLETED:
             raise InvalidStatusTransition("Bekor qilingan savdoni qaytarib bo'lmaydi")
+        if not can_return_sale(actor, sale):
+            raise BusinessRuleError(
+                "Faqat o'z savdongizni qaytara olasiz", code="return_forbidden", status_code=403
+            )
         sale_items = {
             i.pk: i
             for i in sale.items.select_for_update(of=("self",))

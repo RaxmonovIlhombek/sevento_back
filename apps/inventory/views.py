@@ -4,6 +4,7 @@ from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.branches import selectors as branch_selectors
 from core.access import can_access_branch, ensure_branch_access
 from core.api.idempotency import idempotent_call
 from core.api.mixins import CapabilityViewSetMixin
@@ -31,6 +32,7 @@ from .models import (
 )
 from .serializers import (
     BatchSerializer,
+    BranchBriefSerializer,
     CountedWriteSerializer,
     InventoryCancelSerializer,
     MinQuantitySerializer,
@@ -162,6 +164,7 @@ class TransferViewSet(
         "list": T_VIEW,
         "retrieve": T_VIEW,
         "incoming": T_VIEW,
+        "destinations": T_CREATE,
         "create": T_CREATE,
         "update": T_CREATE,
         "send": T_CREATE,
@@ -263,6 +266,13 @@ class TransferViewSet(
     def incoming(self, request):
         """Foydalanuvchi nuqtalariga jo'natilgan, hali qabul qilinmaganlar soni (menyu nishoni)."""
         return Response({"count": selectors.incoming_transfers_count(request.user)})
+
+    @extend_schema(request=None, responses=BranchBriefSerializer(many=True))
+    @action(detail=False, methods=["get"], pagination_class=None)
+    def destinations(self, request):
+        """Qabul qiluvchi nuqta tanlovi: barcha faol nuqtalar (begona nuqtalar ham)."""
+        rows = branch_selectors.active_branches().order_by("name")
+        return Response(BranchBriefSerializer(rows, many=True).data)
 
 
 # --- inventarizatsiya ---
