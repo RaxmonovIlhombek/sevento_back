@@ -39,7 +39,7 @@
 | `sales.credit` | nasiyaga sotish |
 | `payments.view` / `payments.receive` | to'lov qabul qilish |
 | `payments.refund` | pul qaytarish |
-| `cashbox.view` / `cashbox.manage` | kassa, smena, qo'lda kirim-chiqim |
+| `cashbox.view` / `cashbox.manage` | kassa qoldig'i va jurnali (5); smena, qo'lda kirim-chiqim (6) |
 | `customers.view` / `customers.manage` | mijozlar |
 | `customers.credit_limit.manage` | kredit limitini o'zgartirish |
 | `debts.view` / `debts.manage` | qarzlar, muddatni o'zgartirish |

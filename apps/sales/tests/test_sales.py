@@ -404,6 +404,20 @@ def test_pos_products(seller_client, branch, uzs, usd, products, stocked):
     ).json()
     assert [r["sku"] for r in by_barcode] == ["COLA"]
     assert D(by_barcode[0]["price"]) == D("0.80")  # 10 000 / 12 500
+    ids = f"{products['cola'].id},{products['sugar'].id}"
+    by_ids = seller_client.get(
+        f"{URL}pos-products/", {"branch": branch.id, "currency": "UZS", "ids": ids}
+    ).json()
+    assert sorted(r["sku"] for r in by_ids) == ["COLA", "SUGAR"]
+
+
+def test_pos_config(seller_client, owner_client, storekeeper, as_user):
+    assert seller_client.get(f"{URL}pos-config/").json() == {
+        "default_currency": "UZS",
+        "max_discount_percent": "10.00",
+    }
+    assert owner_client.get(f"{URL}pos-config/").json()["max_discount_percent"] is None
+    assert as_user(storekeeper).get(f"{URL}pos-config/").status_code == 403
 
 
 def test_pos_products_branch_forbidden(seller_client, branch2, products):

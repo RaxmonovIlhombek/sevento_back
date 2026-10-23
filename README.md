@@ -13,7 +13,8 @@ Frontend alohida repoda: [sevento_front](https://github.com/shaxobiddindev/seven
 | 2. Realtime asosi (Channels, ticket, guruhlar, `session.revoked`, `system.notice`) | ✅ |
 | 3. Katalog, valyuta kursi (CBU adapteri, Celery Beat) | ✅ |
 | 4. Kirim, partiya (FIFO), tannarx taqsimlash, ombor harakatlari, `stock.changed` | ✅ |
-| 5. Savdo (naqd), chek PDF, kassa qoldig'i | ⏳ keyingi |
+| 5. Naqd savdo (POS), FIFO chiqim, aralash valyuta va qaytim, chek PDF, kassa qoldig'i | ✅ |
+| 6. Nasiya, mijozlar, to'lovlar, kredit limiti, kassa smenasi | ⏳ keyingi |
 
 Batafsil: [docs/roadmap.md](docs/roadmap.md).
 
@@ -56,6 +57,8 @@ celery -A config worker -l info            # alohida terminalda
 celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
 
+Chek PDF (WeasyPrint) uchun tizimda Pango va o'zbek harflari bor shrift kerak: Debian/Ubuntu da `sudo apt install libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu-core` (Docker image da bor).
+
 Frontend dev serveri (`npm run dev`, 5173-port) `/api` ni 8000 ga proxy qiladi — bitta origin, cookie `SameSite=Strict` bilan ishlaydi.
 
 ## Tekshiruvlar
@@ -82,4 +85,6 @@ CI (`.github/workflows/ci.yml`) shularni va `docs/api/openapi.yaml` yangiligini 
 - Katalog: `/api/v1/catalog/{categories,units,price-types,products}/`; `GET products/?branch=<id>` joriy narxlarni shu nuqtaga xos narxlar bilan qaytaradi; `POST products/<id>/set-price/` yangi narx (tarix saqlanadi).
 - Kirim: `/api/v1/purchasing/{suppliers,expense-types,purchases}/`; `GET purchases/<id>/preview/` — joriy kurs bilan tannarx oldindan hisobi, `POST purchases/<id>/receive/` (`Idempotency-Key`) — qabul (partiyalar yaratiladi, kurs qotiriladi), `POST purchases/<id>/cancel/ {reason}` — bekor qilish (partiyalardan chiqim bo'lmagan bo'lsa).
 - Ombor: `GET /api/v1/inventory/stock/` (qoldiq, `?below_minimum=true`, `?category=`, `?search=`; `PATCH stock/<id>/ {min_quantity}` — `inventory.manage`), `GET inventory/movements/` (harakatlar jurnali), `GET inventory/batches/` (partiyalar, `inventory.view_cost`). Tannarx maydonlari `inventory.view_cost` huquqisiz `null`.
+- Savdo: `POST /api/v1/sales/` (`Idempotency-Key`) — bitta so'rovda yakunlangan savdo: `items` (tovar, miqdor, chegirma), `payments` (to'lov turi, valyuta, summa), `expected_total`; narxni server belgilaydi. `GET sales/pos-products/` — kassa qidiruvi (narx + qoldiq, `?barcode=`, `?ids=`), `GET sales/pos-config/`, `GET sales/<id>/receipt/` — chek PDF, `POST sales/<id>/cancel/` (`sales.cancel`), `GET sales/summary/` — kunlik xulosa.
+- To'lov va kassa: `/api/v1/payments/methods/` (ro'yxat — kassir ham, o'zgartirish — `settings.manage`), `payments/cashboxes/` (qoldiq), `payments/cash-transactions/` (jurnal), `payments/cash-categories/`.
 - WebSocket `/ws/v1/`: `POST /api/v1/realtime/ticket/` → 30 s lik bir martalik ticket → ulanishdan keyin birinchi xabar `{"type":"auth","payload":{"ticket"}}` → `auth.ok`. Xabar formati `{type, payload, timestamp}`, turlar ro'yxati — [realtime.md](docs/realtime.md).

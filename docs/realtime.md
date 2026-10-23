@@ -115,11 +115,11 @@ Boshqa hech qanday mijoz xabari qabul qilinmaydi (noma'lum `type` → e'tiborsiz
 | `session.revoked` | `user_{id}` / `role_{code}` | `{reason: "deactivated" \| "permissions_changed" \| "password_changed"}` — keyin server 4403 bilan yopadi | `deactivated` → logout; aks holda `me` qayta o'qiladi, yangi ticket bilan qayta ulanadi | 2 ✅ |
 | `system.notice` | `broadcast` | `{level: "info" \| "warning" \| "error", message}` (`POST /api/v1/realtime/notice/`, `settings.manage`) | — (toast) | 2 ✅ |
 | `currency.rate_updated` | `broadcast` | `{rates: [{currency, rate, date}], source}` | `['currency']`, `['products']` + toast "USD = 12 650,45 so'm" | 3 ✅ |
-| `stock.changed` | `branch_{id}` | `{branch_id, product_id, quantity, delta, movement_type, document: {type, id, number}}` — tannarx yo'q | `['inventory']` (qoldiq, harakatlar, partiyalar; debounce 1,5 s) | 4 ✅ (kirim), 5 (savdo) |
+| `stock.changed` | `branch_{id}` | `{branch_id, product_id, quantity, delta, movement_type, document: {type, id, number}}` — tannarx yo'q | `['inventory']`, `['sales','pos']` (kassa qidiruvidagi qoldiq; debounce 1,5 s) | 4 ✅ (kirim), 5 ✅ (savdo, bekor qilish) |
 | `stock.below_minimum` | `branch_{id}` (omborchi, sotuvchi; rahbar `branches.view_all` orqali barcha nuqtalar guruhida) | `{branch_id, product_id, product_name, quantity, min_quantity, unit}` | `['inventory']` + ogohlantirish toast "Kam qoldi: …" | 4 ✅ |
-| `dashboard.updated` | `role_owner` | `{branch_id, reason: "sale.completed" \| "sale.cancelled" \| "sale_return.completed" \| "payment.received"}` | `['dashboard']` (debounce 2 s) | 5, 8 |
-| `payment.received` | `role_accountant`, `role_owner`, `branch_{id}` | `{payment_id, number, branch_id, customer_id, amount, currency, method, direction}` | `['payments']`, `['cashboxes', branch_id]`, `['customers', customer_id]`, `['debts']` | 6 |
-| `payment.refunded` | xuddi shunday | `{payment_id, ...}` | xuddi shunday | 6 |
+| `dashboard.updated` | `dashboard.view` huquqi borlarning `user_{id}` guruhlari (rollar MB da o'zgaradi — rol nomi emas, huquq) | `{branch_id, reason: "sale.completed" \| "sale.cancelled"}` (keyin `sale_return.completed`) | `['sales','summary']`, `['sales','list']` (debounce 2 s) | 5 ✅, 8 |
+| `payment.received` | `branch_{id}` | `{branch_id, payment_id, method, currency, amount, is_cash, cashbox_id, document: {type, id}}` | `['payments']` (kassa qoldig'i, jurnal), `['sales','list']`, `['sales','summary']` (debounce 1 s) | 5 ✅; 6 da mijoz/qarz kalitlari |
+| `payment.refunded` | `branch_{id}` | xuddi shunday | xuddi shunday | 5 ✅ |
 | `debt.overdue` | `role_accountant`, `role_owner` | `{debt_id, customer_id, customer_name, amount_remaining, currency, due_date, days_overdue}` | `['debts']`, `['customers', customer_id]` + ogohlantirish | 6 |
 | `customer.credit_limit_warning` | `role_accountant`, `role_owner` | `{customer_id, customer_name, used_base, limit_base, percent}` | `['customers', customer_id]` + toast | 6 |
 | `transfer.sent` | `branch_{to}` | `{transfer_id, number, from_branch_id, from_branch_name, to_branch_id, items_count}` | `['transfers']` + bildirishnoma (omborchi) | 7 |
@@ -162,7 +162,7 @@ Backend (`apps/realtime/tests/`, `WebsocketCommunicator`, ✅):
 - ulanish limiti (4429) va yopilgach hisob kamayishi; `POST /realtime/notice/` → `broadcast`.
 - `currency.rate_updated` (kurs kiritilganda) `broadcast` orqali boshqa foydalanuvchiga yetib keladi (3 ✅, `apps/currency/tests/test_realtime.py`).
 - `stock.changed` faqat shu nuqta guruhiga ketadi, payloadda tannarx yo'q (4 ✅, `apps/inventory/tests/test_realtime.py`).
-- Keyingi bosqichlar: `stock.changed` savdodan keyin (5).
+- Savdo: har qator uchun `stock.changed` (nuqta guruhi), `dashboard.updated` faqat `dashboard.view` huquqi borlarga, `payment.received` nuqta guruhiga (5 ✅, `apps/sales/tests/test_realtime.py`).
 
 Frontend (`src/shared/realtime/*.test.ts`, soxta WebSocket + fake timers, ✅):
 - ticket → `auth` birinchi xabar → `auth.ok` → online; `pong` uzatilmaydi; buzuq JSON e'tiborsiz.

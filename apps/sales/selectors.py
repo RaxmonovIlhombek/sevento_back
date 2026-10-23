@@ -39,11 +39,17 @@ def pos_products(
     price_type,
     search: str = "",
     barcode: str = "",
+    ids: list[int] | None = None,
     limit: int = 20,
 ) -> list[dict]:
-    """Kassa qidiruvi: faol tovarlar + shu nuqta qoldig'i + savdo valyutasidagi narx."""
+    """Kassa qidiruvi: faol tovarlar + shu nuqta qoldig'i + savdo valyutasidagi narx.
+
+    `ids` — savatdagi tovarlar narxini yangilash uchun (sahifa qayta ochilganda, narx o'zgarganda).
+    """
     qs = catalog_selectors.products_queryset().filter(is_active=True).select_related("unit")
-    if barcode:
+    if ids:
+        qs = qs.filter(pk__in=ids)
+    elif barcode:
         qs = qs.filter(barcode=barcode.strip())
     elif search:
         qs = catalog_selectors.search_products(qs, search)

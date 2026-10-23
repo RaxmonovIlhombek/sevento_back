@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from apps.catalog import selectors as catalog_selectors
 from apps.currency import selectors as currency_selectors
+from core import settings_service
 from core.access import ensure_branch_access
 from core.api.idempotency import idempotent_call
 from core.api.mixins import CapabilityViewSetMixin
@@ -19,6 +20,7 @@ from .models import Sale
 from .receipt import render_receipt_pdf
 from .serializers import (
     DailySummarySerializer,
+    PosConfigSerializer,
     PosProductSerializer,
     PosQuerySerializer,
     SaleCancelSerializer,
@@ -48,6 +50,7 @@ class SaleViewSet(
         "summary": VIEW,
         "create": CREATE,
         "pos_products": CREATE,
+        "pos_config": CREATE,
         "cancel": "sales.cancel",
     }
     filterset_class = SaleFilter
@@ -129,9 +132,27 @@ class SaleViewSet(
             price_type=price_type,
             search=data["search"],
             barcode=data["barcode"],
-            limit=data["limit"],
+            ids=data["ids"],
+            limit=max(data["limit"], len(data["ids"])),
         )
         return Response(PosProductSerializer(rows, many=True).data)
+
+    @extend_schema(responses=PosConfigSerializer)
+    @action(detail=False, methods=["get"], url_path="pos-config", pagination_class=None)
+    def pos_config(self, request):
+        """Kassa sozlamalari: boshlang'ich valyuta, foydalanuvchining chegirma chegarasi."""
+        user = request.user
+        if user.has_capability("sales.discount.unlimited"):
+            limit = None
+        elif user.has_capability("sales.discount"):
+            limit = settings_service.get("sales.max_seller_discount_percent")
+        else:
+            limit = 0
+        data = {
+            "default_currency": settings_service.get("sales.default_currency"),
+            "max_discount_percent": limit,
+        }
+        return Response(PosConfigSerializer(data).data)
 
     @extend_schema(
         parameters=[

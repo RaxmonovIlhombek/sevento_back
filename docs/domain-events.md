@@ -116,16 +116,17 @@ Ustunlar: **Audit** — audit jurnaliga yoziladimi; **WS** — WebSocket ga chiq
 
 | Hodisa | Qachon | Payload | Audit | WS | Boshqa |
 |---|---|---|---|---|---|
-| `sale.completed` | savdo yakunlandi (to'lov/nasiya bilan) | sale_id, number, branch_id, seller_id, customer_id, total, currency, total_base, cost_base, debt_amount, items | ✔ | ✔ `dashboard.updated` sifatida `role_owner` | |
-| `sale.cancelled` | yakunlangan savdo bekor qilindi (faqat ruxsat bilan) | sale_id, reason | ✔ | ✔ dashboard | |
+| `sale.completed` | savdo yakunlandi | sale_id, number, seller_id, currency, total, total_base, cost_base, discount_total, items_count, payments [{method, currency, amount}]; branch_id (meta) | ✔ | ✔ `dashboard.updated` — `dashboard.view` huquqi borlarning `user_{id}` guruhlariga | 5 ✅; 6-bosqichda customer_id, debt_amount qo'shiladi |
+| `sale.cancelled` | yakunlangan savdo bekor qilindi (`sales.cancel`) | sale_id, number, total, currency, reason | ✔ | ✔ `dashboard.updated` | 5 ✅ |
 | `sale_return.completed` | qaytarish yakunlandi | return_id, sale_id, branch_id, total, refund_method | ✔ | ✔ dashboard | |
 
 ### payments
 
 | Hodisa | Qachon | Payload | Audit | WS | Boshqa |
 |---|---|---|---|---|---|
-| `payment.received` | mijozdan to'lov qabul qilindi (savdo paytida ham, keyin qarz uchun ham) | payment_id, number, branch_id, customer_id, amount, currency, amount_base, method, cashbox_id, allocated_debts | ✔ | ✔ `role_accountant`, `role_owner`, `branch_{id}` | |
-| `payment.refunded` | mijozga pul qaytarildi | payment_id, reason | ✔ | ✔ xuddi shunday | |
+| `payment.received` | mijozdan to'lov qabul qilindi (savdo paytida; 6-bosqichdan qarz to'lovi ham) | payment_id, number, method, currency, amount, amount_base, is_cash, cashbox_id, document_type, document_id, document_number; branch_id (meta) | ✔ | ✔ `branch_{id}` (buxgalter/rahbar `branches.view_all` orqali hamma nuqtada) | 5 ✅. Qaytim (`kind=change`) alohida hodisa chiqarmaydi — `sale.completed` da |
+| `payment.refunded` | mijozga pul qaytarildi (savdo bekor qilinganda) | payment_id, original_payment_id, number, method, currency, amount, is_cash, cashbox_id, document_type, document_id, reason | ✔ | ✔ `branch_{id}` | 5 ✅ |
+| `payment_method.saved` | to'lov turi yaratildi/o'zgardi | payment_method_id, code, created, changes | ✔ | — | 5 ✅ |
 | `debt.registered` | nasiya yozildi | debt_id, customer_id, sale_id, amount, currency, due_date | ✔ | — | |
 | `debt.settled` | qarz to'liq yopildi | debt_id, customer_id | ✔ | — | |
 | `debt.overdue` | Celery muddati o'tganini aniqladi | debt_id, customer_id, customer_name, amount_remaining, currency, due_date, days_overdue | ✔ | ✔ `role_accountant` | |

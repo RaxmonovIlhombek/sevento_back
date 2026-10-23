@@ -2979,6 +2979,22 @@ paths:
                 type: string
                 format: binary
           description: ''
+  /api/v1/sales/pos-config/:
+    get:
+      operationId: sales_pos_config_retrieve
+      description: 'Kassa sozlamalari: boshlang''ich valyuta, foydalanuvchining chegirma
+        chegarasi.'
+      tags:
+      - sales
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PosConfig'
+          description: ''
   /api/v1/sales/pos-products/:
     get:
       operationId: sales_pos_products_list
@@ -3012,10 +3028,16 @@ paths:
           type: string
           format: date
       - in: query
+        name: ids
+        schema:
+          type: string
+          default: ''
+        description: 'vergul bilan: 1,2,3'
+      - in: query
         name: limit
         schema:
           type: integer
-          maximum: 50
+          maximum: 100
           minimum: 1
           default: 20
       - name: ordering
@@ -4960,6 +4982,20 @@ components:
       required:
       - code
       - name
+    PosConfig:
+      type: object
+      properties:
+        default_currency:
+          type: string
+        max_discount_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+          description: null — cheksiz
+      required:
+      - default_currency
+      - max_discount_percent
     PosProduct:
       type: object
       properties:

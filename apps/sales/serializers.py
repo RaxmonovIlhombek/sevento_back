@@ -219,7 +219,23 @@ class PosQuerySerializer(serializers.Serializer):
     )
     search = serializers.CharField(required=False, allow_blank=True, default="")
     barcode = serializers.CharField(required=False, allow_blank=True, default="")
-    limit = serializers.IntegerField(required=False, min_value=1, max_value=50, default=20)
+    ids = serializers.CharField(
+        required=False, allow_blank=True, default="", help_text="vergul bilan: 1,2,3"
+    )
+    limit = serializers.IntegerField(required=False, min_value=1, max_value=100, default=20)
+
+    def validate_ids(self, value: str) -> list[int]:
+        try:
+            return [int(x) for x in value.split(",") if x.strip()][:100]
+        except ValueError:
+            raise serializers.ValidationError("Butun sonlar vergul bilan") from None
+
+
+class PosConfigSerializer(serializers.Serializer):
+    default_currency = serializers.CharField()
+    max_discount_percent = serializers.DecimalField(
+        max_digits=6, decimal_places=2, allow_null=True, help_text="null — cheksiz"
+    )
 
 
 class SummaryCurrencySerializer(serializers.Serializer):
