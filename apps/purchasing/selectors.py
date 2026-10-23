@@ -31,3 +31,17 @@ def purchase_detail_queryset(user) -> QuerySet[Purchase]:
             queryset=PurchaseExpense.objects.select_related("expense_type", "currency"),
         ),
     )
+
+
+def received_purchases(user, *, date_from, date_to, branch_id=None, supplier_id=None):
+    """Hisobot: davrda qabul qilingan kirimlar (qabul sanasi bo'yicha)."""
+    qs = purchases_queryset(user).filter(
+        status=Purchase.Status.RECEIVED,
+        received_at__date__gte=date_from,
+        received_at__date__lte=date_to,
+    )
+    if branch_id:
+        qs = qs.filter(branch_id=branch_id)
+    if supplier_id:
+        qs = qs.filter(supplier_id=supplier_id)
+    return qs.order_by("received_at", "id")

@@ -416,3 +416,55 @@ name = "payments savdo va kirimga bog'lanmaydi"
 type = "forbidden"
 source_modules = ["apps.payments"]
 forbidden_modules = ["apps.sales", "apps.purchasing"]
+
+# reports faqat o'qiydi: boshqa app larning faqat selectors (va types) qatlamini ishlatadi
+[[tool.importlinter.contracts]]
+name = "reports faqat selector lar orqali o'qiydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.reports"]
+forbidden_modules = [
+    "apps.accounts.models",
+    "apps.accounts.serializers",
+    "apps.accounts.views",
+    "apps.accounts.services",
+    "apps.branches.models",
+    "apps.branches.views",
+    "apps.branches.services",
+    "apps.audit.models",
+    "apps.catalog.models",
+    "apps.catalog.services",
+    "apps.catalog.views",
+    "apps.currency.models",
+    "apps.currency.services",
+    "apps.currency.views",
+    "apps.inventory.models",
+    "apps.inventory.services",
+    "apps.inventory.views",
+    "apps.purchasing.models",
+    "apps.purchasing.services",
+    "apps.purchasing.views",
+    "apps.payments.models",
+    "apps.payments.services",
+    "apps.payments.views",
+    "apps.sales.models",
+    "apps.sales.services",
+    "apps.sales.views",
+]
+
+# hech bir biznes app hisobotlarga bog'lanmaydi (bog'liqlik yo'nalishi: reports → boshqalar)
+[[tool.importlinter.contracts]]
+name = "biznes app lar reports ga bog'lanmaydi"
+type = "forbidden"
+source_modules = [
+    "apps.accounts",
+    "apps.branches",
+    "apps.catalog",
+    "apps.currency",
+    "apps.inventory",
+    "apps.purchasing",
+    "apps.payments",
+    "apps.sales",
+]
+forbidden_modules = ["apps.reports"]

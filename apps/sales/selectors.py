@@ -1,7 +1,16 @@
 from datetime import date
 from decimal import Decimal
 
-from django.db.models import Count, Prefetch, QuerySet, Sum
+from django.db.models import (
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    Prefetch,
+    QuerySet,
+    Sum,
+)
+from django.db.models.functions import TruncDate, TruncHour
 from django.utils import timezone
 
 from apps.catalog import selectors as catalog_selectors
@@ -144,3 +153,139 @@ def daily_summary(user, *, on: date | None = None, branch_id: int | None = None)
         # foyda — shu kungi qaytarishlar (sotuv narxi va tannarxi) ayirilgan
         "profit_base": (total_base - returns_total_base) - (cost_base - returns_cost_base),
     }
+
+
+# --- hisobotlar va dashboard uchun (reports app faqat shularni o'qiydi) ---
+
+MONEY = DecimalField(max_digits=24, decimal_places=8)
+
+# guruhlash: kalit → (savdo maydonlari, qaytarish maydonlari)
+_GROUPS = {
+    "day": ({"key": TruncDate("completed_at")}, {"key": TruncDate("created_at")}),
+    "hour": ({"key": TruncHour("completed_at")}, {"key": TruncHour("created_at")}),
+    "branch": (
+        {"key": F("branch_id"), "label": F("branch__name")},
+        {"key": F("branch_id"), "label": F("branch__name")},
+    ),
+    "seller": (
+        {"key": F("seller_id"), "label": F("seller__full_name")},
+        {"key": F("sale__seller_id"), "label": F("sale__seller__full_name")},
+    ),
+}
+
+
+def period_sales(user, *, date_from: date, date_to: date, branch_id: int | None = None):
+    """Davrdagi yakunlangan savdolar (nuqta chegarasi bilan)."""
+    qs = _scoped(user).filter(
+        status=Sale.Status.COMPLETED,
+        completed_at__date__gte=date_from,
+        completed_at__date__lte=date_to,
+    )
+    return qs.filter(branch_id=branch_id) if branch_id else qs
+
+
+def period_returns(user, *, date_from: date, date_to: date, branch_id: int | None = None):
+    qs = scope_queryset_to_user(SaleReturn.objects.all(), user, "branch").filter(
+        created_at__date__gte=date_from, created_at__date__lte=date_to
+    )
+    return qs.filter(branch_id=branch_id) if branch_id else qs
+
+
+def sales_by_group(user, *, date_from, date_to, branch_id=None, group_by="day") -> list[dict]:
+    """[{key, label?, count, revenue_base, cost_base, discount_base}] (asosiy valyutada)."""
+    fields, _ = _GROUPS[group_by]
+    return list(
+        period_sales(user, date_from=date_from, date_to=date_to, branch_id=branch_id)
+        .annotate(**fields)
+        .values(*fields)
+        .annotate(
+            count=Count("id"),
+            revenue_base=Sum("total_base"),
+            cost_base=Sum("cost_base"),
+            discount_base=Sum(
+                ExpressionWrapper(F("discount_total") * F("rate_to_base"), output_field=MONEY)
+            ),
+        )
+        .order_by("key")
+    )
+
+
+def returns_by_group(user, *, date_from, date_to, branch_id=None, group_by="day") -> list[dict]:
+    """[{key, label?, count, total_base, cost_base}] — qaytarish sanasi bo'yicha."""
+    _, fields = _GROUPS[group_by]
+    return list(
+        period_returns(user, date_from=date_from, date_to=date_to, branch_id=branch_id)
+        .annotate(**fields)
+        .values(*fields)
+        .annotate(count=Count("id"), total_base=Sum("total_base"), cost_base=Sum("cost_base"))
+        .order_by("key")
+    )
+
+
+def _product_fields(group_by: str, prefix: str) -> list[str]:
+    if group_by == "category":
+        return [f"{prefix}category_id", f"{prefix}category__name"]
+    return [
+        f"{prefix}id",
+        f"{prefix}name",
+        f"{prefix}sku",
+        f"{prefix}unit__code",
+        f"{prefix}unit__decimal_places",
+    ]
+
+
+def product_sales(
+    user, *, date_from, date_to, branch_id=None, category_ids=None, group_by="product"
+) -> list[dict]:
+    """Tovar (yoki kategoriya) bo'yicha: qty, revenue_base, cost_base."""
+    sales = period_sales(user, date_from=date_from, date_to=date_to, branch_id=branch_id)
+    qs = SaleItem.objects.filter(sale__in=sales)
+    if category_ids:
+        qs = qs.filter(product__category_id__in=category_ids)
+    return list(
+        qs.values(*_product_fields(group_by, "product__"))
+        .annotate(
+            qty=Sum("quantity"),
+            revenue_base=Sum(
+                ExpressionWrapper(F("line_total") * F("sale__rate_to_base"), output_field=MONEY)
+            ),
+            cost_base=Sum("cost_base"),
+        )
+        .order_by()
+    )
+
+
+def product_returns(
+    user, *, date_from, date_to, branch_id=None, category_ids=None, group_by="product"
+) -> list[dict]:
+    returns = period_returns(user, date_from=date_from, date_to=date_to, branch_id=branch_id)
+    qs = SaleReturnItem.objects.filter(sale_return__in=returns)
+    if category_ids:
+        qs = qs.filter(product__category_id__in=category_ids)
+    return list(
+        qs.values(*_product_fields(group_by, "product__"))
+        .annotate(
+            qty=Sum("quantity"),
+            total_base=Sum(
+                ExpressionWrapper(
+                    F("amount") * F("sale_return__sale__rate_to_base"), output_field=MONEY
+                )
+            ),
+            cost_base=Sum("cost_base"),
+        )
+        .order_by()
+    )
+
+
+def returns_report(user, *, date_from, date_to, branch_id=None) -> QuerySet[SaleReturn]:
+    return (
+        period_returns(user, date_from=date_from, date_to=date_to, branch_id=branch_id)
+        .select_related("sale", "branch", "customer", "currency", "refund_method", "created_by")
+        .order_by("created_at", "id")
+    )
+
+
+def payment_method_totals(user, *, date_from, date_to, branch_id=None) -> list[dict]:
+    """Dashboard: savdo to'lovlari to'lov turlari bo'yicha (asosiy valyutada)."""
+    sales = period_sales(user, date_from=date_from, date_to=date_to, branch_id=branch_id)
+    return payment_selectors.document_payment_totals("sale", sales.values("id"))

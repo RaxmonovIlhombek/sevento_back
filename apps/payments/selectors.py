@@ -1,8 +1,9 @@
 from decimal import Decimal
 
-from django.db.models import F, QuerySet, Sum
+from django.db.models import Count, F, OuterRef, Q, QuerySet, Subquery, Sum
 from django.utils import timezone
 
+from apps.currency import selectors as currency_selectors
 from core.access import scope_queryset_to_user
 
 from .models import (
@@ -148,3 +149,127 @@ def current_shift(branch_id: int) -> CashShift | None:
         .prefetch_related("balances__cashbox__currency")
         .first()
     )
+
+
+# --- hisobotlar va dashboard uchun ---
+
+IN, OUT = "in", "out"
+
+
+def document_payment_totals(doc_type: str, doc_ids) -> list[dict]:
+    """Hujjatlar (masalan davr savdolari) to'lovlari turlar bo'yicha, asosiy valyutada (net)."""
+    rows = (
+        Payment.objects.filter(document_type=doc_type, document_id__in=doc_ids)
+        .values("method__name")
+        .annotate(
+            incoming=Sum("amount_base", filter=Q(direction=IN)),
+            outgoing=Sum("amount_base", filter=Q(direction=OUT)),
+        )
+        .order_by("method__name")
+    )
+    return [
+        {
+            "method": r["method__name"],
+            "amount_base": (r["incoming"] or Decimal(0)) - (r["outgoing"] or Decimal(0)),
+        }
+        for r in rows
+    ]
+
+
+def payments_summary(user, *, date_from, date_to, branch_id=None) -> list[dict]:
+    """To'lov turi × valyuta: kirim, chiqim (qaytim, qaytarish), soni — davr bo'yicha."""
+    qs = payments_queryset(user).filter(
+        received_at__date__gte=date_from, received_at__date__lte=date_to
+    )
+    if branch_id:
+        qs = qs.filter(branch_id=branch_id)
+    return list(
+        qs.values("method__name", "currency__code", "currency__decimal_places")
+        .annotate(
+            count=Count("id"),
+            incoming=Sum("amount", filter=Q(direction=IN)),
+            outgoing=Sum("amount", filter=Q(direction=OUT)),
+            incoming_base=Sum("amount_base", filter=Q(direction=IN)),
+            outgoing_base=Sum("amount_base", filter=Q(direction=OUT)),
+        )
+        .order_by("method__name", "currency__code")
+    )
+
+
+def cash_flow(user, *, date_from, date_to, branch_id=None, currency_code=None) -> list[dict]:
+    """Kassa (nuqta × valyuta): boshlang'ich qoldiq, kirim, chiqim, yakuniy qoldiq."""
+    tx = CashTransaction.objects.filter(cashbox=OuterRef("pk")).order_by("-created_at", "-id")
+    period = Q(
+        transactions__created_at__date__gte=date_from,
+        transactions__created_at__date__lte=date_to,
+    )
+    qs = cashboxes_queryset(user).annotate(
+        opening=Subquery(tx.filter(created_at__date__lt=date_from).values("balance_after")[:1]),
+        closing=Subquery(tx.filter(created_at__date__lte=date_to).values("balance_after")[:1]),
+        incoming=Sum("transactions__amount", filter=period & Q(transactions__direction=IN)),
+        outgoing=Sum("transactions__amount", filter=period & Q(transactions__direction=OUT)),
+    )
+    if branch_id:
+        qs = qs.filter(branch_id=branch_id)
+    if currency_code:
+        qs = qs.filter(currency__code=currency_code)
+    return [
+        {
+            "branch": c.branch.name,
+            "currency": c.currency.code,
+            "decimal_places": c.currency.decimal_places,
+            "opening": c.opening or Decimal(0),
+            "incoming": c.incoming or Decimal(0),
+            "outgoing": c.outgoing or Decimal(0),
+            "closing": c.closing or Decimal(0),
+        }
+        for c in qs.order_by("branch__name", "currency__code")
+    ]
+
+
+def open_debts(user, *, branch_id=None, overdue_only=False, today=None) -> QuerySet[Debt]:
+    today = today or timezone.localdate()
+    qs = debts_queryset(user).filter(status=Debt.Status.OPEN)
+    if branch_id:
+        qs = qs.filter(branch_id=branch_id)
+    if overdue_only:
+        qs = qs.filter(due_date__lt=today)
+    return qs.order_by("customer__name", "due_date", "id")
+
+
+def cash_totals(user, *, branch_id=None) -> list[dict]:
+    """Dashboard: kassalardagi naqd valyutalar bo'yicha."""
+    qs = cashboxes_queryset(user)
+    if branch_id:
+        qs = qs.filter(branch_id=branch_id)
+    return list(
+        qs.values("currency__code", "currency__decimal_places")
+        .annotate(balance=Sum("balance"))
+        .order_by("currency__code")
+    )
+
+
+def debt_totals(user, *, branch_id=None, today=None) -> dict:
+    """Dashboard: ochiq va muddati o'tgan qarzlar asosiy valyutada (joriy kurs)."""
+    today = today or timezone.localdate()
+    rows = (
+        open_debts(user, branch_id=branch_id)
+        .values("currency__code")
+        .annotate(
+            remaining=Sum(F("amount") - F("paid_amount") - F("returned_amount")),
+            overdue=Sum(
+                F("amount") - F("paid_amount") - F("returned_amount"),
+                filter=Q(due_date__lt=today),
+            ),
+            overdue_count=Count("id", filter=Q(due_date__lt=today)),
+        )
+        .order_by()
+    )
+    open_base = overdue_base = Decimal(0)
+    overdue_count = 0
+    for r in rows:
+        rate = currency_selectors.rate_to_base(r["currency__code"])
+        open_base += (r["remaining"] or 0) * rate
+        overdue_base += (r["overdue"] or 0) * rate
+        overdue_count += r["overdue_count"]
+    return {"open_base": open_base, "overdue_base": overdue_base, "overdue_count": overdue_count}

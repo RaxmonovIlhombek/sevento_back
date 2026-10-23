@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "apps.purchasing",
     "apps.payments",
     "apps.sales",
+    "apps.reports",
 ]
 
 MIDDLEWARE = [
@@ -205,6 +206,7 @@ SPECTACULAR_SETTINGS = {
         "SaleStatusEnum": "apps.sales.models.Sale.Status",
         "TransferStatusEnum": "apps.inventory.models.Transfer.Status",
         "StockCountStatusEnum": "apps.inventory.models.StockCount.Status",
+        "ReportJobStatusEnum": "apps.reports.models.ReportJob.Status",
     },
     "POSTPROCESSING_HOOKS": [
         "drf_spectacular.hooks.postprocess_schema_enums",

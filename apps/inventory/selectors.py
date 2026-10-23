@@ -28,8 +28,10 @@ from .models import (
     StockMovement,
     Transfer,
     WriteOff,
+    WriteOffItem,
     WriteOffReason,
 )
+from .types import MovementType
 
 QTY_FIELD = DecimalField(max_digits=14, decimal_places=3)
 MONEY_FIELD = DecimalField(max_digits=24, decimal_places=4)
@@ -202,3 +204,136 @@ def write_offs_queryset(user) -> QuerySet[WriteOff]:
 
 def write_off_detail_queryset(user) -> QuerySet[WriteOff]:
     return write_offs_queryset(user).prefetch_related("items__product__unit")
+
+
+# --- hisobotlar va dashboard uchun ---
+
+TURNOVER_GROUPS = {
+    "purchases": (MovementType.PURCHASE_IN, MovementType.PURCHASE_CANCEL),
+    "sales": (
+        MovementType.SALE_OUT,
+        MovementType.SALE_CANCEL,
+        MovementType.SALE_RETURN_IN,
+        MovementType.SALE_RETURN_CANCEL,
+    ),
+    "transfers": (
+        MovementType.TRANSFER_OUT,
+        MovementType.TRANSFER_IN,
+        MovementType.TRANSFER_CANCEL,
+    ),
+    "adjustments": (
+        MovementType.COUNT_SURPLUS,
+        MovementType.COUNT_SHORTAGE,
+        MovementType.WRITE_OFF,
+        MovementType.WRITE_OFF_CANCEL,
+    ),
+}
+
+
+def stock_report(user, *, branch_id=None, category_ids=None, below_min=False, include_zero=False):
+    qs = stock_queryset(user)
+    if branch_id:
+        qs = qs.filter(branch_id=branch_id)
+    if category_ids:
+        qs = qs.filter(product__category_id__in=category_ids)
+    if below_min:
+        qs = qs.filter(is_below_min=True)
+    elif not include_zero:
+        qs = qs.filter(quantity__gt=0)
+    return qs.order_by("product__name", "branch__name")
+
+
+def turnover(user, *, date_from, date_to, branch_id=None, category_ids=None) -> list[dict]:
+    """Tovar aylanmasi: boshlang'ich, kirim/savdo/ko'chirish/tuzatish (ishorali), yakuniy."""
+    qs = scope_queryset_to_user(StockMovement.objects.all(), user, "branch").filter(
+        created_at__date__lte=date_to
+    )
+    if branch_id:
+        qs = qs.filter(branch_id=branch_id)
+    if category_ids:
+        qs = qs.filter(product__category_id__in=category_ids)
+    period = Q(created_at__date__gte=date_from)
+    zero = Value(Decimal("0.000"))
+    sums = {
+        name: Coalesce(Sum("quantity", filter=period & Q(type__in=types)), zero)
+        for name, types in TURNOVER_GROUPS.items()
+    }
+    rows = (
+        qs.values(
+            "product_id",
+            "product__name",
+            "product__sku",
+            "product__unit__code",
+            "product__unit__decimal_places",
+        )
+        .annotate(
+            opening=Coalesce(Sum("quantity", filter=Q(created_at__date__lt=date_from)), zero),
+            closing=Coalesce(Sum("quantity"), zero),
+            moves=Count("id", filter=period),
+            **sums,
+        )
+        .order_by("product__name")
+    )
+    return [r for r in rows if r["moves"] or r["opening"]]
+
+
+def movements_report(user, *, date_from, date_to, branch_id=None, movement_type=None):
+    qs = movements_queryset(user).filter(
+        created_at__date__gte=date_from, created_at__date__lte=date_to
+    )
+    if branch_id:
+        qs = qs.filter(branch_id=branch_id)
+    if movement_type:
+        qs = qs.filter(type=movement_type)
+    return qs.order_by("created_at", "id")
+
+
+def transfers_report(user, *, date_from, date_to, branch_id=None, status=None):
+    qs = transfers_queryset(user).filter(
+        created_at__date__gte=date_from, created_at__date__lte=date_to
+    )
+    if branch_id:
+        qs = qs.filter(Q(from_branch_id=branch_id) | Q(to_branch_id=branch_id))
+    if status:
+        qs = qs.filter(status=status)
+    return qs.order_by("created_at", "id")
+
+
+def write_off_lines(user, *, date_from, date_to, branch_id=None, reason_id=None):
+    qs = scope_queryset_to_user(
+        WriteOffItem.objects.select_related(
+            "write_off", "write_off__branch", "write_off__reason", "product", "product__unit"
+        ),
+        user,
+        "write_off__branch",
+    ).filter(
+        write_off__status=WriteOff.Status.COMPLETED,
+        write_off__completed_at__date__gte=date_from,
+        write_off__completed_at__date__lte=date_to,
+    )
+    if branch_id:
+        qs = qs.filter(write_off__branch_id=branch_id)
+    if reason_id:
+        qs = qs.filter(write_off__reason_id=reason_id)
+    return qs.order_by("write_off__completed_at", "write_off_id", "position")
+
+
+def low_stock_count(user, *, branch_id=None) -> int:
+    qs = stock_queryset(user).filter(is_below_min=True)
+    if branch_id:
+        qs = qs.filter(branch_id=branch_id)
+    return qs.count()
+
+
+def stock_value_base(user, *, branch_id=None) -> Decimal:
+    qs = scope_queryset_to_user(Batch.objects.filter(quantity_remaining__gt=0), user, "branch")
+    if branch_id:
+        qs = qs.filter(branch_id=branch_id)
+    value = qs.aggregate(
+        v=Sum(
+            ExpressionWrapper(
+                F("quantity_remaining") * F("unit_cost_base"), output_field=MONEY_FIELD
+            )
+        )
+    )["v"]
+    return value or Decimal(0)

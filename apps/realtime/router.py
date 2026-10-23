@@ -370,3 +370,28 @@ route(
     msg_type="dashboard.updated",
     payload=_dashboard_payload("sale_return.completed"),
 )
+
+
+# --- 8-bosqich: fondagi hisobot tayyor / xato — faqat so'ragan foydalanuvchiga ---
+
+route(
+    "report.ready",
+    groups=_user_group,
+    payload=lambda e: {  # type: ignore[attr-defined]
+        "job_id": e.job_id,
+        "report_key": e.report_key,
+        "title": e.title,
+        "format": e.format,
+        "download_url": e.download_url,
+    },
+)
+route(
+    "report.failed",
+    groups=_user_group,
+    payload=lambda e: {  # type: ignore[attr-defined]
+        "job_id": e.job_id,
+        "report_key": e.report_key,
+        "title": e.title,
+        "error": e.error,
+    },
+)

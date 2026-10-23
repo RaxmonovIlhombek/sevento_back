@@ -4353,6 +4353,237 @@ paths:
               schema:
                 $ref: '#/components/schemas/Ticket'
           description: ''
+  /api/v1/reports/:
+    get:
+      operationId: reports_list
+      description: |-
+        Hisobotlar reyestri. Ko'rish — JSON (ekranda); fayl — PDF/Excel.
+
+        Har hisobotning o'z huquqi bor (`reports.view` / `reports.financial`); nuqta chegarasi
+        selectorlarda qo'llanadi. Parametrlar — hisobot `filters` ro'yxatidagi nomlar.
+      tags:
+      - reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportInfo'
+          description: ''
+  /api/v1/reports/{key}/:
+    get:
+      operationId: reports_retrieve
+      description: |-
+        Hisobotlar reyestri. Ko'rish — JSON (ekranda); fayl — PDF/Excel.
+
+        Har hisobotning o'z huquqi bor (`reports.view` / `reports.financial`); nuqta chegarasi
+        selectorlarda qo'llanadi. Parametrlar — hisobot `filters` ro'yxatidagi nomlar.
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+          pattern: ^[a-z0-9_]+$
+        required: true
+      - in: query
+        name: params
+        schema:
+          type: object
+          additionalProperties: {}
+        description: hisobot filtrlari (date_from, date_to, branch, ...)
+        explode: true
+        style: form
+      tags:
+      - reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResult'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/reports/{key}/export/:
+    post:
+      operationId: reports_export_create
+      description: Yengil hisobot — fayl darhol; og'ir yoki uzun davr — 202 + ReportJob
+        (report.ready).
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+          pattern: ^[a-z0-9_]+$
+        required: true
+      tags:
+      - reports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExportRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportJob'
+          description: fonda tayyorlanadi
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/reports/dashboard/:
+    get:
+      operationId: reports_dashboard_retrieve
+      description: |-
+        Rahbar dashboardi: KPI (oldingi davr bilan), kunlik/soatlik qator, nuqtalar, top tovar.
+
+        Jonli: `dashboard.updated` kelganda frontend qayta so'raydi.
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+          nullable: true
+      - in: query
+        name: period
+        schema:
+          enum:
+          - today
+          - 7d
+          - 30d
+          - month
+          type: string
+          default: today
+          minLength: 1
+        description: |-
+          * `today` - Bugun
+          * `7d` - 7 kun
+          * `30d` - 30 kun
+          * `month` - Shu oy
+      tags:
+      - reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+          description: ''
+  /api/v1/reports/jobs/:
+    get:
+      operationId: reports_jobs_list
+      description: Fonda tayyorlangan hisobotlar — faqat o'ziniki (oxirgi 20 ta).
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportJob'
+          description: ''
+  /api/v1/reports/jobs/{id}/:
+    get:
+      operationId: reports_jobs_retrieve
+      description: Fonda tayyorlangan hisobotlar — faqat o'ziniki (oxirgi 20 ta).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this report job.
+        required: true
+      tags:
+      - reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportJob'
+          description: ''
+  /api/v1/reports/jobs/{id}/download/:
+    get:
+      operationId: reports_jobs_download_retrieve
+      description: Fonda tayyorlangan hisobotlar — faqat o'ziniki (oxirgi 20 ta).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this report job.
+        required: true
+      tags:
+      - reports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/v1/roles/:
     get:
       operationId: roles_list
@@ -5488,6 +5719,21 @@ components:
       required:
       - code
       - name
+    BranchSales:
+      type: object
+      properties:
+        branch:
+          type: string
+        revenue:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,22}(?:\.\d{0,2})?$
+        count:
+          type: integer
+      required:
+      - branch
+      - count
+      - revenue
     BranchTypeEnum:
       enum:
       - shop
@@ -5518,6 +5764,21 @@ components:
       - code
       - group
       - name
+    CashBalance:
+      type: object
+      properties:
+        currency:
+          type: string
+        decimal_places:
+          type: integer
+        balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,20}(?:\.\d{0,4})?$
+      required:
+      - balance
+      - currency
+      - decimal_places
     CashEntryWriteRequest:
       type: object
       properties:
@@ -5853,6 +6114,39 @@ components:
       required:
       - current_password
       - new_password
+    Choice:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+      required:
+      - label
+      - value
+    Column:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+        decimals:
+          type: integer
+        decimals_key:
+          type: string
+          nullable: true
+        total:
+          type: boolean
+      required:
+      - decimals
+      - decimals_key
+      - key
+      - label
+      - total
+      - type
     CostPreview:
       type: object
       properties:
@@ -6332,6 +6626,73 @@ components:
       - returns_count
       - returns_total_base
       - total_base
+    Dashboard:
+      type: object
+      properties:
+        period:
+          $ref: '#/components/schemas/Period'
+        base_currency:
+          type: string
+        show_profit:
+          type: boolean
+        kpi:
+          $ref: '#/components/schemas/DashboardKpi'
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeriesPoint'
+        by_branch:
+          type: array
+          items:
+            $ref: '#/components/schemas/BranchSales'
+        top_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopProduct'
+        payment_methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/MethodShare'
+        cash:
+          type: array
+          items:
+            $ref: '#/components/schemas/CashBalance'
+        debts:
+          $ref: '#/components/schemas/DebtTotals'
+        inventory:
+          $ref: '#/components/schemas/InventoryTotals'
+      required:
+      - base_currency
+      - by_branch
+      - cash
+      - debts
+      - inventory
+      - kpi
+      - payment_methods
+      - period
+      - series
+      - show_profit
+      - top_products
+    DashboardKpi:
+      type: object
+      properties:
+        revenue:
+          $ref: '#/components/schemas/Kpi'
+        profit:
+          allOf:
+          - $ref: '#/components/schemas/Kpi'
+          description: faqat reports.financial bilan
+        sales_count:
+          $ref: '#/components/schemas/Kpi'
+        average_check:
+          $ref: '#/components/schemas/Kpi'
+        returns:
+          $ref: '#/components/schemas/Kpi'
+      required:
+      - average_check
+      - returns
+      - revenue
+      - sales_count
     Debt:
       type: object
       properties:
@@ -6474,6 +6835,23 @@ components:
         * `open` - Ochiq
         * `paid` - To'langan
         * `cancelled` - Bekor qilingan
+    DebtTotals:
+      type: object
+      properties:
+        open:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,22}(?:\.\d{0,2})?$
+        overdue:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,22}(?:\.\d{0,2})?$
+        overdue_count:
+          type: integer
+      required:
+      - open
+      - overdue
+      - overdue_count
     DocumentRef:
       type: object
       properties:
@@ -6623,6 +7001,16 @@ components:
       required:
       - code
       - name
+    ExportRequestRequest:
+      type: object
+      properties:
+        format:
+          $ref: '#/components/schemas/FormatEnum'
+        params:
+          type: object
+          additionalProperties: {}
+      required:
+      - format
     FetchResult:
       type: object
       properties:
@@ -6635,6 +7023,41 @@ components:
       required:
       - provider
       - updated
+    Filter:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        label:
+          type: string
+        required:
+          type: boolean
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Choice'
+          readOnly: true
+        default:
+          type: string
+          nullable: true
+          readOnly: true
+      required:
+      - choices
+      - default
+      - label
+      - name
+      - required
+      - type
+    FormatEnum:
+      enum:
+      - pdf
+      - xlsx
+      type: string
+      description: |-
+        * `pdf` - PDF
+        * `xlsx` - Excel
     Health:
       type: object
       properties:
@@ -6664,6 +7087,43 @@ components:
           maxLength: 255
       required:
       - reason
+    InventoryTotals:
+      type: object
+      properties:
+        low_stock:
+          type: integer
+        stock_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,22}(?:\.\d{0,2})?$
+          nullable: true
+        incoming_transfers:
+          type: integer
+      required:
+      - incoming_transfers
+      - low_stock
+      - stock_value
+    Kpi:
+      type: object
+      properties:
+        value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,22}(?:\.\d{0,2})?$
+        previous:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,22}(?:\.\d{0,2})?$
+        change:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,9}(?:\.\d{0,1})?$
+          nullable: true
+          description: oldingi davrga nisbatan %
+      required:
+      - change
+      - previous
+      - value
     LatestRate:
       type: object
       properties:
@@ -6870,6 +7330,18 @@ components:
       - phone
       - role
       - username
+    MethodShare:
+      type: object
+      properties:
+        method:
+          type: string
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,22}(?:\.\d{0,2})?$
+      required:
+      - amount
+      - method
     MovementTypeEnum:
       enum:
       - purchase_in
@@ -8100,6 +8572,21 @@ components:
       required:
       - amount
       - currency
+    Period:
+      type: object
+      properties:
+        key:
+          type: string
+        date_from:
+          type: string
+          format: date
+        date_to:
+          type: string
+          format: date
+      required:
+      - date_from
+      - date_to
+      - key
     PosConfig:
       type: object
       properties:
@@ -8879,6 +9366,158 @@ components:
           type: string
       required:
       - access
+    ReportInfo:
+      type: object
+      properties:
+        key:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        category_label:
+          type: string
+          readOnly: true
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+        formats:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        heavy:
+          type: boolean
+      required:
+      - category
+      - category_label
+      - description
+      - filters
+      - formats
+      - heavy
+      - key
+      - title
+    ReportJob:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        report_key:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        format:
+          type: string
+          readOnly: true
+        params:
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ReportJobStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        rows_count:
+          type: integer
+          readOnly: true
+        error:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        finished_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        download_url:
+          type: string
+          nullable: true
+          readOnly: true
+      required:
+      - created_at
+      - download_url
+      - error
+      - finished_at
+      - format
+      - id
+      - params
+      - report_key
+      - rows_count
+      - status
+      - status_display
+      - title
+    ReportJobStatusEnum:
+      enum:
+      - pending
+      - running
+      - ready
+      - failed
+      type: string
+      description: |-
+        * `pending` - Navbatda
+        * `running` - Tayyorlanmoqda
+        * `ready` - Tayyor
+        * `failed` - Xato
+    ReportResult:
+      type: object
+      properties:
+        key:
+          type: string
+        title:
+          type: string
+        subtitle:
+          type: string
+        params:
+          type: object
+          additionalProperties: {}
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/Column'
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        totals:
+          type: object
+          additionalProperties: {}
+          nullable: true
+          readOnly: true
+        notes:
+          type: array
+          items:
+            type: string
+        row_count:
+          type: integer
+        truncated:
+          type: boolean
+        heavy:
+          type: boolean
+          description: Fayl fonda tayyorlanadi (report.ready)
+      required:
+      - columns
+      - heavy
+      - key
+      - notes
+      - params
+      - row_count
+      - rows
+      - subtitle
+      - title
+      - totals
+      - truncated
     ReturnStateEnum:
       enum:
       - none
@@ -9924,6 +10563,25 @@ components:
       - currency
       - items
       - payments
+    SeriesPoint:
+      type: object
+      properties:
+        label:
+          type: string
+        revenue:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,22}(?:\.\d{0,2})?$
+        profit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,22}(?:\.\d{0,2})?$
+        count:
+          type: integer
+      required:
+      - count
+      - label
+      - revenue
     SetPasswordRequest:
       type: object
       properties:
@@ -10561,6 +11219,29 @@ components:
       required:
       - expires_in
       - ticket
+    TopProduct:
+      type: object
+      properties:
+        product_id:
+          type: integer
+        name:
+          type: string
+        unit:
+          type: string
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        revenue:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,22}(?:\.\d{0,2})?$
+      required:
+      - name
+      - product_id
+      - quantity
+      - revenue
+      - unit
     TransferDetail:
       type: object
       description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan

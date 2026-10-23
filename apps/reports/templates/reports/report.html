@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>{{ title }}</title>
+<style>
+  @page {
+    size: {{ page_size }};
+    margin: 12mm 10mm 14mm;
+    @bottom-left { content: "{{ generated_by }} · {{ generated_at }}"; font-family: "DejaVu Sans", sans-serif; font-size: 7pt; color: #64748b; }
+    @bottom-right { content: "Sahifa " counter(page) " / " counter(pages); font-family: "DejaVu Sans", sans-serif; font-size: 7pt; color: #64748b; }
+  }
+  body { font-family: "DejaVu Sans", "Noto Sans", sans-serif; font-size: 8pt; color: #0f172a; }
+  h1 { font-size: 14pt; margin: 0 0 1mm; }
+  .subtitle { color: #475569; margin-bottom: 4mm; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { display: table-header-group; }
+  th { background: #e2e8f0; text-align: left; font-weight: bold; padding: 1.5mm 1.5mm; border-bottom: 1px solid #94a3b8; }
+  td { padding: 1.2mm 1.5mm; border-bottom: 0.5px solid #e2e8f0; vertical-align: top; }
+  tr { page-break-inside: avoid; }
+  .n { text-align: right; white-space: nowrap; }
+  tfoot td { font-weight: bold; border-top: 1px solid #0f172a; border-bottom: none; background: #f8fafc; }
+  .empty { padding: 6mm; text-align: center; color: #64748b; }
+  .notes { margin-top: 4mm; color: #475569; font-size: 7.5pt; }
+</style>
+</head>
+<body>
+  <h1>{{ title }}</h1>
+  <div class="subtitle">{{ subtitle }}</div>
+  {% if empty %}
+    <div class="empty">Ma'lumot yo'q</div>
+  {% else %}
+  <table>
+    <thead>
+      <tr>{% for c in columns %}<th{% if c.numeric %} class="n"{% endif %}>{{ c.label }}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>{% for cell in row %}<td{% if cell.numeric %} class="n"{% endif %}>{{ cell.text }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+    {% if totals %}
+    <tfoot>
+      <tr>{% for cell in totals %}<td{% if cell.numeric %} class="n"{% endif %}>{% if forloop.first and not cell.text %}Jami{% else %}{{ cell.text }}{% endif %}</td>{% endfor %}</tr>
+    </tfoot>
+    {% endif %}
+  </table>
+  {% endif %}
+  {% for note in notes %}<div class="notes">{{ note }}</div>{% endfor %}
+</body>
+</html>
