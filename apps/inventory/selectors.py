@@ -83,6 +83,12 @@ def get_quantity(branch_id: int, product_id: int) -> Decimal:
     return level.quantity if level else Decimal(0)
 
 
+def quantities(branch_id: int, product_ids) -> dict[int, Decimal]:
+    """Bir nechta tovar qoldig'i bitta so'rovda (kassa qidiruvi uchun)."""
+    rows = StockLevel.objects.filter(branch_id=branch_id, product_id__in=list(product_ids))
+    return {row.product_id: row.quantity for row in rows.only("product_id", "quantity")}
+
+
 def batches_for_source(source_type: str, source_id: int) -> QuerySet[Batch]:
     return Batch.objects.filter(source_type=source_type, source_id=source_id)
 

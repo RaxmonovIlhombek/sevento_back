@@ -177,3 +177,49 @@ route(
         "unit": e.unit,
     },
 )
+
+
+# --- 5-bosqich: savdo va to'lov ---
+
+
+def _capability_users(code: str) -> list[str]:
+    """Rollar MB da o'zgaradi: rol nomi emas, huquq bo'yicha foydalanuvchi guruhlari."""
+    from apps.accounts import selectors as accounts_selectors  # app registry tayyor bo'lgach
+
+    users = accounts_selectors.users_with_capability(code)
+    return [f"user_{pk}" for pk in users.values_list("pk", flat=True)]
+
+
+def _dashboard_payload(reason: str):
+    return lambda e: {"branch_id": e.branch_id, "reason": reason}
+
+
+route(
+    "sale.completed",
+    groups=lambda e: _capability_users("dashboard.view"),
+    msg_type="dashboard.updated",
+    payload=_dashboard_payload("sale.completed"),
+)
+route(
+    "sale.cancelled",
+    groups=lambda e: _capability_users("dashboard.view"),
+    msg_type="dashboard.updated",
+    payload=_dashboard_payload("sale.cancelled"),
+)
+
+
+def _payment_payload(e: Event) -> dict:
+    return {  # type: ignore[attr-defined]
+        "branch_id": e.branch_id,
+        "payment_id": e.payment_id,
+        "method": e.method,
+        "currency": e.currency,
+        "amount": str(e.amount),
+        "is_cash": e.is_cash,
+        "cashbox_id": e.cashbox_id,
+        "document": {"type": e.document_type, "id": e.document_id},
+    }
+
+
+route("payment.received", groups=_branch_group, payload=_payment_payload)
+route("payment.refunded", groups=_branch_group, payload=_payment_payload)

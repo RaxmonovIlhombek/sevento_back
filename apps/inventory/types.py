@@ -8,6 +8,7 @@ class MovementType(models.TextChoices):
     PURCHASE_IN = "purchase_in", "Kirim"
     PURCHASE_CANCEL = "purchase_cancel", "Kirim bekor qilindi"
     SALE_OUT = "sale_out", "Savdo"
+    SALE_CANCEL = "sale_cancel", "Savdo bekor qilindi"
     SALE_RETURN_IN = "sale_return_in", "Qaytarish"
     TRANSFER_OUT = "transfer_out", "Ko'chirish (jo'natildi)"
     TRANSFER_IN = "transfer_in", "Ko'chirish (qabul qilindi)"

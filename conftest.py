@@ -1,11 +1,20 @@
 """Umumiy test fixture lari: rollar, foydalanuvchilar, nuqtalar, autentifikatsiyalangan mijoz."""
 
 import pytest
+from django.core.cache import cache
 from rest_framework.test import APIClient
 
 from apps.accounts.capabilities import ROLE_PRESETS
 from apps.accounts.models import Role, User, UserBranch
 from apps.branches.models import Branch
+
+
+@pytest.fixture(autouse=True)
+def _isolated_cache():
+    """Sozlamalar va ticketlar keshda — testlar bir-biriga ta'sir qilmasin."""
+    cache.clear()
+    yield
+    cache.clear()
 
 
 @pytest.fixture

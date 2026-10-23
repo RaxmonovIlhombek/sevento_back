@@ -8,7 +8,7 @@ class CapabilityViewSetMixin:
     """ViewSet: capability_map = {"list": "x.view", "create": "x.manage", ...}."""
 
     permission_classes = [IsAuthenticated, HasCapability]
-    capability_map: dict[str, str | None] = {}
+    capability_map: dict[str, str | tuple[str, ...] | None] = {}
 
 
 class BranchScopedQuerySetMixin:

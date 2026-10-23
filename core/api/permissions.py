@@ -5,6 +5,7 @@ class HasCapability(BasePermission):
     """View dagi `capability_map` (ViewSet: action → huquq) yoki `required_capability` bo'yicha.
 
     capability_map da bo'lmagan action — rad etiladi (xavfsiz default); "*" kaliti hammasi uchun.
+    Qiymat tuple bo'lsa — ulardan **birortasi** yetarli (masalan POS uchun to'lov turlari ro'yxati).
     """
 
     message = "Ruxsat yo'q"
@@ -18,6 +19,8 @@ class HasCapability(BasePermission):
             return True
         if required is False:
             return False
+        if isinstance(required, tuple | list | frozenset):
+            return any(user.has_capability(code) for code in required)
         return user.has_capability(required)
 
     @staticmethod

@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     "apps.catalog",
     "apps.inventory",
     "apps.purchasing",
+    "apps.payments",
+    "apps.sales",
 ]
 
 MIDDLEWARE = [
@@ -197,6 +199,10 @@ SPECTACULAR_SETTINGS = {
         "AllocationMethodEnum": "apps.purchasing.models.AllocationMethod",
         "MovementTypeEnum": "apps.inventory.types.MovementType",
         "PurchaseStatusEnum": "apps.purchasing.models.Purchase.Status",
+        "PaymentKindEnum": "apps.payments.types.PaymentKind",
+        "PaymentDirectionEnum": "apps.payments.types.Direction",
+        "PaymentStatusEnum": "apps.payments.models.Payment.Status",
+        "SaleStatusEnum": "apps.sales.models.Sale.Status",
     },
     "POSTPROCESSING_HOOKS": [
         "drf_spectacular.hooks.postprocess_schema_enums",
@@ -240,5 +246,8 @@ LOGGING = {
     "loggers": {
         "django.request": {"level": "WARNING"},
         "core.events": {"level": "INFO"},
+        # PDF (WeasyPrint) shrift kutubxonasi DEBUG da juda ko'p yozadi
+        "fontTools": {"level": "WARNING"},
+        "weasyprint": {"level": "WARNING"},
     },
 }

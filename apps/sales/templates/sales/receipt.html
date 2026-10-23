@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>Chek {{ number }}</title>
+<style>
+  body { font-family: "DejaVu Sans", "Noto Sans", sans-serif; font-size: 8.5pt; color: #000; margin: 0; }
+  h1 { font-size: 11pt; text-align: center; margin: 0 0 1mm; }
+  .center { text-align: center; }
+  .muted { font-size: 7.5pt; }
+  .sep { border-top: 1px dashed #000; margin: 2mm 0; }
+  table { width: 100%; border-collapse: collapse; }
+  td { vertical-align: top; padding: 0.4mm 0; }
+  .r { text-align: right; white-space: nowrap; }
+  .name { font-weight: bold; }
+  .total td { font-size: 11pt; font-weight: bold; padding-top: 1mm; }
+  .stamp { border: 2px solid #000; text-align: center; font-weight: bold; font-size: 12pt; padding: 1mm; margin: 2mm 0; }
+</style>
+</head>
+<body>
+  <h1>{{ header }}</h1>
+  {% if header != branch_name %}<div class="center">{{ branch_name }}</div>{% endif %}
+  {% if address %}<div class="center muted">{{ address }}</div>{% endif %}
+  {% if phone %}<div class="center muted">Tel: {{ phone }}</div>{% endif %}
+  <div class="sep"></div>
+  <table class="muted">
+    <tr><td>Chek №</td><td class="r">{{ number }}</td></tr>
+    <tr><td>Sana</td><td class="r">{{ date }}</td></tr>
+    <tr><td>Sotuvchi</td><td class="r">{{ seller }}</td></tr>
+  </table>
+  {% if cancelled %}<div class="stamp">BEKOR QILINGAN</div>{% endif %}
+  <div class="sep"></div>
+  <table>
+    {% for item in items %}
+    <tr><td colspan="2" class="name">{{ item.name }}</td></tr>
+    <tr><td>{{ item.quantity }} {{ item.unit }} × {{ item.price }}</td><td class="r">{{ item.total }}</td></tr>
+    {% if item.discount %}<tr><td class="muted">chegirma</td><td class="r muted">−{{ item.discount }}</td></tr>{% endif %}
+    {% endfor %}
+  </table>
+  <div class="sep"></div>
+  <table>
+    {% if discount_total %}
+    <tr><td>Summa</td><td class="r">{{ subtotal }}</td></tr>
+    <tr><td>Chegirma</td><td class="r">−{{ discount_total }}</td></tr>
+    {% endif %}
+    <tr class="total"><td>JAMI</td><td class="r">{{ total }} {{ currency }}</td></tr>
+  </table>
+  <div class="sep"></div>
+  <table>
+    {% for p in payments %}
+    <tr><td>{{ p.method }}</td><td class="r">{{ p.amount }} {{ p.currency }}</td></tr>
+    {% endfor %}
+    {% if change %}<tr><td>Qaytim</td><td class="r">{{ change }} {{ currency }}</td></tr>{% endif %}
+  </table>
+  <div class="sep"></div>
+  <div class="center">{{ footer }}</div>
+</body>
+</html>

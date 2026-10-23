@@ -17,7 +17,7 @@ from . import events
 from .costing import get_strategy
 from .exceptions import BatchConsumed, InsufficientStock
 from .models import Batch, StockLevel, StockMovement
-from .types import DocRef, IssueResult, MovementType
+from .types import BatchAllocation, DocRef, IssueResult, MovementType
 
 MONEY_PLACES = Decimal("0.0001")
 UNIT_COST_PLACES = Decimal("0.000001")
@@ -169,6 +169,73 @@ def issue_stock(
             )
         StockMovement.objects.bulk_create(rows)
     return IssueResult(allocations=allocations, total_cost_base=total)
+
+
+def restore_stock(
+    *,
+    actor,
+    branch_id: int,
+    product_id: int,
+    allocations: list[BatchAllocation],
+    movement_type: str,
+    doc: DocRef,
+) -> Decimal:
+    """Chiqimni teskari qilish (savdo bekor qilish, keyin qaytarish): tovar **asl partiyalarga**
+    qaytadi, tannarx saqlanadi. Qaytarilgan miqdor qaytariladi."""
+    allocations = [a for a in allocations if a.quantity > 0]
+    if not allocations:
+        return Decimal(0)
+    with transaction.atomic():
+        level = _lock_level(branch_id, product_id)
+        batches = {
+            b.pk: b
+            for b in Batch.objects.select_for_update()
+            .filter(pk__in=[a.batch_id for a in allocations])
+            .order_by("id")
+        }
+        total_qty = Decimal(0)
+        for alloc in allocations:
+            batch = batches.get(alloc.batch_id)
+            if (
+                batch is None
+                or batch.branch_id != branch_id
+                or batch.product_id != product_id
+                or batch.quantity_remaining + alloc.quantity > batch.quantity_initial
+            ):
+                raise ValueError(f"restore_stock: partiya {alloc.batch_id} ga qaytarib bo'lmaydi")
+            batch.quantity_remaining += alloc.quantity
+            total_qty += alloc.quantity
+        Batch.objects.bulk_update(list(batches.values()), ["quantity_remaining"])
+        before = level.quantity
+        level = _apply_delta(
+            actor=actor, level=level, delta=total_qty, movement_type=movement_type, doc=doc
+        )
+        now = timezone.now()
+        balance = before
+        rows = []
+        for alloc in allocations:
+            balance += alloc.quantity
+            rows.append(
+                StockMovement(
+                    branch_id=branch_id,
+                    product_id=product_id,
+                    batch_id=alloc.batch_id,
+                    type=movement_type,
+                    quantity=alloc.quantity,
+                    unit_cost_base=alloc.unit_cost_base,
+                    total_cost_base=(alloc.quantity * alloc.unit_cost_base).quantize(
+                        MONEY_PLACES, ROUND_HALF_UP
+                    ),
+                    balance_after=balance,
+                    document_type=doc.type,
+                    document_id=doc.id,
+                    document_number=doc.number,
+                    created_by=actor,
+                    created_at=now,
+                )
+            )
+        StockMovement.objects.bulk_create(rows)
+    return total_qty
 
 
 def reverse_receipt(*, actor, doc_type: str, doc_id: int, doc_number: str = "") -> int:

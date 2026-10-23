@@ -7,8 +7,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# curl — healthcheck; pango + DejaVu — WeasyPrint (chek, hisobot PDF, o'zbek harflari bilan)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
+       libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements/ requirements/

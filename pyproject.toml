@@ -71,6 +71,12 @@ forbidden_modules = [
     "apps.purchasing.models",
     "apps.purchasing.serializers",
     "apps.purchasing.views",
+    "apps.payments.models",
+    "apps.payments.serializers",
+    "apps.payments.views",
+    "apps.sales.models",
+    "apps.sales.serializers",
+    "apps.sales.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -101,6 +107,12 @@ forbidden_modules = [
     "apps.purchasing.models",
     "apps.purchasing.serializers",
     "apps.purchasing.views",
+    "apps.payments.models",
+    "apps.payments.serializers",
+    "apps.payments.views",
+    "apps.sales.models",
+    "apps.sales.serializers",
+    "apps.sales.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -131,6 +143,12 @@ forbidden_modules = [
     "apps.purchasing.models",
     "apps.purchasing.serializers",
     "apps.purchasing.views",
+    "apps.payments.models",
+    "apps.payments.serializers",
+    "apps.payments.views",
+    "apps.sales.models",
+    "apps.sales.serializers",
+    "apps.sales.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -161,6 +179,12 @@ forbidden_modules = [
     "apps.purchasing.models",
     "apps.purchasing.serializers",
     "apps.purchasing.views",
+    "apps.payments.models",
+    "apps.payments.serializers",
+    "apps.payments.views",
+    "apps.sales.models",
+    "apps.sales.serializers",
+    "apps.sales.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -191,6 +215,12 @@ forbidden_modules = [
     "apps.purchasing.models",
     "apps.purchasing.serializers",
     "apps.purchasing.views",
+    "apps.payments.models",
+    "apps.payments.serializers",
+    "apps.payments.views",
+    "apps.sales.models",
+    "apps.sales.serializers",
+    "apps.sales.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -221,6 +251,12 @@ forbidden_modules = [
     "apps.purchasing.models",
     "apps.purchasing.serializers",
     "apps.purchasing.views",
+    "apps.payments.models",
+    "apps.payments.serializers",
+    "apps.payments.views",
+    "apps.sales.models",
+    "apps.sales.serializers",
+    "apps.sales.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -251,6 +287,12 @@ forbidden_modules = [
     "apps.purchasing.models",
     "apps.purchasing.serializers",
     "apps.purchasing.views",
+    "apps.payments.models",
+    "apps.payments.serializers",
+    "apps.payments.views",
+    "apps.sales.models",
+    "apps.sales.serializers",
+    "apps.sales.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -281,4 +323,96 @@ forbidden_modules = [
     "apps.inventory.models",
     "apps.inventory.serializers",
     "apps.inventory.views",
+    "apps.payments.models",
+    "apps.payments.serializers",
+    "apps.payments.views",
+    "apps.sales.models",
+    "apps.sales.serializers",
+    "apps.sales.views",
 ]
+
+[[tool.importlinter.contracts]]
+name = "payments boshqa app ichki qatlamini import qilmaydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.payments"]
+forbidden_modules = [
+    "apps.accounts.models",
+    "apps.accounts.serializers",
+    "apps.accounts.views",
+    "apps.branches.models",
+    "apps.branches.serializers",
+    "apps.branches.views",
+    "apps.audit.models",
+    "apps.audit.serializers",
+    "apps.audit.views",
+    "apps.realtime.models",
+    "apps.realtime.serializers",
+    "apps.realtime.views",
+    "apps.currency.models",
+    "apps.currency.serializers",
+    "apps.currency.views",
+    "apps.catalog.models",
+    "apps.catalog.serializers",
+    "apps.catalog.views",
+    "apps.inventory.models",
+    "apps.inventory.serializers",
+    "apps.inventory.views",
+    "apps.purchasing.models",
+    "apps.purchasing.serializers",
+    "apps.purchasing.views",
+    "apps.sales.models",
+    "apps.sales.serializers",
+    "apps.sales.views",
+]
+
+[[tool.importlinter.contracts]]
+name = "sales boshqa app ichki qatlamini import qilmaydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.sales"]
+forbidden_modules = [
+    "apps.accounts.models",
+    "apps.accounts.serializers",
+    "apps.accounts.views",
+    "apps.branches.models",
+    "apps.branches.serializers",
+    "apps.branches.views",
+    "apps.audit.models",
+    "apps.audit.serializers",
+    "apps.audit.views",
+    "apps.realtime.models",
+    "apps.realtime.serializers",
+    "apps.realtime.views",
+    "apps.currency.models",
+    "apps.currency.serializers",
+    "apps.currency.views",
+    "apps.catalog.models",
+    "apps.catalog.serializers",
+    "apps.catalog.views",
+    "apps.inventory.models",
+    "apps.inventory.serializers",
+    "apps.inventory.views",
+    "apps.purchasing.models",
+    "apps.purchasing.serializers",
+    "apps.purchasing.views",
+    "apps.payments.models",
+    "apps.payments.serializers",
+    "apps.payments.views",
+]
+
+# Bog'liqlik yo'nalishi: hujjatlar (kirim, savdo) ombor va to'lovni chaqiradi, aksincha emas.
+
+[[tool.importlinter.contracts]]
+name = "inventory hujjat app lariga bog'lanmaydi"
+type = "forbidden"
+source_modules = ["apps.inventory"]
+forbidden_modules = ["apps.purchasing", "apps.sales", "apps.payments"]
+
+[[tool.importlinter.contracts]]
+name = "payments savdo va kirimga bog'lanmaydi"
+type = "forbidden"
+source_modules = ["apps.payments"]
+forbidden_modules = ["apps.sales", "apps.purchasing"]

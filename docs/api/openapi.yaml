@@ -1580,6 +1580,7 @@ paths:
             - count_surplus
             - purchase_cancel
             - purchase_in
+            - sale_cancel
             - sale_out
             - sale_return_in
             - transfer_in
@@ -1589,6 +1590,7 @@ paths:
           * `purchase_in` - Kirim
           * `purchase_cancel` - Kirim bekor qilindi
           * `sale_out` - Savdo
+          * `sale_cancel` - Savdo bekor qilindi
           * `sale_return_in` - Qaytarish
           * `transfer_out` - Ko'chirish (jo'natildi)
           * `transfer_in` - Ko'chirish (qabul qilindi)
@@ -1744,6 +1746,298 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StockLevel'
+          description: ''
+  /api/v1/payments/cash-categories/:
+    get:
+      operationId: payments_cash_categories_list
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CashFlowCategory'
+          description: ''
+  /api/v1/payments/cash-transactions/:
+    get:
+      operationId: payments_cash_transactions_list
+      description: Kassa jurnali (faqat o'qish).
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: cashbox
+        schema:
+          type: number
+      - in: query
+        name: category
+        schema:
+          type: string
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - in
+          - out
+        description: |-
+          * `in` - Kirim
+          * `out` - Chiqim
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCashTransactionList'
+          description: ''
+  /api/v1/payments/cashboxes/:
+    get:
+      operationId: payments_cashboxes_list
+      description: Kassalar (nuqta × valyuta) va qoldiq. Faqat ko'rinadigan nuqtalar.
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: currency
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cashbox'
+          description: ''
+  /api/v1/payments/cashboxes/{id}/:
+    get:
+      operationId: payments_cashboxes_retrieve
+      description: Kassalar (nuqta × valyuta) va qoldiq. Faqat ko'rinadigan nuqtalar.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this cashbox.
+        required: true
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cashbox'
+          description: ''
+  /api/v1/payments/methods/:
+    get:
+      operationId: payments_methods_list
+      description: To'lov turlari (MB da). Ro'yxat — kassir ham ko'radi; o'zgartirish
+        — sozlamalar huquqi.
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: is_cash
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+    post:
+      operationId: payments_methods_create
+      description: To'lov turlari (MB da). Ro'yxat — kassir ham ko'radi; o'zgartirish
+        — sozlamalar huquqi.
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+  /api/v1/payments/methods/{id}/:
+    put:
+      operationId: payments_methods_update
+      description: To'lov turlari (MB da). Ro'yxat — kassir ham ko'radi; o'zgartirish
+        — sozlamalar huquqi.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payment method.
+        required: true
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+    patch:
+      operationId: payments_methods_partial_update
+      description: To'lov turlari (MB da). Ro'yxat — kassir ham ko'radi; o'zgartirish
+        — sozlamalar huquqi.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payment method.
+        required: true
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethodRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
           description: ''
   /api/v1/purchasing/expense-types/:
     get:
@@ -2492,6 +2786,306 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/sales/:
+    get:
+      operationId: sales_list
+      description: Savdolar. POST — bitta so'rovda yakunlangan savdo (Idempotency-Key
+        bilan).
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: currency
+        schema:
+          type: string
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: seller
+        schema:
+          type: number
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - cancelled
+          - completed
+        description: |-
+          * `completed` - Yakunlandi
+          * `cancelled` - Bekor qilindi
+      tags:
+      - sales
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSaleListList'
+          description: ''
+    post:
+      operationId: sales_create
+      description: Savdolar. POST — bitta so'rovda yakunlangan savdo (Idempotency-Key
+        bilan).
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaleWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleDetail'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/sales/{id}/:
+    get:
+      operationId: sales_retrieve
+      description: Savdolar. POST — bitta so'rovda yakunlangan savdo (Idempotency-Key
+        bilan).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sale.
+        required: true
+      tags:
+      - sales
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleDetail'
+          description: ''
+  /api/v1/sales/{id}/cancel/:
+    post:
+      operationId: sales_cancel_create
+      description: Savdolar. POST — bitta so'rovda yakunlangan savdo (Idempotency-Key
+        bilan).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sale.
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleCancelRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaleCancelRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleDetail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/sales/{id}/receipt/:
+    get:
+      operationId: sales_receipt_retrieve
+      description: Chek PDF (80 mm). O'zbek harflari bilan, termoprinter uchun.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sale.
+        required: true
+      tags:
+      - sales
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/v1/sales/pos-products/:
+    get:
+      operationId: sales_pos_products_list
+      description: 'Kassa qidiruvi: nomi/artikul/shtrix-kod, savdo valyutasidagi narx
+        va nuqta qoldig''i.'
+      parameters:
+      - in: query
+        name: barcode
+        schema:
+          type: string
+          default: ''
+      - in: query
+        name: branch
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: currency
+        schema:
+          type: string
+          minLength: 1
+        required: true
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 20
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: price_type
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+          default: ''
+      - in: query
+        name: seller
+        schema:
+          type: number
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - cancelled
+          - completed
+        description: |-
+          * `completed` - Yakunlandi
+          * `cancelled` - Bekor qilindi
+      tags:
+      - sales
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PosProduct'
+          description: ''
+  /api/v1/sales/summary/:
+    get:
+      operationId: sales_summary_retrieve
+      description: Kunlik savdo xulosasi (dashboard). Tannarx/foyda — faqat inventory.view_cost
+        bilan.
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
+      tags:
+      - sales
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailySummary'
+          description: ''
   /api/v1/settings/:
     get:
       operationId: settings_list
@@ -2983,6 +3577,154 @@ components:
       - code
       - group
       - name
+    CashFlowCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 30
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 60
+        direction:
+          type: string
+          description: in | out | both
+          maxLength: 4
+      required:
+      - code
+      - id
+      - name
+    CashTransaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        cashbox:
+          type: integer
+          readOnly: true
+        cashbox_name:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        direction:
+          allOf:
+          - $ref: '#/components/schemas/PaymentDirectionEnum'
+          readOnly: true
+        category_code:
+          type: string
+          readOnly: true
+        category_name:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        balance_after:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        payment_number:
+          type: string
+          readOnly: true
+          nullable: true
+        document_type:
+          type: string
+          readOnly: true
+        document_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        document_number:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - balance_after
+      - branch
+      - cashbox
+      - cashbox_name
+      - category_code
+      - category_name
+      - created_at
+      - created_by_name
+      - currency_code
+      - direction
+      - document_id
+      - document_number
+      - document_type
+      - id
+      - note
+      - payment_number
+    Cashbox:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        currency:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        currency_decimal_places:
+          type: integer
+          readOnly: true
+        balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - balance
+      - branch
+      - branch_name
+      - currency
+      - currency_code
+      - currency_decimal_places
+      - id
+      - is_active
+      - name
+      - updated_at
     Category:
       type: object
       properties:
@@ -3231,6 +3973,49 @@ components:
       - price_type
       - price_type_name
       - valid_from
+    DailySummary:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        branch:
+          type: integer
+          nullable: true
+        count:
+          type: integer
+        cancelled_count:
+          type: integer
+        by_currency:
+          type: array
+          items:
+            $ref: '#/components/schemas/SummaryCurrency'
+        total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        profit_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        base_currency:
+          type: string
+      required:
+      - base_currency
+      - branch
+      - by_currency
+      - cancelled_count
+      - cost_base
+      - count
+      - date
+      - profit_base
+      - total_base
     ErrorBody:
       type: object
       properties:
@@ -3505,6 +4290,7 @@ components:
       - purchase_in
       - purchase_cancel
       - sale_out
+      - sale_cancel
       - sale_return_in
       - transfer_out
       - transfer_in
@@ -3516,6 +4302,7 @@ components:
         * `purchase_in` - Kirim
         * `purchase_cancel` - Kirim bekor qilindi
         * `sale_out` - Savdo
+        * `sale_cancel` - Savdo bekor qilindi
         * `sale_return_in` - Qaytarish
         * `transfer_out` - Ko'chirish (jo'natildi)
         * `transfer_in` - Ko'chirish (qabul qilindi)
@@ -3610,6 +4397,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Branch'
+    PaginatedCashTransactionList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CashTransaction'
     PaginatedExchangeRateList:
       type: object
       required:
@@ -3710,6 +4522,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Role'
+    PaginatedSaleListList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleList'
     PaginatedStockLevelList:
       type: object
       required:
@@ -3896,6 +4733,31 @@ components:
           format: decimal
           pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
           nullable: true
+    PatchedPaymentMethodRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 30
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        provider:
+          allOf:
+          - $ref: '#/components/schemas/ProviderEnum'
+          default: manual
+        is_cash:
+          type: boolean
+          description: Kassa qoldig'iga ta'sir qiladimi
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
     PatchedPriceTypeRequest:
       type: object
       properties:
@@ -4032,6 +4894,105 @@ components:
         is_active:
           type: boolean
           default: true
+    PaymentDirectionEnum:
+      enum:
+      - in
+      - out
+      type: string
+      description: |-
+        * `in` - Kirim
+        * `out` - Chiqim
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 30
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 50
+        provider:
+          allOf:
+          - $ref: '#/components/schemas/ProviderEnum'
+          default: manual
+        is_cash:
+          type: boolean
+          description: Kassa qoldig'iga ta'sir qiladimi
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+      required:
+      - code
+      - id
+      - name
+    PaymentMethodRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 30
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        provider:
+          allOf:
+          - $ref: '#/components/schemas/ProviderEnum'
+          default: manual
+        is_cash:
+          type: boolean
+          description: Kassa qoldig'iga ta'sir qiladimi
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+      required:
+      - code
+      - name
+    PosProduct:
+      type: object
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+        barcode:
+          type: string
+        name:
+          type: string
+        unit_code:
+          type: string
+        unit_decimal_places:
+          type: integer
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+      required:
+      - barcode
+      - id
+      - name
+      - price
+      - sku
+      - stock
+      - unit_code
+      - unit_decimal_places
     PriceType:
       type: object
       properties:
@@ -4290,6 +5251,11 @@ components:
       - name
       - sku
       - unit
+    ProviderEnum:
+      enum:
+      - manual
+      type: string
+      description: '* `manual` - Qo''lda (naqd, terminal, o''tkazma)'
     PurchaseDetail:
       type: object
       properties:
@@ -4819,6 +5785,475 @@ components:
       required:
       - code
       - name
+    SaleCancelRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 255
+      required:
+      - reason
+    SaleDetail:
+      type: object
+      description: Tannarx va foyda faqat `inventory.view_cost` huquqi borlarga (sotuvchiga
+        — yo'q).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/SaleStatusEnum'
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        seller:
+          type: integer
+          readOnly: true
+        seller_name:
+          type: string
+          readOnly: true
+        currency:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        currency_decimal_places:
+          type: integer
+          readOnly: true
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: chegirmasiz
+        discount_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+        profit_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+        paid_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: to'lovlar savdo valyutasida
+        change_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+        cancelled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        price_type:
+          type: integer
+          readOnly: true
+        price_type_name:
+          type: string
+          readOnly: true
+        rate_to_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,12})?$
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        cancelled_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        cancel_reason:
+          type: string
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleItem'
+          readOnly: true
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalePayment'
+          readOnly: true
+        base_currency:
+          type: string
+          readOnly: true
+        can_cancel:
+          type: boolean
+          readOnly: true
+      required:
+      - base_currency
+      - branch
+      - branch_name
+      - can_cancel
+      - cancel_reason
+      - cancelled_at
+      - cancelled_by_name
+      - change_amount
+      - completed_at
+      - cost_base
+      - currency
+      - currency_code
+      - currency_decimal_places
+      - discount_total
+      - id
+      - items
+      - items_count
+      - note
+      - number
+      - paid_total
+      - payments
+      - price_type
+      - price_type_name
+      - profit_base
+      - rate_to_base
+      - seller
+      - seller_name
+      - status
+      - subtotal
+      - total
+      - total_base
+    SaleItem:
+      type: object
+      description: Tannarx va foyda faqat `inventory.view_cost` huquqi borlarga (sotuvchiga
+        — yo'q).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        position:
+          type: integer
+          readOnly: true
+        product:
+          type: integer
+          readOnly: true
+        product_name:
+          type: string
+          readOnly: true
+        product_sku:
+          type: string
+          readOnly: true
+        unit_code:
+          type: string
+          readOnly: true
+        unit_decimal_places:
+          type: integer
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        line_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+      required:
+      - cost_base
+      - discount_amount
+      - id
+      - line_total
+      - position
+      - product
+      - product_name
+      - product_sku
+      - quantity
+      - unit_code
+      - unit_decimal_places
+      - unit_price
+    SaleItemWriteRequest:
+      type: object
+      properties:
+        product:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          default: '0.0000'
+      required:
+      - product
+      - quantity
+    SaleList:
+      type: object
+      description: Tannarx va foyda faqat `inventory.view_cost` huquqi borlarga (sotuvchiga
+        — yo'q).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/SaleStatusEnum'
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        seller:
+          type: integer
+          readOnly: true
+        seller_name:
+          type: string
+          readOnly: true
+        currency:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        currency_decimal_places:
+          type: integer
+          readOnly: true
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: chegirmasiz
+        discount_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+        profit_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+        paid_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: to'lovlar savdo valyutasida
+        change_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+        cancelled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - branch
+      - branch_name
+      - cancelled_at
+      - change_amount
+      - completed_at
+      - cost_base
+      - currency
+      - currency_code
+      - currency_decimal_places
+      - discount_total
+      - id
+      - items_count
+      - number
+      - paid_total
+      - profit_base
+      - seller
+      - seller_name
+      - status
+      - subtotal
+      - total
+      - total_base
+    SalePayment:
+      type: object
+      description: Savdo to'lovlari (payments app dagi Payment, atribut nomlari bo'yicha).
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+        kind:
+          type: string
+        direction:
+          type: string
+        status:
+          type: string
+        method_code:
+          type: string
+        method_name:
+          type: string
+        is_cash:
+          type: boolean
+        currency_code:
+          type: string
+        currency_decimal_places:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        received_by_name:
+          type: string
+        received_at:
+          type: string
+          format: date-time
+      required:
+      - amount
+      - currency_code
+      - currency_decimal_places
+      - direction
+      - id
+      - is_cash
+      - kind
+      - method_code
+      - method_name
+      - number
+      - received_at
+      - received_by_name
+      - status
+    SalePaymentWriteRequest:
+      type: object
+      properties:
+        method:
+          type: integer
+        currency:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+      required:
+      - amount
+      - currency
+      - method
+    SaleStatusEnum:
+      enum:
+      - completed
+      - cancelled
+      type: string
+      description: |-
+        * `completed` - Yakunlandi
+        * `cancelled` - Bekor qilindi
+    SaleWriteRequest:
+      type: object
+      properties:
+        branch:
+          type: integer
+        currency:
+          type: integer
+        price_type:
+          type: integer
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleItemWriteRequest'
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalePaymentWriteRequest'
+        note:
+          type: string
+          default: ''
+          maxLength: 255
+        expected_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+          description: Kassada ko'rsatilgan jami; serverdagidan farq qilsa 409 total_mismatch
+      required:
+      - branch
+      - currency
+      - items
+      - payments
     SetPasswordRequest:
       type: object
       properties:
@@ -5037,6 +6472,21 @@ components:
       - type_display
       - unit_code
       - unit_cost_base
+    SummaryCurrency:
+      type: object
+      properties:
+        currency:
+          type: string
+        count:
+          type: integer
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+      required:
+      - count
+      - currency
+      - total
     Supplier:
       type: object
       properties:
