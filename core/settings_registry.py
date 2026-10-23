@@ -100,12 +100,6 @@ register(
         description="Tovar uchun alohida berilmagan bo'lsa minimal qoldiq",
     ),
     SettingDef(
-        key="inventory.allow_negative_stock",
-        type="bool",
-        default=False,
-        description="Manfiy qoldiqqa ruxsat",
-    ),
-    SettingDef(
         key="sales.max_seller_discount_percent",
         type="decimal",
         default="10",

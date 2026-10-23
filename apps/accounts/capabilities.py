@@ -29,6 +29,7 @@ CAPABILITIES: tuple[Capability, ...] = (
     # ombor
     Capability("inventory.view", "Qoldiq va harakatlarni ko'rish", "Ombor"),
     Capability("inventory.view_cost", "Tannarxni ko'rish", "Ombor"),
+    Capability("inventory.manage", "Qoldiq sozlamalari (nuqta bo'yicha minimal qoldiq)", "Ombor"),
     Capability("purchasing.view", "Kirimlarni ko'rish", "Ombor"),
     Capability("purchasing.manage", "Kirim qilish", "Ombor"),
     Capability("inventory.transfers.create", "Ko'chirish yaratish va jo'natish", "Ombor"),
@@ -111,6 +112,7 @@ ROLE_PRESETS: dict[str, dict] = {
             "catalog.manage",
             "inventory.view",
             "inventory.view_cost",
+            "inventory.manage",
             "purchasing.view",
             "purchasing.manage",
             "inventory.transfers.create",

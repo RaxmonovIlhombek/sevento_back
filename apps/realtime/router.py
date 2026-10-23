@@ -146,3 +146,34 @@ route(
     groups=lambda e: [BROADCAST],
     payload=lambda e: {"rates": e.rates, "source": e.source},  # type: ignore[attr-defined]
 )
+
+
+def _branch_group(e: Event) -> list[str]:
+    return [f"branch_{e.branch_id}"] if e.branch_id else []
+
+
+route(
+    "stock.changed",
+    groups=_branch_group,
+    # tannarx yo'q: branch guruhida sotuvchi ham bor
+    payload=lambda e: {  # type: ignore[attr-defined]
+        "branch_id": e.branch_id,
+        "product_id": e.product_id,
+        "quantity": str(e.quantity_after),
+        "delta": str(e.delta),
+        "movement_type": e.movement_type,
+        "document": {"type": e.document_type, "id": e.document_id, "number": e.document_number},
+    },
+)
+route(
+    "stock.below_minimum",
+    groups=_branch_group,
+    payload=lambda e: {  # type: ignore[attr-defined]
+        "branch_id": e.branch_id,
+        "product_id": e.product_id,
+        "product_name": e.product_name,
+        "quantity": str(e.quantity),
+        "min_quantity": str(e.min_quantity),
+        "unit": e.unit,
+    },
+)

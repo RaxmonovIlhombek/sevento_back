@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     "apps.realtime",
     "apps.currency",
     "apps.catalog",
+    "apps.inventory",
+    "apps.purchasing",
 ]
 
 MIDDLEWARE = [
@@ -191,6 +193,10 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": r"/api/v1",
     "COMPONENT_SPLIT_REQUEST": True,
     "SORT_OPERATIONS": True,
+    "ENUM_NAME_OVERRIDES": {
+        "AllocationMethodEnum": "apps.purchasing.models.AllocationMethod",
+        "MovementTypeEnum": "apps.inventory.types.MovementType",
+    },
     "POSTPROCESSING_HOOKS": [
         "drf_spectacular.hooks.postprocess_schema_enums",
     ],

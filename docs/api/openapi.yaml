@@ -1425,6 +1425,871 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
           description: ''
+  /api/v1/inventory/batches/:
+    get:
+      operationId: inventory_batches_list
+      description: Partiyalar va ularning tannarxi — inventory.view_cost.
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: open
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: product
+        schema:
+          type: number
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: source_type
+        schema:
+          type: string
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBatchList'
+          description: ''
+  /api/v1/inventory/batches/{id}/:
+    get:
+      operationId: inventory_batches_retrieve
+      description: Partiyalar va ularning tannarxi — inventory.view_cost.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this batch.
+        required: true
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Batch'
+          description: ''
+  /api/v1/inventory/movements/:
+    get:
+      operationId: inventory_movements_list
+      description: Ombor harakatlari jurnali. Tannarx ustunlari — faqat inventory.view_cost
+        bilan.
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - in
+          - out
+        description: |-
+          * `in` - in
+          * `out` - out
+      - in: query
+        name: document_id
+        schema:
+          type: integer
+      - in: query
+        name: document_type
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: product
+        schema:
+          type: number
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: type
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - count_shortage
+            - count_surplus
+            - purchase_cancel
+            - purchase_in
+            - sale_out
+            - sale_return_in
+            - transfer_in
+            - transfer_out
+            - write_off
+        description: |-
+          * `purchase_in` - Kirim
+          * `purchase_cancel` - Kirim bekor qilindi
+          * `sale_out` - Savdo
+          * `sale_return_in` - Qaytarish
+          * `transfer_out` - Ko'chirish (jo'natildi)
+          * `transfer_in` - Ko'chirish (qabul qilindi)
+          * `count_surplus` - Inventarizatsiya: ortiqcha
+          * `count_shortage` - Inventarizatsiya: kamomad
+          * `write_off` - Hisobdan chiqarish
+        explode: true
+        style: form
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStockMovementList'
+          description: ''
+  /api/v1/inventory/movements/{id}/:
+    get:
+      operationId: inventory_movements_retrieve
+      description: Ombor harakatlari jurnali. Tannarx ustunlari — faqat inventory.view_cost
+        bilan.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this stock movement.
+        required: true
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovement'
+          description: ''
+  /api/v1/inventory/stock/:
+    get:
+      operationId: inventory_stock_list
+      description: Qoldiqlar (o'z nuqtalari). PATCH — faqat nuqtaga xos minimal qoldiq
+        (inventory.manage).
+      parameters:
+      - in: query
+        name: below_minimum
+        schema:
+          type: boolean
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: category
+        schema:
+          type: number
+      - in: query
+        name: in_stock
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: product
+        schema:
+          type: number
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStockLevelList'
+          description: ''
+  /api/v1/inventory/stock/{id}/:
+    get:
+      operationId: inventory_stock_retrieve
+      description: Qoldiqlar (o'z nuqtalari). PATCH — faqat nuqtaga xos minimal qoldiq
+        (inventory.manage).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this stock level.
+        required: true
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockLevel'
+          description: ''
+    patch:
+      operationId: inventory_stock_partial_update
+      description: Qoldiqlar (o'z nuqtalari). PATCH — faqat nuqtaga xos minimal qoldiq
+        (inventory.manage).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this stock level.
+        required: true
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMinQuantityRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMinQuantityRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockLevel'
+          description: ''
+  /api/v1/purchasing/expense-types/:
+    get:
+      operationId: purchasing_expense_types_list
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - purchasing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExpenseType'
+          description: ''
+    post:
+      operationId: purchasing_expense_types_create
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseTypeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExpenseTypeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseType'
+          description: ''
+  /api/v1/purchasing/expense-types/{id}/:
+    put:
+      operationId: purchasing_expense_types_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this expense type.
+        required: true
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseTypeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExpenseTypeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseType'
+          description: ''
+    patch:
+      operationId: purchasing_expense_types_partial_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this expense type.
+        required: true
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedExpenseTypeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedExpenseTypeRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseType'
+          description: ''
+  /api/v1/purchasing/purchases/:
+    get:
+      operationId: purchasing_purchases_list
+      description: Kirimlar. Qoralama → receive (partiyalar, tannarx) → cancel (chiqim
+        bo'lmagan bo'lsa).
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: currency
+        schema:
+          type: integer
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - cancelled
+            - draft
+            - received
+        description: |-
+          * `draft` - Qoralama
+          * `received` - Qabul qilindi
+          * `cancelled` - Bekor qilindi
+        explode: true
+        style: form
+      - in: query
+        name: supplier
+        schema:
+          type: number
+      tags:
+      - purchasing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPurchaseListList'
+          description: ''
+    post:
+      operationId: purchasing_purchases_create
+      description: Kirimlar. Qoralama → receive (partiyalar, tannarx) → cancel (chiqim
+        bo'lmagan bo'lsa).
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDetail'
+          description: ''
+  /api/v1/purchasing/purchases/{id}/:
+    get:
+      operationId: purchasing_purchases_retrieve
+      description: Kirimlar. Qoralama → receive (partiyalar, tannarx) → cancel (chiqim
+        bo'lmagan bo'lsa).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - purchasing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDetail'
+          description: ''
+    put:
+      operationId: purchasing_purchases_update
+      description: Kirimlar. Qoralama → receive (partiyalar, tannarx) → cancel (chiqim
+        bo'lmagan bo'lsa).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDetail'
+          description: ''
+    patch:
+      operationId: purchasing_purchases_partial_update
+      description: Kirimlar. Qoralama → receive (partiyalar, tannarx) → cancel (chiqim
+        bo'lmagan bo'lsa).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - purchasing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseList'
+          description: ''
+  /api/v1/purchasing/purchases/{id}/cancel/:
+    post:
+      operationId: purchasing_purchases_cancel_create
+      description: Kirimlar. Qoralama → receive (partiyalar, tannarx) → cancel (chiqim
+        bo'lmagan bo'lsa).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CancelRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDetail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/purchasing/purchases/{id}/preview/:
+    get:
+      operationId: purchasing_purchases_preview_retrieve
+      description: Qoralama uchun tannarx hisob-kitobi joriy kurs bilan (saqlanmaydi).
+        Kurs yo'q → 409.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - purchasing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostPreview'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/purchasing/purchases/{id}/receive/:
+    post:
+      operationId: purchasing_purchases_receive_create
+      description: Kirimlar. Qoralama → receive (partiyalar, tannarx) → cancel (chiqim
+        bo'lmagan bo'lsa).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this purchase.
+        required: true
+      tags:
+      - purchasing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseDetail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/purchasing/suppliers/:
+    get:
+      operationId: purchasing_suppliers_list
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - purchasing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSupplierList'
+          description: ''
+    post:
+      operationId: purchasing_suppliers_create
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+  /api/v1/purchasing/suppliers/{id}/:
+    get:
+      operationId: purchasing_suppliers_retrieve
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this supplier.
+        required: true
+      tags:
+      - purchasing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+    put:
+      operationId: purchasing_suppliers_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this supplier.
+        required: true
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+    patch:
+      operationId: purchasing_suppliers_partial_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this supplier.
+        required: true
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
   /api/v1/realtime/notice/:
     post:
       operationId: realtime_notice_create
@@ -1894,6 +2759,14 @@ paths:
           description: No response body
 components:
   schemas:
+    AllocationMethodEnum:
+      enum:
+      - by_value
+      - by_quantity
+      type: string
+      description: |-
+        * `by_value` - Qiymat bo'yicha
+        * `by_quantity` - Miqdor bo'yicha
     AuditLog:
       type: object
       properties:
@@ -1953,6 +2826,69 @@ components:
       - ip
       - payload
       - request_id
+    Batch:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        product:
+          type: integer
+          readOnly: true
+        product_name:
+          type: string
+          readOnly: true
+        unit_code:
+          type: string
+          readOnly: true
+        source_type:
+          type: string
+          readOnly: true
+        source_id:
+          type: integer
+          readOnly: true
+        source_number:
+          type: string
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+          readOnly: true
+        quantity_initial:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        quantity_remaining:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        unit_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+          readOnly: true
+      required:
+      - branch
+      - branch_name
+      - id
+      - product
+      - product_name
+      - quantity_initial
+      - quantity_remaining
+      - received_at
+      - source_id
+      - source_number
+      - source_type
+      - unit_code
+      - unit_cost_base
     Branch:
       type: object
       properties:
@@ -1967,7 +2903,7 @@ components:
           type: string
           maxLength: 100
         type:
-          $ref: '#/components/schemas/TypeEnum'
+          $ref: '#/components/schemas/BranchTypeEnum'
         address:
           type: string
           maxLength: 255
@@ -2004,7 +2940,7 @@ components:
           minLength: 1
           maxLength: 100
         type:
-          $ref: '#/components/schemas/TypeEnum'
+          $ref: '#/components/schemas/BranchTypeEnum'
         address:
           type: string
           maxLength: 255
@@ -2017,6 +2953,23 @@ components:
       required:
       - code
       - name
+    BranchTypeEnum:
+      enum:
+      - shop
+      - warehouse
+      type: string
+      description: |-
+        * `shop` - Do'kon
+        * `warehouse` - Ombor
+    CancelRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 255
+      required:
+      - reason
     Capability:
       type: object
       properties:
@@ -2123,6 +3076,64 @@ components:
       required:
       - current_password
       - new_password
+    CostPreview:
+      type: object
+      properties:
+        rate_to_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,12})?$
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        subtotal_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        expenses_total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/CostPreviewLine'
+      required:
+      - expenses_total_base
+      - lines
+      - rate_to_base
+      - subtotal
+      - subtotal_base
+      - total_base
+    CostPreviewLine:
+      type: object
+      properties:
+        line_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        line_total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        allocated_expense_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        landed_unit_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+      required:
+      - allocated_expense_base
+      - landed_unit_cost_base
+      - line_total
+      - line_total_base
     Currency:
       type: object
       properties:
@@ -2306,6 +3317,54 @@ components:
       - rate
       - source
       - updated_at
+    ExpenseType:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 30
+        name:
+          type: string
+          maxLength: 100
+        default_allocation:
+          $ref: '#/components/schemas/AllocationMethodEnum'
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - name
+      - updated_at
+    ExpenseTypeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 30
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        default_allocation:
+          $ref: '#/components/schemas/AllocationMethodEnum'
+        is_active:
+          type: boolean
+      required:
+      - code
+      - name
     FetchResult:
       type: object
       properties:
@@ -2436,6 +3495,28 @@ components:
       - phone
       - role
       - username
+    MovementTypeEnum:
+      enum:
+      - purchase_in
+      - purchase_cancel
+      - sale_out
+      - sale_return_in
+      - transfer_out
+      - transfer_in
+      - count_surplus
+      - count_shortage
+      - write_off
+      type: string
+      description: |-
+        * `purchase_in` - Kirim
+        * `purchase_cancel` - Kirim bekor qilindi
+        * `sale_out` - Savdo
+        * `sale_return_in` - Qaytarish
+        * `transfer_out` - Ko'chirish (jo'natildi)
+        * `transfer_in` - Ko'chirish (qabul qilindi)
+        * `count_surplus` - Inventarizatsiya: ortiqcha
+        * `count_shortage` - Inventarizatsiya: kamomad
+        * `write_off` - Hisobdan chiqarish
     NoticeRequest:
       type: object
       properties:
@@ -2474,6 +3555,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AuditLog'
+    PaginatedBatchList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Batch'
     PaginatedBranchList:
       type: object
       required:
@@ -2549,6 +3655,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Product'
+    PaginatedPurchaseListList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseList'
     PaginatedRoleList:
       type: object
       required:
@@ -2574,6 +3705,81 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Role'
+    PaginatedStockLevelList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockLevel'
+    PaginatedStockMovementList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockMovement'
+    PaginatedSupplierList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Supplier'
     PaginatedUserList:
       type: object
       required:
@@ -2612,7 +3818,7 @@ components:
           minLength: 1
           maxLength: 100
         type:
-          $ref: '#/components/schemas/TypeEnum'
+          $ref: '#/components/schemas/BranchTypeEnum'
         address:
           type: string
           maxLength: 255
@@ -2662,6 +3868,29 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+    PatchedExpenseTypeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 30
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        default_allocation:
+          $ref: '#/components/schemas/AllocationMethodEnum'
+        is_active:
+          type: boolean
+    PatchedMinQuantityRequest:
+      type: object
+      properties:
+        min_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
     PatchedPriceTypeRequest:
       type: object
       properties:
@@ -2725,6 +3954,30 @@ components:
           items:
             type: string
             minLength: 1
+    PatchedSupplierRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        phone:
+          type: string
+          maxLength: 30
+        contact_person:
+          type: string
+          maxLength: 150
+        tin:
+          type: string
+          title: STIR
+          maxLength: 20
+        address:
+          type: string
+          maxLength: 255
+        note:
+          type: string
+        is_active:
+          type: boolean
     PatchedUnitRequest:
       type: object
       properties:
@@ -3032,6 +4285,434 @@ components:
       - name
       - sku
       - unit
+    PurchaseDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        supplier:
+          type: integer
+          readOnly: true
+        supplier_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        invoice_number:
+          type: string
+          readOnly: true
+        invoice_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        currency:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+          default: 0
+        created_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        rate_to_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,12})?$
+          readOnly: true
+          nullable: true
+        subtotal_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        expenses_total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItem'
+          readOnly: true
+        expenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseExpense'
+          readOnly: true
+        received_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        cancelled_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        cancelled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        cancel_reason:
+          type: string
+          readOnly: true
+        can_cancel:
+          type: boolean
+          readOnly: true
+          default: false
+        base_currency:
+          type: string
+          readOnly: true
+          default: ''
+      required:
+      - base_currency
+      - branch
+      - branch_name
+      - can_cancel
+      - cancel_reason
+      - cancelled_at
+      - cancelled_by_name
+      - created_at
+      - created_by_name
+      - currency
+      - currency_code
+      - expenses
+      - expenses_total_base
+      - id
+      - invoice_date
+      - invoice_number
+      - items
+      - items_count
+      - note
+      - number
+      - rate_to_base
+      - received_at
+      - received_by_name
+      - status
+      - status_display
+      - subtotal
+      - subtotal_base
+      - supplier
+      - supplier_name
+      - total_base
+    PurchaseExpense:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        expense_type:
+          type: integer
+          readOnly: true
+        expense_type_name:
+          type: string
+          readOnly: true
+        currency:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        allocation_method:
+          allOf:
+          - $ref: '#/components/schemas/AllocationMethodEnum'
+          readOnly: true
+        rate_to_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,12})?$
+          readOnly: true
+          nullable: true
+        amount_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+      required:
+      - allocation_method
+      - amount
+      - amount_base
+      - currency
+      - currency_code
+      - expense_type
+      - expense_type_name
+      - id
+      - note
+      - rate_to_base
+    PurchaseExpenseWriteRequest:
+      type: object
+      properties:
+        expense_type:
+          type: integer
+        currency:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        allocation_method:
+          $ref: '#/components/schemas/AllocationMethodEnum'
+        note:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - amount
+      - currency
+      - expense_type
+    PurchaseItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        product:
+          type: integer
+          readOnly: true
+        product_name:
+          type: string
+          readOnly: true
+        product_sku:
+          type: string
+          readOnly: true
+        unit_code:
+          type: string
+          readOnly: true
+        unit_decimal_places:
+          type: integer
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        line_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        line_total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        allocated_expense_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        landed_unit_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+          readOnly: true
+      required:
+      - allocated_expense_base
+      - id
+      - landed_unit_cost_base
+      - line_total
+      - line_total_base
+      - product
+      - product_name
+      - product_sku
+      - quantity
+      - unit_code
+      - unit_decimal_places
+      - unit_price
+    PurchaseItemWriteRequest:
+      type: object
+      properties:
+        product:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+      required:
+      - product
+      - quantity
+      - unit_price
+    PurchaseList:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        supplier:
+          type: integer
+          readOnly: true
+        supplier_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        invoice_number:
+          type: string
+          readOnly: true
+        invoice_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        currency:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+          default: 0
+        created_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - branch
+      - branch_name
+      - created_at
+      - created_by_name
+      - currency
+      - currency_code
+      - id
+      - invoice_date
+      - invoice_number
+      - items_count
+      - number
+      - received_at
+      - status
+      - status_display
+      - subtotal
+      - supplier
+      - supplier_name
+      - total_base
+    PurchaseWriteRequest:
+      type: object
+      properties:
+        branch:
+          type: integer
+        supplier:
+          type: integer
+        currency:
+          type: integer
+        invoice_number:
+          type: string
+          default: ''
+          maxLength: 50
+        invoice_date:
+          type: string
+          format: date
+          nullable: true
+        note:
+          type: string
+          default: ''
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseItemWriteRequest'
+        expenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseExpenseWriteRequest'
+      required:
+      - branch
+      - currency
+      - items
+      - supplier
     RateCreateRequest:
       type: object
       properties:
@@ -3161,6 +4842,266 @@ components:
       description: |-
         * `cbu` - Markaziy bank
         * `manual` - Qo'lda
+    StatusEnum:
+      enum:
+      - draft
+      - received
+      - cancelled
+      type: string
+      description: |-
+        * `draft` - Qoralama
+        * `received` - Qabul qilindi
+        * `cancelled` - Bekor qilindi
+    StockLevel:
+      type: object
+      description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
+        olib tashlanadi.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        product:
+          type: integer
+          readOnly: true
+        product_name:
+          type: string
+          readOnly: true
+        product_sku:
+          type: string
+          readOnly: true
+        product_barcode:
+          type: string
+          readOnly: true
+        category_name:
+          type: string
+          readOnly: true
+          nullable: true
+        unit_code:
+          type: string
+          readOnly: true
+        unit_decimal_places:
+          type: integer
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        min_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+          nullable: true
+          description: Bo'sh — tovardagi yoki sozlamadagi minimal qoldiq
+        effective_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        is_below_min:
+          type: boolean
+          readOnly: true
+        value_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,20}(?:\.\d{0,4})?$
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch
+      - branch_name
+      - category_name
+      - effective_min
+      - id
+      - is_below_min
+      - min_quantity
+      - product
+      - product_barcode
+      - product_name
+      - product_sku
+      - quantity
+      - unit_code
+      - unit_decimal_places
+      - updated_at
+      - value_base
+    StockMovement:
+      type: object
+      description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
+        olib tashlanadi.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        product:
+          type: integer
+          readOnly: true
+        product_name:
+          type: string
+          readOnly: true
+        product_sku:
+          type: string
+          readOnly: true
+        unit_code:
+          type: string
+          readOnly: true
+        batch:
+          type: integer
+          readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/MovementTypeEnum'
+          readOnly: true
+        type_display:
+          type: string
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        balance_after:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        unit_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+          readOnly: true
+        total_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        document_type:
+          type: string
+          readOnly: true
+        document_id:
+          type: integer
+          readOnly: true
+        document_number:
+          type: string
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - balance_after
+      - batch
+      - branch
+      - branch_name
+      - created_at
+      - created_by
+      - created_by_name
+      - document_id
+      - document_number
+      - document_type
+      - id
+      - product
+      - product_name
+      - product_sku
+      - quantity
+      - total_cost_base
+      - type
+      - type_display
+      - unit_code
+      - unit_cost_base
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        phone:
+          type: string
+          maxLength: 30
+        contact_person:
+          type: string
+          maxLength: 150
+        tin:
+          type: string
+          title: STIR
+          maxLength: 20
+        address:
+          type: string
+          maxLength: 255
+        note:
+          type: string
+        is_active:
+          type: boolean
+        purchases_count:
+          type: integer
+          readOnly: true
+          default: 0
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - purchases_count
+      - updated_at
+    SupplierRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        phone:
+          type: string
+          maxLength: 30
+        contact_person:
+          type: string
+          maxLength: 150
+        tin:
+          type: string
+          title: STIR
+          maxLength: 20
+        address:
+          type: string
+          maxLength: 255
+        note:
+          type: string
+        is_active:
+          type: boolean
+      required:
+      - name
     SystemSetting:
       type: object
       properties:
@@ -3219,14 +5160,6 @@ components:
       required:
       - expires_in
       - ticket
-    TypeEnum:
-      enum:
-      - shop
-      - warehouse
-      type: string
-      description: |-
-        * `shop` - Do'kon
-        * `warehouse` - Ombor
     Unit:
       type: object
       properties:

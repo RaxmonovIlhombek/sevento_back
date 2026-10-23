@@ -65,6 +65,12 @@ forbidden_modules = [
     "apps.catalog.models",
     "apps.catalog.serializers",
     "apps.catalog.views",
+    "apps.inventory.models",
+    "apps.inventory.serializers",
+    "apps.inventory.views",
+    "apps.purchasing.models",
+    "apps.purchasing.serializers",
+    "apps.purchasing.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -89,6 +95,12 @@ forbidden_modules = [
     "apps.catalog.models",
     "apps.catalog.serializers",
     "apps.catalog.views",
+    "apps.inventory.models",
+    "apps.inventory.serializers",
+    "apps.inventory.views",
+    "apps.purchasing.models",
+    "apps.purchasing.serializers",
+    "apps.purchasing.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -113,6 +125,12 @@ forbidden_modules = [
     "apps.catalog.models",
     "apps.catalog.serializers",
     "apps.catalog.views",
+    "apps.inventory.models",
+    "apps.inventory.serializers",
+    "apps.inventory.views",
+    "apps.purchasing.models",
+    "apps.purchasing.serializers",
+    "apps.purchasing.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -137,6 +155,12 @@ forbidden_modules = [
     "apps.catalog.models",
     "apps.catalog.serializers",
     "apps.catalog.views",
+    "apps.inventory.models",
+    "apps.inventory.serializers",
+    "apps.inventory.views",
+    "apps.purchasing.models",
+    "apps.purchasing.serializers",
+    "apps.purchasing.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -161,6 +185,12 @@ forbidden_modules = [
     "apps.catalog.models",
     "apps.catalog.serializers",
     "apps.catalog.views",
+    "apps.inventory.models",
+    "apps.inventory.serializers",
+    "apps.inventory.views",
+    "apps.purchasing.models",
+    "apps.purchasing.serializers",
+    "apps.purchasing.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -185,4 +215,70 @@ forbidden_modules = [
     "apps.currency.models",
     "apps.currency.serializers",
     "apps.currency.views",
+    "apps.inventory.models",
+    "apps.inventory.serializers",
+    "apps.inventory.views",
+    "apps.purchasing.models",
+    "apps.purchasing.serializers",
+    "apps.purchasing.views",
+]
+
+[[tool.importlinter.contracts]]
+name = "inventory boshqa app ichki qatlamini import qilmaydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.inventory"]
+forbidden_modules = [
+    "apps.accounts.models",
+    "apps.accounts.serializers",
+    "apps.accounts.views",
+    "apps.branches.models",
+    "apps.branches.serializers",
+    "apps.branches.views",
+    "apps.audit.models",
+    "apps.audit.serializers",
+    "apps.audit.views",
+    "apps.realtime.models",
+    "apps.realtime.serializers",
+    "apps.realtime.views",
+    "apps.currency.models",
+    "apps.currency.serializers",
+    "apps.currency.views",
+    "apps.catalog.models",
+    "apps.catalog.serializers",
+    "apps.catalog.views",
+    "apps.purchasing.models",
+    "apps.purchasing.serializers",
+    "apps.purchasing.views",
+]
+
+[[tool.importlinter.contracts]]
+name = "purchasing boshqa app ichki qatlamini import qilmaydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.purchasing"]
+forbidden_modules = [
+    "apps.accounts.models",
+    "apps.accounts.serializers",
+    "apps.accounts.views",
+    "apps.branches.models",
+    "apps.branches.serializers",
+    "apps.branches.views",
+    "apps.audit.models",
+    "apps.audit.serializers",
+    "apps.audit.views",
+    "apps.realtime.models",
+    "apps.realtime.serializers",
+    "apps.realtime.views",
+    "apps.currency.models",
+    "apps.currency.serializers",
+    "apps.currency.views",
+    "apps.catalog.models",
+    "apps.catalog.serializers",
+    "apps.catalog.views",
+    "apps.inventory.models",
+    "apps.inventory.serializers",
+    "apps.inventory.views",
 ]

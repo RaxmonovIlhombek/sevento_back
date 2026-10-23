@@ -52,6 +52,18 @@ def latest_rates(on: date | None = None) -> dict[str, ExchangeRate | None]:
     return {c.code: latest_rate(c, on) for c in active_currencies().exclude(code=QUOTE_CODE)}
 
 
+RATE_TO_BASE_PLACES = Decimal("0.000000000001")
+
+
+def rate_to_base(code: str, on: date | None = None) -> Decimal:
+    """Ko'paytuvchi k: summa (code) * k = summa (asosiy valyuta). Hujjatlarda snapshot sifatida."""
+    code = code.upper()
+    base = base_currency_code()
+    if code == base:
+        return Decimal(1)
+    return (rate_value(code, on) / rate_value(base, on)).quantize(RATE_TO_BASE_PLACES)
+
+
 def rate_value(code: str, on: date | None = None) -> Decimal:
     """1 birlik `code` necha so'm. UZS → 1. Kurs bo'lmasa RateUnavailable (409)."""
     code = code.upper()

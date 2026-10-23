@@ -170,6 +170,13 @@ def test_convert(owner, usd):
     assert services.convert(Decimal("1"), "uzs", "USD") == Decimal("0.0001")
 
 
+def test_rate_to_base(owner, usd):
+    services.set_rate(actor=owner, currency=usd, rate=Decimal("12500"))
+    assert selectors.rate_to_base("USD") == Decimal(1)  # asosiy valyuta
+    assert selectors.rate_to_base("uzs") == Decimal("0.000080000000")
+    assert Decimal("25000") * selectors.rate_to_base("UZS") == Decimal("2.000000000000")
+
+
 def test_convert_without_rate_raises(usd):
     with pytest.raises(RateUnavailable):
         services.convert(Decimal("1"), "USD", "UZS")

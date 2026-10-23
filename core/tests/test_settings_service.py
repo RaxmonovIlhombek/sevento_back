@@ -19,7 +19,15 @@ def _clear_cache():
 def test_default_when_not_in_db():
     assert settings_service.get("payments.default_due_days") == 30
     assert settings_service.get("inventory.default_min_quantity") == Decimal("5")
-    assert settings_service.get("inventory.allow_negative_stock") is False
+
+
+def test_bool_setting_coercion():
+    from core.settings_registry import SettingDef
+
+    definition = SettingDef(key="x.flag", type="bool", default=False, description="")
+    assert definition.coerce(True) is True
+    with pytest.raises(ValueError):
+        definition.coerce("yes")
 
 
 def test_unknown_key():
@@ -44,8 +52,6 @@ def test_set_and_get_with_cache_invalidation(django_capture_on_commit_callbacks)
 def test_set_wrong_type_rejected():
     with pytest.raises(ValueError):
         settings_service.set(key="payments.default_due_days", value="30 kun")
-    with pytest.raises(ValueError):
-        settings_service.set(key="inventory.allow_negative_stock", value="yes")
     with pytest.raises(ValueError):
         settings_service.set(key="inventory.costing_method", value="lifo")
 
