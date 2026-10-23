@@ -953,13 +953,17 @@ erDiagram
   ReportJob {
     int id PK
     string report_key
+    string title
     json params
     string format "pdf | xlsx"
     string status "pending, running, ready, failed"
-    file file
-    int requested_by_id FK
-    datetime finished_at
+    file file "reports/YYYY/MM/"
+    int rows_count
     string error
+    int requested_by_id FK
+    datetime created_at
+    datetime started_at
+    datetime finished_at
   }
 ```
 

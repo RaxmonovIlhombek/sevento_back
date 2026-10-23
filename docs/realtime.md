@@ -119,7 +119,7 @@ Boshqa hech qanday mijoz xabari qabul qilinmaydi (noma'lum `type` → e'tiborsiz
 | `currency.rate_updated` | `broadcast` | `{rates: [{currency, rate, date}], source}` | `['currency']`, `['products']` + toast "USD = 12 650,45 so'm" | 3 ✅ |
 | `stock.changed` | `branch_{id}` | `{branch_id, product_id, quantity, delta, movement_type, document: {type, id, number}}` — tannarx yo'q | `['inventory']`, `['sales','pos']` (kassa qidiruvidagi qoldiq; debounce 1,5 s) | 4 ✅ (kirim), 5 ✅ (savdo, bekor qilish) |
 | `stock.below_minimum` | `branch_{id}` (omborchi, sotuvchi; rahbar `branches.view_all` orqali barcha nuqtalar guruhida) | `{branch_id, product_id, product_name, quantity, min_quantity, unit}` | `['inventory']` + ogohlantirish toast "Kam qoldi: …" | 4 ✅ |
-| `dashboard.updated` | `dashboard.view` huquqi borlarning `user_{id}` guruhlari (rollar MB da o'zgaradi — rol nomi emas, huquq) | `{branch_id, reason: "sale.completed" \| "sale.cancelled" \| "payment.received" \| "sale_return.completed"}` | `['sales','summary']`, `['sales','list']` (debounce 2 s) | 5 ✅, 8 |
+| `dashboard.updated` | `dashboard.view` huquqi borlarning `user_{id}` guruhlari (rollar MB da o'zgaradi — rol nomi emas, huquq) | `{branch_id, reason: "sale.completed" \| "sale.cancelled" \| "payment.received" \| "sale_return.completed"}` | `['sales','summary']`, `['sales','list']`, `['dashboard']` (debounce 2 s) — rahbar dashboardi KPI va grafiklarni qayta so'raydi | 5 ✅, 8 ✅ |
 | `payment.received` | `branch_{id}` | `{branch_id, payment_id, method, currency, amount, is_cash, cashbox_id, customer_id, document: {type, id}}` | `['payments']` (kassa, jurnal, mijoz kartasi, qarzlar), `['sales','list']`, `['sales','summary']` (debounce 1 s) | 5–6 ✅ |
 | `debt.changed` | `branch_{id}` | `{branch_id, debt_id, customer_id}` (nasiya yozildi, yopildi, bekor qilindi) | `['payments']`, `['sales','list']` (debounce 1 s) | 6 ✅ |
 | `cash.updated` | `branch_{id}` | `{branch_id, reason: "shift_opened" \| "shift_closed" \| "manual_entry"}` | `['payments']` (debounce 0,5 s) | 6 ✅ |
@@ -131,8 +131,8 @@ Boshqa hech qanday mijoz xabari qabul qilinmaydi (noma'lum `type` → e'tiborsiz
 | `transfer.received` | ikkala nuqta; farq bo'lsa `dashboard.view` huquqi borlar ham (o'sha xabar) | `{..., status, has_discrepancy, discrepancies: [{product_name, quantity, quantity_received}]}` | `['inventory']` + jo'natuvchiga toast (farq bo'lsa — ogohlantirish, rahbarga ham) | 7 ✅ |
 | `transfer.cancelled` | jo'natilgan bo'lsa ikkala nuqta, qoralama — `branch_{from}` | `{..., status, previous_status, reason}` | `['inventory']` + qabul qiluvchiga ogohlantirish toast | 7 ✅ |
 | `sale_return.completed` | `branch_{id}` (+ `dashboard.updated` `dashboard.view` larga) | `{branch_id, return_id, number, sale_id, customer_id}` | `['sales']`, `['payments']` (debounce 0,5 s) | 7 ✅ |
-| `report.ready` | `user_{id}` | `{job_id, report_key, format, download_url}` | `['reports','jobs']` + toast "yuklab olish" | 8 |
-| `report.failed` | `user_{id}` | `{job_id, report_key, error}` | `['reports','jobs']` + xato toast | 8 |
+| `report.ready` | faqat so'ragan `user_{id}` | `{job_id, report_key, title, format, download_url}` | `['reports','jobs']` + toast "Hisobot tayyor" (fayl «Tayyorlangan fayllar» ro'yxatida, yuklab olish REST orqali) | 8 ✅ |
+| `report.failed` | faqat so'ragan `user_{id}` | `{job_id, report_key, title, error}` | `['reports','jobs']` + xato toast | 8 ✅ |
 
 Yangi tur qo'shilganda shu jadval yangilanadi; frontend da noma'lum `type` jim e'tiborsiz qoladi (eski mijoz yangi server bilan buzilmaydi).
 

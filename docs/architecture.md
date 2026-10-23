@@ -214,7 +214,7 @@ Strelka = "shu modulning service/selector funksiyasini chaqiradi". Teskari yo'na
 | `purchasing` | Supplier, Purchase, PurchaseItem, PurchaseExpense, ExpenseType | `selectors.*` (hisobotlar uchun) |
 | `payments` | PaymentMethod, Cashbox, CashTransaction, CashFlowCategory, CashShift(+Balance), Customer, Payment, Debt, DebtAllocation, CustomerLedgerEntry | `services` paketi (`payments.py`, `credit.py`, `cash.py`): `receive_payment()`, `give_change()`, `refund_to_customer()`, `reverse_document_payments()`, `register_debt()`, `cancel_document_debts()`, `reduce_document_debt()`, `receive_debt_payment()`, `credit_status()`; `selectors.payments_for_document()`, `document_debt()`; `types.PaymentDoc` |
 | `sales` | Sale, SaleItem, SaleReturn, SaleReturnItem | `selectors.*` (hisobotlar uchun); qaytarish `services.create_return()` — `inventory.restore_stock()` + `payments.reduce_document_debt()` / `refund_to_customer()` |
-| `reports` | ReportJob | — |
+| `reports` | ReportJob | — (boshqa app lar `reports` ga bog'lanmaydi — import-linter kontrakti). O'zi `sales`/`payments`/`inventory`/`purchasing`/`catalog`/`currency` selectorlarini o'qiydi; `dashboard.build_dashboard()` ham shu orqali |
 | `audit` | AuditLog | — |
 | `realtime` | — (ticket Redis da) | `services.issue_ticket()` |
 | `core` | OutboxEvent, SystemSetting, DocumentSequence, IdempotencyRecord | `events.publish()`, `numbering.next_number()`, `settings_service.get()` |
@@ -236,8 +236,8 @@ Qat'iy qoidalar:
 | Kirim xarajatlarini taqsimlash | `purchasing.allocation.AllocationStrategy` | qiymat bo'yicha, miqdor bo'yicha | og'irlik bo'yicha | har bir xarajat qatorida `allocation_method` |
 | To'lov provayderi | `payments.providers.PaymentProvider` | `ManualProvider` (naqd, terminal, o'tkazma) ✅ | `ClickProvider`, `PaymeProvider` | `PaymentMethod.provider` (MB) |
 | Valyuta kursi manbai | `currency.providers.RateProvider` | `CbuRateProvider` | boshqa bank / qo'lda | `SystemSetting["currency.rate_provider"]` |
-| Hisobotlar | `reports.registry.BaseReport` + `@register_report` | savdo, foyda, qoldiq, qarzlar, kassa ... | yangi fayl `reports/definitions/<nom>.py` | autodiscover — mavjud kod o'zgarmaydi |
-| Hisobot formati | `reports.renderers.Renderer` | JSON, PDF, XLSX | CSV | `?format=pdf` |
+| Hisobotlar | `reports.registry.BaseReport` + `@register_report` | 13 ta ✅: savdo, tovarlar bo'yicha foyda, qaytarish, qoldiq, aylanma, harakatlar, ko'chirish, hisobdan chiqarish, kirim, to'lovlar, kassa oqimi, qarzlar, qarzlar yoshi | yangi fayl `reports/definitions/<nom>.py` (ta'rif: `columns()`, `rows()`, `filters`, `capability`, `heavy`) | `ReportsConfig.ready()` `definitions/` ni autodiscover qiladi — mavjud kod (view, renderlar, frontend) o'zgarmaydi |
+| Hisobot formati | `reports.renderers.Renderer` (`@register_renderer`) | JSON (ko'rish), PDF (WeasyPrint), XLSX (openpyxl) ✅ | CSV | `POST /reports/{key}/export/ {format}` |
 
 Har bir joyda oddiy reyestr: `registry.register("fifo", FifoStrategy)` va `registry.get(key)`.
 
@@ -369,7 +369,8 @@ sequenceDiagram
 |---|---|---|
 | `currency.tasks.fetch_rates` | har kuni 09:05 (MB da o'zgaradi) | provider dan kurslarni oladi, `ExchangeRate` ga yozadi, `currency.rate_updated` hodisasi |
 | `payments.detect_overdue_debts` | har kuni 08:05 (MB da o'zgaradi) | muddati o'tgan ochiq qarzlar uchun bir martalik `debt.overdue` hodisasi (`overdue_notified_at`) ✅ |
-| `reports.tasks.generate_report` | so'rov bo'yicha | og'ir PDF/Excel hisobotlar, natija `ReportJob.file` ga |
+| `reports.generate_report` | so'rov bo'yicha | og'ir/uzoq davrli PDF/Excel, natija `ReportJob.file` ga, keyin `report.ready` / `report.failed` ✅ |
+| `reports.cleanup_report_files` | har kuni 03:20 (MB da) | `reports.keep_days` (7) dan eski fayl va `ReportJob` larni o'chiradi ✅ |
 | `core.tasks.redispatch_outbox` | har daqiqa | jo'natilmay qolgan hodisalarni qayta jo'natadi |
 | `core.tasks.cleanup` | har kuni tunda | eski idempotency yozuvlari va jo'natilgan outbox ni tozalaydi |
 

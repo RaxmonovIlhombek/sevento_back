@@ -115,3 +115,12 @@ Testlar: har app `tests/test_permissions.py` — 4 rol × asosiy endpointlar mat
 - **Hisobdan chiqarish:** ko'rish — `inventory.writeoffs.manage` yoki `inventory.view_cost`; yaratish/bekor qilish — `inventory.writeoffs.manage` + nuqta. Sabablar ma'lumotnomasi — `settings.manage`.
 - **Savdo qaytarish:** `sales.returns.create` + nuqta; sotuvchi faqat **o'z** savdosini qaytaradi, `sales.cancel` huquqi borlar nuqtadagi istalgan savdoni (403 `return_forbidden`). Pul qaytarish shu huquq bilan (alohida `payments.refund` shart emas). Qaytarish bo'lgan savdoni bekor qilib bo'lmaydi (409 `sale_has_returns`).
 - Tannarx maydonlari (ko'chirish, inventarizatsiya, hisobdan chiqarish, qaytarish) `inventory.view_cost` bo'lmasa javobdan olib tashlanadi; WebSocket payload ida tannarx yo'q.
+
+## Hisobotlar va dashboard bo'yicha qoidalar (8-bosqich)
+
+- **Hisobotlar ro'yxati va eksport:** `reports.view` yoki `reports.financial` (birortasi). Har hisobotning o'z `capability` si bor: savdo, tovarlar bo'yicha foyda, qaytarish, to'lovlar, kassa oqimi, qarzlar — `reports.financial`; kirim — `purchasing.view`; ombor hisobotlari — `reports.view`. Ro'yxatda faqat ochiq hisobotlar; boshqasini so'rash — 403 `permission_denied`.
+- **Ustun darajasi:** tannarx/qiymat ustunlari (`Column.capability = "inventory.view_cost"`) huquq bo'lmasa JSON, PDF va Excel dan olib tashlanadi.
+- **Nuqta chegarasi:** `branch` filtri `ensure_branch_access` dan o'tadi (begona nuqta — 403); filtr bo'sh bo'lsa selectorlar foydalanuvchining nuqtalari bilan cheklanadi (`branches.view_all` — hammasi).
+- **Fondagi fayllar:** `GET /reports/jobs/` va yuklab olish — faqat **o'zi so'ragan** `ReportJob` (boshqaniki 404); tayyor bo'lmasa 409 `report_not_ready`. `report.ready` WS xabari ham faqat so'raganga.
+- **Dashboard:** `GET /reports/dashboard/` — `dashboard.view`. Foyda KPI va grafikdagi foyda chizig'i — faqat `reports.financial`; ombor qiymati — `inventory.view_cost`. Ma'lumot foydalanuvchi nuqtalari bilan cheklangan; `branch` parametri bilan bitta nuqta.
+- Har bir eksport audit jurnaliga yoziladi (`report.exported`: hisobot, format, filtrlar, qatorlar soni).

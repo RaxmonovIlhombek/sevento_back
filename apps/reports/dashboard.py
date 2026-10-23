@@ -54,9 +54,10 @@ def _totals(user, start, end, branch_id) -> dict:
     returned = sum((r["total_base"] or ZERO for r in returns), ZERO)
     returned_cost = sum((r["cost_base"] or ZERO for r in returns), ZERO)
     net = revenue - returned
+    # foyda = yaxlitlangan tushum − yaxlitlangan tannarx (hisobotlardagi bilan bir xil son)
     return {
         "revenue": _q(net),
-        "profit": _q(net - (cost - returned_cost)),
+        "profit": _q(net) - _q(cost - returned_cost),
         "sales_count": count,
         "average_check": _q(revenue / count) if count else ZERO,
         "returns": _q(returned),
@@ -110,7 +111,7 @@ def _series(user, start, end, branch_id, hourly: bool) -> list[dict]:
             {
                 "label": key.strftime("%H:00") if hourly else key.isoformat(),
                 "revenue": _q(revenue),
-                "profit": _q(revenue - cost),
+                "profit": _q(revenue) - _q(cost),
                 "count": s.get("count", 0),
             }
         )

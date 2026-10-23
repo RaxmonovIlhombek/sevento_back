@@ -1,7 +1,7 @@
 """Hisobot natijasining yagona formati — JSON, PDF va Excel renderlari shuni chizadi."""
 
 from dataclasses import dataclass, field
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 
@@ -61,4 +61,4 @@ def percent(part, whole) -> Decimal | None:
     """Ulush foizda (1 xona); maxraj 0 bo'lsa — bo'sh."""
     if not whole:
         return None
-    return (Decimal(part) * 100 / Decimal(whole)).quantize(Decimal("0.1"))
+    return (Decimal(part) * 100 / Decimal(whole)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)

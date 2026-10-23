@@ -146,8 +146,11 @@ Ustunlar: **Audit** — audit jurnaliga yoziladimi; **WS** — WebSocket ga chiq
 
 | Hodisa | Qachon | Payload | Audit | WS | Boshqa |
 |---|---|---|---|---|---|
-| `report.ready` | Celery hisobot faylini tayyorladi | job_id, report_key, format, download_url | — | ✔ `user_{id}` | |
-| `report.failed` | | job_id, error | — | ✔ `user_{id}` | |
+| `report.exported` | hisobot fayli olindi (darhol yoki fonda tayyorlandi) | report_key, format, params, rows, job_id | ✔ | — | 8 ✅. Kim, qaysi hisobotni, qaysi filtrlar bilan |
+| `report.ready` | Celery (`reports.generate_report`) faylni tayyorladi | user_id, job_id, report_key, title, format, download_url | — | ✔ faqat so'ragan `user_{id}` | 8 ✅ |
+| `report.failed` | fondagi tayyorlash xato bilan tugadi | user_id, job_id, report_key, title, error | — | ✔ faqat so'ragan `user_{id}` | 8 ✅ |
+
+Og'ir hisobot (`heavy = True`) yoki davri `reports.sync_max_days` (31) dan uzun bo'lsa — eksport `202` + `ReportJob`, aks holda fayl darhol qaytadi. Ko'rish (JSON) hodisa chiqarmaydi.
 
 ## 3. Hodisa ↔ WebSocket xabari
 
