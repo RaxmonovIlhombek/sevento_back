@@ -16,6 +16,15 @@ def roles_queryset() -> QuerySet[Role]:
     return Role.objects.annotate(users_count=Count("users"))
 
 
+def get_user(user_id: int) -> User | None:
+    """Rol bilan birga (huquqlar uchun). Boshqa app lar User modelini to'g'ridan-to'g'ri olmaydi."""
+    return User.objects.select_related("role").filter(pk=user_id).first()
+
+
+def is_user_active(user_id: int) -> bool:
+    return User.objects.filter(pk=user_id, is_active=True).exists()
+
+
 def get_user_branch_ids(user: User) -> frozenset[int] | None:
     return user.accessible_branch_ids()
 

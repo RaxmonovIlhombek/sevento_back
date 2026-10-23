@@ -141,3 +141,8 @@ route(
     groups=lambda e: [BROADCAST],
     payload=lambda e: {"level": e.level, "message": e.message},
 )  # type: ignore[attr-defined]
+route(
+    "currency.rate_updated",
+    groups=lambda e: [BROADCAST],
+    payload=lambda e: {"rates": e.rates, "source": e.source},  # type: ignore[attr-defined]
+)

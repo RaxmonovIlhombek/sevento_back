@@ -388,6 +388,1049 @@ paths:
               schema:
                 $ref: '#/components/schemas/Branch'
           description: ''
+  /api/v1/catalog/categories/:
+    get:
+      operationId: catalog_categories_list
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: parent
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - catalog
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+          description: ''
+    post:
+      operationId: catalog_categories_create
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /api/v1/catalog/categories/{id}/:
+    get:
+      operationId: catalog_categories_retrieve
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - catalog
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    put:
+      operationId: catalog_categories_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    patch:
+      operationId: catalog_categories_partial_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /api/v1/catalog/categories/tree/:
+    get:
+      operationId: catalog_categories_tree_list
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: query
+        name: include_inactive
+        schema:
+          type: boolean
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: parent
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - catalog
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryTree'
+          description: ''
+  /api/v1/catalog/price-types/:
+    get:
+      operationId: catalog_price_types_list
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - catalog
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceType'
+          description: ''
+    post:
+      operationId: catalog_price_types_create
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceTypeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PriceTypeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceType'
+          description: ''
+  /api/v1/catalog/price-types/{id}/:
+    get:
+      operationId: catalog_price_types_retrieve
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this price type.
+        required: true
+      tags:
+      - catalog
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceType'
+          description: ''
+    put:
+      operationId: catalog_price_types_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this price type.
+        required: true
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceTypeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PriceTypeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceType'
+          description: ''
+    patch:
+      operationId: catalog_price_types_partial_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this price type.
+        required: true
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPriceTypeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPriceTypeRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceType'
+          description: ''
+  /api/v1/catalog/products/:
+    get:
+      operationId: catalog_products_list
+      description: Tovarlar. ?branch= — joriy narxlar shu nuqtaga xos narxlarni hisobga
+        olib qaytariladi.
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - in: query
+        name: category
+        schema:
+          type: integer
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: unit
+        schema:
+          type: integer
+      tags:
+      - catalog
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductList'
+          description: ''
+    post:
+      operationId: catalog_products_create
+      description: Tovarlar. ?branch= — joriy narxlar shu nuqtaga xos narxlarni hisobga
+        olib qaytariladi.
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+  /api/v1/catalog/products/{id}/:
+    get:
+      operationId: catalog_products_retrieve
+      description: Tovarlar. ?branch= — joriy narxlar shu nuqtaga xos narxlarni hisobga
+        olib qaytariladi.
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product.
+        required: true
+      tags:
+      - catalog
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    put:
+      operationId: catalog_products_update
+      description: Tovarlar. ?branch= — joriy narxlar shu nuqtaga xos narxlarni hisobga
+        olib qaytariladi.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product.
+        required: true
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    patch:
+      operationId: catalog_products_partial_update
+      description: Tovarlar. ?branch= — joriy narxlar shu nuqtaga xos narxlarni hisobga
+        olib qaytariladi.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product.
+        required: true
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductWrite'
+          description: ''
+  /api/v1/catalog/products/{id}/prices/:
+    get:
+      operationId: catalog_products_prices_list
+      description: Narx tarixi (barcha nuqtalar, barcha turlar).
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product.
+        required: true
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: unit
+        schema:
+          type: integer
+      tags:
+      - catalog
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductPriceList'
+          description: ''
+  /api/v1/catalog/products/{id}/set-price/:
+    post:
+      operationId: catalog_products_set_price_create
+      description: Tovarlar. ?branch= — joriy narxlar shu nuqtaga xos narxlarni hisobga
+        olib qaytariladi.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product.
+        required: true
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetPriceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SetPriceRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPrice'
+          description: ''
+  /api/v1/catalog/units/:
+    get:
+      operationId: catalog_units_list
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - catalog
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Unit'
+          description: ''
+    post:
+      operationId: catalog_units_create
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UnitRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+  /api/v1/catalog/units/{id}/:
+    get:
+      operationId: catalog_units_retrieve
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this unit.
+        required: true
+      tags:
+      - catalog
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+    put:
+      operationId: catalog_units_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this unit.
+        required: true
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UnitRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+    patch:
+      operationId: catalog_units_partial_update
+      description: 'ViewSet: capability_map = {"list": "x.view", "create": "x.manage",
+        ...}.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this unit.
+        required: true
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUnitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUnitRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+  /api/v1/currencies/:
+    get:
+      operationId: currencies_list
+      description: Valyutalar jadvali. Ro'yxat hammaga; o'zgartirish — settings.manage.
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - currency
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Currency'
+          description: ''
+    post:
+      operationId: currencies_create
+      description: Valyutalar jadvali. Ro'yxat hammaga; o'zgartirish — settings.manage.
+      tags:
+      - currency
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CurrencyRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Currency'
+          description: ''
+  /api/v1/currencies/{id}/:
+    get:
+      operationId: currencies_retrieve
+      description: Valyutalar jadvali. Ro'yxat hammaga; o'zgartirish — settings.manage.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this currency.
+        required: true
+      tags:
+      - currency
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Currency'
+          description: ''
+    put:
+      operationId: currencies_update
+      description: Valyutalar jadvali. Ro'yxat hammaga; o'zgartirish — settings.manage.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this currency.
+        required: true
+      tags:
+      - currency
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CurrencyRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Currency'
+          description: ''
+    patch:
+      operationId: currencies_partial_update
+      description: Valyutalar jadvali. Ro'yxat hammaga; o'zgartirish — settings.manage.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this currency.
+        required: true
+      tags:
+      - currency
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCurrencyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCurrencyRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Currency'
+          description: ''
+  /api/v1/currency-rates/:
+    get:
+      operationId: currency_rates_list
+      description: Kurslar tarixi; qo'lda kiritish va provayderdan yangilash — currency.rates.manage.
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+      - in: query
+        name: currency
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: source
+        schema:
+          type: string
+          enum:
+          - cbu
+          - manual
+        description: |-
+          * `cbu` - Markaziy bank
+          * `manual` - Qo'lda
+      tags:
+      - currency
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExchangeRateList'
+          description: ''
+    post:
+      operationId: currency_rates_create
+      description: Kurslar tarixi; qo'lda kiritish va provayderdan yangilash — currency.rates.manage.
+      tags:
+      - currency
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RateCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RateCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeRate'
+          description: ''
+  /api/v1/currency-rates/fetch/:
+    post:
+      operationId: currency_rates_fetch_create
+      description: Tanlangan manbadan (sozlama currency.rate_provider) hozir yangilash.
+      tags:
+      - currency
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FetchResult'
+          description: ''
+  /api/v1/currency-rates/latest/:
+    get:
+      operationId: currency_rates_latest_list
+      description: Har faol valyuta uchun joriy kurs (UZS dan tashqari).
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+      - in: query
+        name: currency
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: source
+        schema:
+          type: string
+          enum:
+          - cbu
+          - manual
+        description: |-
+          * `cbu` - Markaziy bank
+          * `manual` - Qo'lda
+      tags:
+      - currency
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLatestRateList'
+          description: ''
   /api/v1/health/:
     get:
       operationId: health_retrieve
@@ -1007,6 +2050,84 @@ components:
       - code
       - group
       - name
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        parent:
+          type: integer
+          nullable: true
+        parent_name:
+          type: string
+          readOnly: true
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - parent_name
+      - updated_at
+    CategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        parent:
+          type: integer
+          nullable: true
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+      required:
+      - name
+    CategoryTree:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        sort_order:
+          type: integer
+        is_active:
+          type: boolean
+        parent:
+          type: integer
+          nullable: true
+        children:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - id
+      - is_active
+      - name
+      - parent
+      - sort_order
     ChangePasswordRequest:
       type: object
       properties:
@@ -1021,6 +2142,98 @@ components:
       required:
       - current_password
       - new_password
+    Currency:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 3
+        name:
+          type: string
+          maxLength: 50
+        symbol:
+          type: string
+          maxLength: 10
+        decimal_places:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - name
+      - updated_at
+    CurrencyRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 3
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        symbol:
+          type: string
+          maxLength: 10
+        decimal_places:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+      required:
+      - code
+      - name
+    CurrentPrice:
+      type: object
+      properties:
+        price_type:
+          type: string
+        price_type_name:
+          type: string
+        currency:
+          type: string
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        branch:
+          type: integer
+          nullable: true
+        valid_from:
+          type: string
+          format: date-time
+      required:
+      - amount
+      - branch
+      - currency
+      - price_type
+      - price_type_name
+      - valid_from
     ErrorBody:
       type: object
       properties:
@@ -1060,6 +2273,69 @@ components:
           $ref: '#/components/schemas/ErrorBody'
       required:
       - error
+    ExchangeRate:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        currency:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+          readOnly: true
+        date:
+          type: string
+          format: date
+          readOnly: true
+        source:
+          allOf:
+          - $ref: '#/components/schemas/SourceEnum'
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - created_by_name
+      - currency
+      - currency_code
+      - date
+      - id
+      - rate
+      - source
+      - updated_at
+    FetchResult:
+      type: object
+      properties:
+        provider:
+          type: string
+        updated:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeRate'
+      required:
+      - provider
+      - updated
     Health:
       type: object
       properties:
@@ -1073,6 +2349,40 @@ components:
       - db
       - redis
       - status
+    LatestRate:
+      type: object
+      properties:
+        currency:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        symbol:
+          type: string
+        decimal_places:
+          type: integer
+        rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+          nullable: true
+        date:
+          type: string
+          format: date
+          nullable: true
+        source:
+          type: string
+          nullable: true
+      required:
+      - code
+      - currency
+      - date
+      - decimal_places
+      - name
+      - rate
+      - source
+      - symbol
     LevelEnum:
       enum:
       - info
@@ -1207,6 +2517,106 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Branch'
+    PaginatedExchangeRateList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeRate'
+    PaginatedLatestRateList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LatestRate'
+    PaginatedProductList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+    PaginatedProductPriceList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductPrice'
     PaginatedRoleList:
       type: object
       required:
@@ -1280,6 +2690,92 @@ components:
         settings: {}
         is_active:
           type: boolean
+    PatchedCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        parent:
+          type: integer
+          nullable: true
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+    PatchedCurrencyRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 3
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        symbol:
+          type: string
+          maxLength: 10
+        decimal_places:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+    PatchedPriceTypeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        is_default:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+    PatchedProductWriteRequest:
+      type: object
+      properties:
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 50
+        barcode:
+          type: string
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        category:
+          type: integer
+          nullable: true
+        unit:
+          type: integer
+        min_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+          description: Bo'sh — sozlamadagi default (inventory.default_min_quantity)
+        description:
+          type: string
+        is_active:
+          type: boolean
     PatchedRoleRequest:
       type: object
       properties:
@@ -1297,6 +2793,23 @@ components:
           items:
             type: string
             minLength: 1
+    PatchedUnitRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        decimal_places:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
     PatchedUserWriteRequest:
       type: object
       properties:
@@ -1329,6 +2842,276 @@ components:
         is_active:
           type: boolean
           default: true
+    PriceType:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 20
+        name:
+          type: string
+          maxLength: 50
+        is_default:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - name
+      - updated_at
+    PriceTypeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        is_default:
+          type: boolean
+        sort_order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+      required:
+      - code
+      - name
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        barcode:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        category:
+          type: integer
+          readOnly: true
+          nullable: true
+        category_name:
+          type: string
+          readOnly: true
+        unit:
+          type: integer
+          readOnly: true
+        unit_code:
+          type: string
+          readOnly: true
+        unit_name:
+          type: string
+          readOnly: true
+        unit_decimal_places:
+          type: integer
+          readOnly: true
+        min_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+          nullable: true
+          description: Bo'sh — sozlamadagi default (inventory.default_min_quantity)
+        description:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        prices:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurrentPrice'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - barcode
+      - category
+      - category_name
+      - created_at
+      - description
+      - id
+      - is_active
+      - min_quantity
+      - name
+      - prices
+      - sku
+      - unit
+      - unit_code
+      - unit_decimal_places
+      - unit_name
+      - updated_at
+    ProductPrice:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        price_type:
+          type: integer
+          readOnly: true
+        price_type_code:
+          type: string
+          readOnly: true
+        price_type_name:
+          type: string
+          readOnly: true
+        currency:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+          nullable: true
+        branch_name:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        valid_from:
+          type: string
+          format: date-time
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - branch
+      - branch_name
+      - created_at
+      - created_by
+      - created_by_name
+      - currency
+      - currency_code
+      - id
+      - price_type
+      - price_type_code
+      - price_type_name
+      - valid_from
+    ProductWrite:
+      type: object
+      properties:
+        sku:
+          type: string
+          maxLength: 50
+        barcode:
+          type: string
+          maxLength: 64
+        name:
+          type: string
+          maxLength: 200
+        category:
+          type: integer
+          nullable: true
+        unit:
+          type: integer
+        min_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+          description: Bo'sh — sozlamadagi default (inventory.default_min_quantity)
+        description:
+          type: string
+        is_active:
+          type: boolean
+      required:
+      - name
+      - sku
+      - unit
+    ProductWriteRequest:
+      type: object
+      properties:
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 50
+        barcode:
+          type: string
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        category:
+          type: integer
+          nullable: true
+        unit:
+          type: integer
+        min_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+          description: Bo'sh — sozlamadagi default (inventory.default_min_quantity)
+        description:
+          type: string
+        is_active:
+          type: boolean
+      required:
+      - name
+      - sku
+      - unit
+    RateCreateRequest:
+      type: object
+      properties:
+        currency:
+          type: integer
+        rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+        date:
+          type: string
+          format: date
+      required:
+      - currency
+      - rate
     RefreshResponse:
       type: object
       properties:
@@ -1414,6 +3197,35 @@ components:
           minLength: 1
       required:
       - new_password
+    SetPriceRequest:
+      type: object
+      properties:
+        price_type:
+          type: integer
+        currency:
+          type: integer
+        branch:
+          type: integer
+          nullable: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        valid_from:
+          type: string
+          format: date-time
+      required:
+      - amount
+      - currency
+      - price_type
+    SourceEnum:
+      enum:
+      - cbu
+      - manual
+      type: string
+      description: |-
+        * `cbu` - Markaziy bank
+        * `manual` - Qo'lda
     SystemSetting:
       type: object
       properties:
@@ -1480,6 +3292,58 @@ components:
       description: |-
         * `shop` - Do'kon
         * `warehouse` - Ombor
+    Unit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 20
+        name:
+          type: string
+          maxLength: 50
+        decimal_places:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - name
+      - updated_at
+    UnitRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        decimal_places:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+      required:
+      - code
+      - name
     User:
       type: object
       properties:

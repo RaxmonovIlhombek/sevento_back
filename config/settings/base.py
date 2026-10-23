@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     "apps.branches",
     "apps.audit",
     "apps.realtime",
+    "apps.currency",
+    "apps.catalog",
 ]
 
 MIDDLEWARE = [
@@ -193,6 +195,9 @@ SPECTACULAR_SETTINGS = {
         "drf_spectacular.hooks.postprocess_schema_enums",
     ],
 }
+
+# --- Valyuta kursi manbai ---
+CURRENCY_CBU_URL = env("CURRENCY_CBU_URL", default="https://cbu.uz/uz/arkhiv-kursov-valyut/json/")
 
 # --- WebSocket (apps.realtime) ---
 REALTIME = {

@@ -28,12 +28,12 @@ CLOSE_TOO_MANY = 4429
 
 @database_sync_to_async
 def _load_user_for_ticket(ticket: str):
-    from apps.accounts.models import User
+    from apps.accounts import selectors
 
     user_id = tickets.consume_ticket(ticket)
     if user_id is None:
         return None
-    return User.objects.select_related("role").filter(pk=user_id).first()
+    return selectors.get_user(user_id)
 
 
 @database_sync_to_async
@@ -45,9 +45,9 @@ def _groups_for(user) -> list[str]:
 
 @database_sync_to_async
 def _is_active(user_id: int) -> bool:
-    from apps.accounts.models import User
+    from apps.accounts import selectors
 
-    return User.objects.filter(pk=user_id, is_active=True).exists()
+    return selectors.is_user_active(user_id)
 
 
 class RealtimeConsumer(AsyncJsonWebsocketConsumer):

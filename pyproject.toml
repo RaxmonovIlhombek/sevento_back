@@ -41,7 +41,8 @@ source_modules = ["core"]
 forbidden_modules = ["apps"]
 
 # App lar bir-birining models/serializers/views qatlamiga yopishmaydi:
-# faqat services, selectors, events orqali gaplashadi.
+# faqat services, selectors, events orqali gaplashadi (testlar istisno).
+
 [[tool.importlinter.contracts]]
 name = "accounts boshqa app ichki qatlamini import qilmaydi"
 type = "forbidden"
@@ -49,8 +50,21 @@ allow_indirect_imports = true
 ignore_imports = ["apps.**.tests.** -> apps.**"]
 source_modules = ["apps.accounts"]
 forbidden_modules = [
-    "apps.branches.models", "apps.branches.serializers", "apps.branches.views",
-    "apps.audit.models", "apps.audit.serializers", "apps.audit.views",
+    "apps.branches.models",
+    "apps.branches.serializers",
+    "apps.branches.views",
+    "apps.audit.models",
+    "apps.audit.serializers",
+    "apps.audit.views",
+    "apps.realtime.models",
+    "apps.realtime.serializers",
+    "apps.realtime.views",
+    "apps.currency.models",
+    "apps.currency.serializers",
+    "apps.currency.views",
+    "apps.catalog.models",
+    "apps.catalog.serializers",
+    "apps.catalog.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -60,20 +74,21 @@ allow_indirect_imports = true
 ignore_imports = ["apps.**.tests.** -> apps.**"]
 source_modules = ["apps.branches"]
 forbidden_modules = [
-    "apps.accounts.models", "apps.accounts.serializers", "apps.accounts.views",
-    "apps.audit.models", "apps.audit.serializers", "apps.audit.views",
-]
-
-[[tool.importlinter.contracts]]
-name = "realtime boshqa app ichki qatlamini import qilmaydi"
-type = "forbidden"
-allow_indirect_imports = true
-ignore_imports = ["apps.**.tests.** -> apps.**"]
-source_modules = ["apps.realtime"]
-forbidden_modules = [
-    "apps.accounts.serializers", "apps.accounts.views",
-    "apps.branches.models", "apps.branches.serializers", "apps.branches.views",
-    "apps.audit.models", "apps.audit.serializers", "apps.audit.views",
+    "apps.accounts.models",
+    "apps.accounts.serializers",
+    "apps.accounts.views",
+    "apps.audit.models",
+    "apps.audit.serializers",
+    "apps.audit.views",
+    "apps.realtime.models",
+    "apps.realtime.serializers",
+    "apps.realtime.views",
+    "apps.currency.models",
+    "apps.currency.serializers",
+    "apps.currency.views",
+    "apps.catalog.models",
+    "apps.catalog.serializers",
+    "apps.catalog.views",
 ]
 
 [[tool.importlinter.contracts]]
@@ -83,6 +98,91 @@ allow_indirect_imports = true
 ignore_imports = ["apps.**.tests.** -> apps.**"]
 source_modules = ["apps.audit"]
 forbidden_modules = [
-    "apps.accounts.models", "apps.accounts.serializers", "apps.accounts.views",
-    "apps.branches.models", "apps.branches.serializers", "apps.branches.views",
+    "apps.accounts.models",
+    "apps.accounts.serializers",
+    "apps.accounts.views",
+    "apps.branches.models",
+    "apps.branches.serializers",
+    "apps.branches.views",
+    "apps.realtime.models",
+    "apps.realtime.serializers",
+    "apps.realtime.views",
+    "apps.currency.models",
+    "apps.currency.serializers",
+    "apps.currency.views",
+    "apps.catalog.models",
+    "apps.catalog.serializers",
+    "apps.catalog.views",
+]
+
+[[tool.importlinter.contracts]]
+name = "realtime boshqa app ichki qatlamini import qilmaydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.realtime"]
+forbidden_modules = [
+    "apps.accounts.models",
+    "apps.accounts.serializers",
+    "apps.accounts.views",
+    "apps.branches.models",
+    "apps.branches.serializers",
+    "apps.branches.views",
+    "apps.audit.models",
+    "apps.audit.serializers",
+    "apps.audit.views",
+    "apps.currency.models",
+    "apps.currency.serializers",
+    "apps.currency.views",
+    "apps.catalog.models",
+    "apps.catalog.serializers",
+    "apps.catalog.views",
+]
+
+[[tool.importlinter.contracts]]
+name = "currency boshqa app ichki qatlamini import qilmaydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.currency"]
+forbidden_modules = [
+    "apps.accounts.models",
+    "apps.accounts.serializers",
+    "apps.accounts.views",
+    "apps.branches.models",
+    "apps.branches.serializers",
+    "apps.branches.views",
+    "apps.audit.models",
+    "apps.audit.serializers",
+    "apps.audit.views",
+    "apps.realtime.models",
+    "apps.realtime.serializers",
+    "apps.realtime.views",
+    "apps.catalog.models",
+    "apps.catalog.serializers",
+    "apps.catalog.views",
+]
+
+[[tool.importlinter.contracts]]
+name = "catalog boshqa app ichki qatlamini import qilmaydi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.**.tests.** -> apps.**"]
+source_modules = ["apps.catalog"]
+forbidden_modules = [
+    "apps.accounts.models",
+    "apps.accounts.serializers",
+    "apps.accounts.views",
+    "apps.branches.models",
+    "apps.branches.serializers",
+    "apps.branches.views",
+    "apps.audit.models",
+    "apps.audit.serializers",
+    "apps.audit.views",
+    "apps.realtime.models",
+    "apps.realtime.serializers",
+    "apps.realtime.views",
+    "apps.currency.models",
+    "apps.currency.serializers",
+    "apps.currency.views",
 ]
