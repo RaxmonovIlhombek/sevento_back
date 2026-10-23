@@ -27,6 +27,7 @@
     <tr><td>Chek №</td><td class="r">{{ number }}</td></tr>
     <tr><td>Sana</td><td class="r">{{ date }}</td></tr>
     <tr><td>Sotuvchi</td><td class="r">{{ seller }}</td></tr>
+    {% if customer %}<tr><td>Mijoz</td><td class="r">{{ customer }}</td></tr>{% endif %}
   </table>
   {% if cancelled %}<div class="stamp">BEKOR QILINGAN</div>{% endif %}
   <div class="sep"></div>
@@ -51,6 +52,8 @@
     <tr><td>{{ p.method }}</td><td class="r">{{ p.amount }} {{ p.currency }}</td></tr>
     {% endfor %}
     {% if change %}<tr><td>Qaytim</td><td class="r">{{ change }} {{ currency }}</td></tr>{% endif %}
+    {% if debt %}<tr class="name"><td>Nasiya</td><td class="r">{{ debt }} {{ currency }}</td></tr>
+    <tr class="muted"><td>To'lash muddati</td><td class="r">{{ due_date }}</td></tr>{% endif %}
   </table>
   <div class="sep"></div>
   <div class="center">{{ footer }}</div>

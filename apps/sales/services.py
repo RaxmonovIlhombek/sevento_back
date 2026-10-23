@@ -1,11 +1,13 @@
-"""Savdo: bitta tranzaksiyada narx → chegirma tekshiruvi → FIFO chiqim → to'lovlar → qaytim.
+"""Savdo: bitta tranzaksiyada narx → chegirma tekshiruvi → nasiya (limit) → FIFO chiqim →
+to'lovlar → qaytim.
 
-5-bosqichda faqat to'liq to'lov (naqd, karta, o'tkazma, bir nechta valyuta aralash). Nasiya —
-6-bosqichda shu oqimga qo'shiladi (to'lov yetmasa qarz yoziladi).
+To'lov (naqd, karta, o'tkazma, bir nechta valyuta aralash) jamidan kam bo'lsa, qolgani mijoz
+nomiga nasiya yoziladi (`sales.credit` huquqi va kredit limiti bilan).
 """
 
 from dataclasses import dataclass
-from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
+from datetime import date
+from decimal import ROUND_DOWN, ROUND_HALF_UP, ROUND_UP, Decimal
 
 from django.db import transaction
 from django.utils import timezone
@@ -177,6 +179,8 @@ def create_sale(
     items: list[dict],
     payments: list[dict],
     price_type=None,
+    customer=None,
+    due_date: date | None = None,
     note: str = "",
     expected_total: Decimal | None = None,
 ) -> Sale:
@@ -201,7 +205,15 @@ def create_sale(
 
     prepared = _prepare_payments(payments, currency)
     paid_total = sum((p.in_sale_currency for p in prepared), Decimal(0))
-    if paid_total < total:
+    debt = Decimal(0)
+    if paid_total < total and customer is not None:
+        if not actor.has_capability("sales.credit"):
+            raise BusinessRuleError(
+                "Nasiyaga sotish huquqi yo'q", code="credit_forbidden", status_code=403
+            )
+        # qarz hech qachon kam yozilmaydi: kasr qoldiq yuqoriga yaxlitlanadi
+        debt = (total - paid_total).quantize(quantum(places), rounding=ROUND_UP)
+    elif paid_total < total:
         raise PaymentInsufficient(
             f"To'lov yetarli emas: yana {(total - paid_total).normalize():f} {currency.code}",
             details=[
@@ -240,9 +252,25 @@ def create_sale(
             cost_base=Decimal(0),
             paid_total=paid_total,
             change_amount=change,
+            customer=customer,
+            debt_amount=debt,
             completed_at=now,
             note=note,
         )
+        doc = PaymentDoc(type=DOC_TYPE, id=sale.pk, number=sale.number)
+        if debt > 0:
+            # limit tekshiruvi tovar chiqimidan oldin — rad etilsa og'ir ish qilinmaydi
+            debt_row = payment_services.register_debt(
+                actor=actor,
+                customer=customer,
+                branch=branch,
+                currency=currency,
+                amount=debt,
+                doc=doc,
+                due_date=due_date,
+            )
+            sale.due_date = debt_row.due_date
+            sale.save(update_fields=["due_date"])
         sale_items = SaleItem.objects.bulk_create(
             [
                 SaleItem(
@@ -294,7 +322,6 @@ def create_sale(
             cost_total += result.total_cost_base
         SaleItem.objects.bulk_update(sale_items, ["cost_base", "batch_allocations"])
 
-        doc = PaymentDoc(type=DOC_TYPE, id=sale.pk, number=sale.number)
         for p in prepared:
             payment_services.receive_payment(
                 actor=actor,
@@ -303,6 +330,7 @@ def create_sale(
                 currency=p.currency,
                 amount=p.amount,
                 doc=doc,
+                customer=customer,
             )
         if change > 0:
             payment_services.give_change(
@@ -323,6 +351,8 @@ def create_sale(
             cost_base=cost_total,
             discount_total=discount_total,
             items_count=len(sale_items),
+            customer_id=customer.pk if customer else None,
+            debt_amount=debt,
             payments=[
                 {"method": p.method.code, "currency": p.currency.code, "amount": str(p.amount)}
                 for p in prepared
@@ -356,11 +386,10 @@ def cancel_sale(*, actor, sale: Sale, reason: str) -> Sale:
                 movement_type=MovementType.SALE_CANCEL,
                 doc=DocRef(type=DOC_TYPE, id=sale.pk, number=sale.number, line_id=item.pk),
             )
-        payment_services.reverse_document_payments(
-            actor=actor,
-            doc=PaymentDoc(type=doc.type, id=doc.id, number=doc.number),
-            reason=reason,
-        )
+        pay_doc = PaymentDoc(type=doc.type, id=doc.id, number=doc.number)
+        # nasiya: to'lov qilingan bo'lsa bekor qilinmaydi (409 debt_has_payments)
+        payment_services.cancel_document_debts(actor=actor, doc=pay_doc, reason=reason)
+        payment_services.reverse_document_payments(actor=actor, doc=pay_doc, reason=reason)
         sale.status = Sale.Status.CANCELLED
         sale.cancelled_by = actor
         sale.cancelled_at = timezone.now()

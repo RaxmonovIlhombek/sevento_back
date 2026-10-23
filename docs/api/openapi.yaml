@@ -1781,7 +1781,8 @@ paths:
   /api/v1/payments/cash-transactions/:
     get:
       operationId: payments_cash_transactions_list
-      description: Kassa jurnali (faqat o'qish).
+      description: Kassa jurnali. POST — qo'lda kirim/chiqim (kiritish, inkassatsiya,
+        xarajat).
       parameters:
       - in: query
         name: branch
@@ -1839,6 +1840,10 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: shift
+        schema:
+          type: number
       tags:
       - payments
       security:
@@ -1850,6 +1855,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedCashTransactionList'
           description: ''
+    post:
+      operationId: payments_cash_transactions_create
+      description: Kassa jurnali. POST — qo'lda kirim/chiqim (kiritish, inkassatsiya,
+        xarajat).
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashEntryWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CashEntryWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashTransaction'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
   /api/v1/payments/cashboxes/:
     get:
       operationId: payments_cashboxes_list
@@ -1913,6 +1954,361 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Cashbox'
+          description: ''
+  /api/v1/payments/customers/:
+    get:
+      operationId: payments_customers_list
+      description: Mijozlar (barcha nuqtalar uchun umumiy). Kredit limitini — alohida
+        huquq bilan.
+      parameters:
+      - in: query
+        name: has_debt
+        schema:
+          type: boolean
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: overdue
+        schema:
+          type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCustomerList'
+          description: ''
+    post:
+      operationId: payments_customers_create
+      description: Mijozlar (barcha nuqtalar uchun umumiy). Kredit limitini — alohida
+        huquq bilan.
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomerWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerDetail'
+          description: ''
+  /api/v1/payments/customers/{id}/:
+    get:
+      operationId: payments_customers_retrieve
+      description: Mijozlar (barcha nuqtalar uchun umumiy). Kredit limitini — alohida
+        huquq bilan.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerDetail'
+          description: ''
+    put:
+      operationId: payments_customers_update
+      description: Mijozlar (barcha nuqtalar uchun umumiy). Kredit limitini — alohida
+        huquq bilan.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomerWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerDetail'
+          description: ''
+    patch:
+      operationId: payments_customers_partial_update
+      description: Mijozlar (barcha nuqtalar uchun umumiy). Kredit limitini — alohida
+        huquq bilan.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+  /api/v1/payments/customers/{id}/ledger/:
+    get:
+      operationId: payments_customers_ledger_list
+      description: 'Mijoz hisobi (akt-sverka): nasiya +, to''lov −, qoldiq valyuta
+        kesimida.'
+      parameters:
+      - in: query
+        name: has_debt
+        schema:
+          type: boolean
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: overdue
+        schema:
+          type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLedgerEntryList'
+          description: ''
+  /api/v1/payments/customers/{id}/pay/:
+    post:
+      operationId: payments_customers_pay_create
+      description: 'Qarz to''lovi (Idempotency-Key): eng eski muddatdan boshlab yopiladi.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebtPaymentWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DebtPaymentWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentDetail'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/payments/debts/:
+    get:
+      operationId: payments_debts_list
+      description: Qarzlar (nuqta bo'yicha). ?overdue=true — muddati o'tganlar.
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: currency
+        schema:
+          type: string
+      - in: query
+        name: customer
+        schema:
+          type: number
+      - in: query
+        name: due_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: due_to
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: overdue
+        schema:
+          type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - cancelled
+          - open
+          - paid
+        description: |-
+          * `open` - Ochiq
+          * `paid` - To'langan
+          * `cancelled` - Bekor qilingan
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDebtList'
+          description: ''
+  /api/v1/payments/debts/{id}/:
+    get:
+      operationId: payments_debts_retrieve
+      description: Qarzlar (nuqta bo'yicha). ?overdue=true — muddati o'tganlar.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this debt.
+        required: true
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Debt'
           description: ''
   /api/v1/payments/methods/:
     get:
@@ -2039,6 +2435,336 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaymentMethod'
           description: ''
+  /api/v1/payments/payments/:
+    get:
+      operationId: payments_payments_list
+      description: To'lovlar jurnali (savdo to'lovlari, qaytimlar, qarz to'lovlari,
+        qaytarishlar).
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: customer
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - in
+          - out
+        description: |-
+          * `in` - Kirim
+          * `out` - Chiqim
+      - in: query
+        name: document_type
+        schema:
+          type: string
+      - in: query
+        name: kind
+        schema:
+          type: string
+          enum:
+          - change
+          - change_return
+          - payment
+          - refund
+        description: |-
+          * `payment` - To'lov
+          * `change` - Qaytim
+          * `refund` - Pul qaytarildi
+          * `change_return` - Qaytim qaytarildi
+      - in: query
+        name: method
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPaymentListList'
+          description: ''
+  /api/v1/payments/payments/{id}/:
+    get:
+      operationId: payments_payments_retrieve
+      description: To'lovlar jurnali (savdo to'lovlari, qaytimlar, qarz to'lovlari,
+        qaytarishlar).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payment.
+        required: true
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentDetail'
+          description: ''
+  /api/v1/payments/payments/{id}/refund/:
+    post:
+      operationId: payments_payments_refund_create
+      description: 'Qarz to''lovini qaytarish: qarz qayta ochiladi, naqd kassadan
+        chiqadi.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payment.
+        required: true
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentDetail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/payments/shifts/:
+    get:
+      operationId: payments_shifts_list
+      description: 'Kassa smenalari: ochish (qoldiq qotiriladi), yopish (sanalgan
+        naqd, farq yoziladi).'
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - closed
+          - open
+        description: |-
+          * `open` - Ochiq
+          * `closed` - Yopilgan
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCashShiftList'
+          description: ''
+  /api/v1/payments/shifts/{id}/:
+    get:
+      operationId: payments_shifts_retrieve
+      description: 'Kassa smenalari: ochish (qoldiq qotiriladi), yopish (sanalgan
+        naqd, farq yoziladi).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this cash shift.
+        required: true
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashShift'
+          description: ''
+  /api/v1/payments/shifts/{id}/close/:
+    post:
+      operationId: payments_shifts_close_create
+      description: 'Kassa smenalari: ochish (qoldiq qotiriladi), yopish (sanalgan
+        naqd, farq yoziladi).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this cash shift.
+        required: true
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftCloseRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftCloseRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashShift'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/payments/shifts/current/:
+    get:
+      operationId: payments_shifts_current_retrieve
+      description: Nuqtadagi ochiq smena (yo'q bo'lsa null).
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: integer
+        required: true
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentShift'
+          description: ''
+  /api/v1/payments/shifts/open/:
+    post:
+      operationId: payments_shifts_open_create
+      description: 'Kassa smenalari: ochish (qoldiq qotiriladi), yopish (sanalgan
+        naqd, farq yoziladi).'
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftOpenRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftOpenRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashShift'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
   /api/v1/purchasing/expense-types/:
     get:
       operationId: purchasing_expense_types_list
@@ -2801,6 +3527,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: customer
+        schema:
+          type: number
+      - in: query
         name: date_from
         schema:
           type: string
@@ -2810,6 +3540,10 @@ paths:
         schema:
           type: string
           format: date
+      - in: query
+        name: on_credit
+        schema:
+          type: boolean
       - name: ordering
         required: false
         in: query
@@ -3018,6 +3752,10 @@ paths:
           minLength: 1
         required: true
       - in: query
+        name: customer
+        schema:
+          type: number
+      - in: query
         name: date_from
         schema:
           type: string
@@ -3040,6 +3778,10 @@ paths:
           maximum: 100
           minimum: 1
           default: 20
+      - in: query
+        name: on_credit
+        schema:
+          type: boolean
       - name: ordering
         required: false
         in: query
@@ -3375,6 +4117,40 @@ paths:
           description: No response body
 components:
   schemas:
+    Allocation:
+      type: object
+      properties:
+        debt:
+          type: integer
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: qarz valyutasida
+        payment_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: to'lov valyutasida
+        currency_code:
+          type: string
+          readOnly: true
+        document_id:
+          type: integer
+          readOnly: true
+        document_number:
+          type: string
+          readOnly: true
+      required:
+      - amount
+      - currency_code
+      - debt
+      - document_id
+      - document_number
+      - payment_amount
     AllocationMethodEnum:
       enum:
       - by_value
@@ -3599,6 +4375,33 @@ components:
       - code
       - group
       - name
+    CashEntryWriteRequest:
+      type: object
+      properties:
+        branch:
+          type: integer
+        currency:
+          type: integer
+        direction:
+          $ref: '#/components/schemas/PaymentDirectionEnum'
+        category:
+          type: string
+          minLength: 1
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        note:
+          type: string
+          minLength: 1
+          maxLength: 255
+      required:
+      - amount
+      - branch
+      - category
+      - currency
+      - direction
+      - note
     CashFlowCategory:
       type: object
       properties:
@@ -3616,10 +4419,72 @@ components:
           type: string
           description: in | out | both
           maxLength: 4
+        is_manual:
+          type: boolean
+          description: Kassaga qo'lda kiritiladimi (kiritish, inkassatsiya, xarajat)
       required:
       - code
       - id
       - name
+    CashShift:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CashShiftStatusEnum'
+          readOnly: true
+        opened_by_name:
+          type: string
+          readOnly: true
+        opened_at:
+          type: string
+          format: date-time
+          readOnly: true
+        closed_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        note:
+          type: string
+          readOnly: true
+        balances:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShiftBalance'
+          readOnly: true
+      required:
+      - balances
+      - branch
+      - branch_name
+      - closed_at
+      - closed_by_name
+      - id
+      - note
+      - opened_at
+      - opened_by_name
+      - status
+    CashShiftStatusEnum:
+      enum:
+      - open
+      - closed
+      type: string
+      description: |-
+        * `open` - Ochiq
+        * `closed` - Yopilgan
     CashTransaction:
       type: object
       properties:
@@ -3662,6 +4527,10 @@ components:
           type: string
           readOnly: true
           nullable: true
+        shift:
+          type: integer
+          readOnly: true
+          nullable: true
         document_type:
           type: string
           readOnly: true
@@ -3700,6 +4569,7 @@ components:
       - id
       - note
       - payment_number
+      - shift
     Cashbox:
       type: object
       properties:
@@ -3898,6 +4768,36 @@ components:
       - landed_unit_cost_base
       - line_total
       - line_total_base
+    CreditStatus:
+      type: object
+      properties:
+        limit_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        used_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        available_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        base_currency:
+          type: string
+        warning_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        due_days:
+          type: integer
+      required:
+      - available_base
+      - base_currency
+      - due_days
+      - limit_base
+      - used_base
+      - warning_percent
     Currency:
       type: object
       properties:
@@ -3942,6 +4842,18 @@ components:
       - is_base
       - name
       - updated_at
+    CurrencyAmount:
+      type: object
+      properties:
+        currency:
+          type: string
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+      required:
+      - amount
+      - currency
     CurrencyRequest:
       type: object
       properties:
@@ -3995,6 +4907,215 @@ components:
       - price_type
       - price_type_name
       - valid_from
+    CurrentShift:
+      type: object
+      properties:
+        shift:
+          allOf:
+          - $ref: '#/components/schemas/CashShift'
+          nullable: true
+      required:
+      - shift
+    Customer:
+      type: object
+      description: 'Ro''yxat: qarz qoldig''i valyuta kesimida va asosiy valyutada
+        (joriy kurs bilan).'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        tin:
+          type: string
+          readOnly: true
+          description: STIR / JSHSHIR
+        address:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        credit_limit_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+          description: Asosiy valyutada; null — sozlamadagi default
+        default_due_days:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: null — sozlamadagi default
+        effective_credit_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        balances:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurrencyAmount'
+          readOnly: true
+        debt_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        has_overdue:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - address
+      - balances
+      - created_at
+      - credit_limit_base
+      - debt_base
+      - default_due_days
+      - effective_credit_limit
+      - has_overdue
+      - id
+      - is_active
+      - name
+      - note
+      - phone
+      - tin
+    CustomerDetail:
+      type: object
+      description: 'Ro''yxat: qarz qoldig''i valyuta kesimida va asosiy valyutada
+        (joriy kurs bilan).'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        tin:
+          type: string
+          readOnly: true
+          description: STIR / JSHSHIR
+        address:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        credit_limit_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+          description: Asosiy valyutada; null — sozlamadagi default
+        default_due_days:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: null — sozlamadagi default
+        effective_credit_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        balances:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurrencyAmount'
+          readOnly: true
+        debt_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        has_overdue:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        credit:
+          allOf:
+          - $ref: '#/components/schemas/CreditStatus'
+          readOnly: true
+        open_debts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Debt'
+          readOnly: true
+      required:
+      - address
+      - balances
+      - created_at
+      - credit
+      - credit_limit_base
+      - debt_base
+      - default_due_days
+      - effective_credit_limit
+      - has_overdue
+      - id
+      - is_active
+      - name
+      - note
+      - open_debts
+      - phone
+      - tin
+    CustomerWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        phone:
+          type: string
+          default: ''
+          maxLength: 30
+        tin:
+          type: string
+          default: ''
+          maxLength: 20
+        address:
+          type: string
+          default: ''
+          maxLength: 255
+        note:
+          type: string
+          default: ''
+        credit_limit_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        default_due_days:
+          type: integer
+          maximum: 3650
+          minimum: 0
+          nullable: true
+        is_active:
+          type: boolean
+          default: true
+      required:
+      - name
     DailySummary:
       type: object
       properties:
@@ -4038,6 +5159,141 @@ components:
       - date
       - profit_base
       - total_base
+    Debt:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        customer_name:
+          type: string
+          readOnly: true
+        customer_phone:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        currency:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        currency_decimal_places:
+          type: integer
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        paid_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        remaining:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        due_date:
+          type: string
+          format: date
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DebtStatusEnum'
+          readOnly: true
+        is_overdue:
+          type: boolean
+          readOnly: true
+        days_overdue:
+          type: integer
+          readOnly: true
+        document_type:
+          type: string
+          readOnly: true
+        document_id:
+          type: integer
+          readOnly: true
+        document_number:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        settled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - amount
+      - branch
+      - branch_name
+      - created_at
+      - currency
+      - currency_code
+      - currency_decimal_places
+      - customer
+      - customer_name
+      - customer_phone
+      - days_overdue
+      - document_id
+      - document_number
+      - document_type
+      - due_date
+      - id
+      - is_overdue
+      - paid_amount
+      - remaining
+      - settled_at
+      - status
+    DebtPaymentWriteRequest:
+      type: object
+      properties:
+        branch:
+          type: integer
+        method:
+          type: integer
+        currency:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        debt_ids:
+          type: array
+          items:
+            type: integer
+        note:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - amount
+      - branch
+      - currency
+      - method
+    DebtStatusEnum:
+      enum:
+      - open
+      - paid
+      - cancelled
+      type: string
+      description: |-
+        * `open` - Ochiq
+        * `paid` - To'langan
+        * `cancelled` - Bekor qilingan
     ErrorBody:
       type: object
       properties:
@@ -4236,6 +5492,93 @@ components:
       - rate
       - source
       - symbol
+    LedgerEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/LedgerEntryTypeEnum'
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        currency_decimal_places:
+          type: integer
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        balance_after:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        debt:
+          type: integer
+          readOnly: true
+          nullable: true
+        payment:
+          type: integer
+          readOnly: true
+          nullable: true
+        payment_number:
+          type: string
+          readOnly: true
+          nullable: true
+        method_name:
+          type: string
+          readOnly: true
+          nullable: true
+        document_type:
+          type: string
+          readOnly: true
+        document_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        document_number:
+          type: string
+          readOnly: true
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - balance_after
+      - created_at
+      - created_by_name
+      - currency_code
+      - currency_decimal_places
+      - debt
+      - document_id
+      - document_number
+      - document_type
+      - id
+      - method_name
+      - payment
+      - payment_number
+      - type
+    LedgerEntryTypeEnum:
+      enum:
+      - debt
+      - payment
+      - refund
+      - cancel
+      type: string
+      description: |-
+        * `debt` - Nasiya
+        * `payment` - To'lov
+        * `refund` - To'lov qaytarildi
+        * `cancel` - Qarz bekor qilindi
     LevelEnum:
       enum:
       - info
@@ -4419,6 +5762,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Branch'
+    PaginatedCashShiftList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CashShift'
     PaginatedCashTransactionList:
       type: object
       required:
@@ -4444,6 +5812,56 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CashTransaction'
+    PaginatedCustomerList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
+    PaginatedDebtList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Debt'
     PaginatedExchangeRateList:
       type: object
       required:
@@ -4469,6 +5887,56 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExchangeRate'
+    PaginatedLedgerEntryList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LedgerEntry'
+    PaginatedPaymentListList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentList'
     PaginatedProductList:
       type: object
       required:
@@ -4916,6 +6384,138 @@ components:
         is_active:
           type: boolean
           default: true
+    PaymentDetail:
+      type: object
+      description: Hujjat ichida ko'rsatish uchun (savdo tafsiloti, chek).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/PaymentKindEnum'
+          readOnly: true
+        direction:
+          allOf:
+          - $ref: '#/components/schemas/PaymentDirectionEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PaymentStatusEnum'
+          readOnly: true
+        method:
+          type: integer
+          readOnly: true
+        method_code:
+          type: string
+          readOnly: true
+        method_name:
+          type: string
+          readOnly: true
+        is_cash:
+          type: boolean
+          readOnly: true
+        currency:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        rate_to_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,12})?$
+          readOnly: true
+        amount_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        received_by_name:
+          type: string
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        currency_decimal_places:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+          nullable: true
+        customer_name:
+          type: string
+          readOnly: true
+          nullable: true
+        document_type:
+          type: string
+          readOnly: true
+        document_id:
+          type: integer
+          readOnly: true
+        document_number:
+          type: string
+          readOnly: true
+        reversal_of_number:
+          type: string
+          readOnly: true
+          nullable: true
+        note:
+          type: string
+          readOnly: true
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Allocation'
+          readOnly: true
+        can_refund:
+          type: boolean
+          readOnly: true
+      required:
+      - allocations
+      - amount
+      - amount_base
+      - branch
+      - branch_name
+      - can_refund
+      - currency
+      - currency_code
+      - currency_decimal_places
+      - customer
+      - customer_name
+      - direction
+      - document_id
+      - document_number
+      - document_type
+      - id
+      - is_cash
+      - kind
+      - method
+      - method_code
+      - method_name
+      - note
+      - number
+      - rate_to_base
+      - received_at
+      - received_by_name
+      - reversal_of_number
+      - status
     PaymentDirectionEnum:
       enum:
       - in
@@ -4924,6 +6524,140 @@ components:
       description: |-
         * `in` - Kirim
         * `out` - Chiqim
+    PaymentKindEnum:
+      enum:
+      - payment
+      - change
+      - refund
+      - change_return
+      type: string
+      description: |-
+        * `payment` - To'lov
+        * `change` - Qaytim
+        * `refund` - Pul qaytarildi
+        * `change_return` - Qaytim qaytarildi
+    PaymentList:
+      type: object
+      description: Hujjat ichida ko'rsatish uchun (savdo tafsiloti, chek).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/PaymentKindEnum'
+          readOnly: true
+        direction:
+          allOf:
+          - $ref: '#/components/schemas/PaymentDirectionEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PaymentStatusEnum'
+          readOnly: true
+        method:
+          type: integer
+          readOnly: true
+        method_code:
+          type: string
+          readOnly: true
+        method_name:
+          type: string
+          readOnly: true
+        is_cash:
+          type: boolean
+          readOnly: true
+        currency:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        rate_to_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,12})?$
+          readOnly: true
+        amount_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        received_by_name:
+          type: string
+          readOnly: true
+        received_at:
+          type: string
+          format: date-time
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        currency_decimal_places:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+          nullable: true
+        customer_name:
+          type: string
+          readOnly: true
+          nullable: true
+        document_type:
+          type: string
+          readOnly: true
+        document_id:
+          type: integer
+          readOnly: true
+        document_number:
+          type: string
+          readOnly: true
+        reversal_of_number:
+          type: string
+          readOnly: true
+          nullable: true
+        note:
+          type: string
+          readOnly: true
+      required:
+      - amount
+      - amount_base
+      - branch
+      - branch_name
+      - currency
+      - currency_code
+      - currency_decimal_places
+      - customer
+      - customer_name
+      - direction
+      - document_id
+      - document_number
+      - document_type
+      - id
+      - is_cash
+      - kind
+      - method
+      - method_code
+      - method_name
+      - note
+      - number
+      - rate_to_base
+      - received_at
+      - received_by_name
+      - reversal_of_number
+      - status
     PaymentMethod:
       type: object
       properties:
@@ -4982,6 +6716,14 @@ components:
       required:
       - code
       - name
+    PaymentStatusEnum:
+      enum:
+      - completed
+      - reversed
+      type: string
+      description: |-
+        * `completed` - Bajarildi
+        * `reversed` - Qaytarildi
     PosConfig:
       type: object
       properties:
@@ -5745,6 +7487,15 @@ components:
       required:
       - currency
       - rate
+    ReasonRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 255
+      required:
+      - reason
     RefreshResponse:
       type: object
       properties:
@@ -5830,6 +7581,36 @@ components:
           maxLength: 255
       required:
       - reason
+    SaleDebt:
+      type: object
+      description: Savdo nasiyasining hozirgi holati (payments.Debt).
+      properties:
+        id:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        paid_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        remaining:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        due_date:
+          type: string
+          format: date
+        status:
+          type: string
+      required:
+      - amount
+      - due_date
+      - id
+      - paid_amount
+      - remaining
+      - status
     SaleDetail:
       type: object
       description: Tannarx va foyda faqat `inventory.view_cost` huquqi borlarga (sotuvchiga
@@ -5910,6 +7691,25 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
           readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+          nullable: true
+        customer_name:
+          type: string
+          readOnly: true
+          nullable: true
+        debt_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: nasiya (savdo valyutasida)
+        due_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
         items_count:
           type: integer
           readOnly: true
@@ -5959,6 +7759,11 @@ components:
         can_cancel:
           type: boolean
           readOnly: true
+        debt:
+          allOf:
+          - $ref: '#/components/schemas/SaleDebt'
+          nullable: true
+          readOnly: true
       required:
       - base_currency
       - branch
@@ -5973,7 +7778,12 @@ components:
       - currency
       - currency_code
       - currency_decimal_places
+      - customer
+      - customer_name
+      - debt
+      - debt_amount
       - discount_total
+      - due_date
       - id
       - items
       - items_count
@@ -6153,6 +7963,25 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
           readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+          nullable: true
+        customer_name:
+          type: string
+          readOnly: true
+          nullable: true
+        debt_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: nasiya (savdo valyutasida)
+        due_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
         items_count:
           type: integer
           readOnly: true
@@ -6175,7 +8004,11 @@ components:
       - currency
       - currency_code
       - currency_decimal_places
+      - customer
+      - customer_name
+      - debt_amount
       - discount_total
+      - due_date
       - id
       - items_count
       - number
@@ -6275,6 +8108,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SalePaymentWriteRequest'
+        customer:
+          type: integer
+          nullable: true
+          description: Nasiya uchun majburiy; to'liq to'lovda ixtiyoriy (mijoz tarixi
+            uchun)
+        due_date:
+          type: string
+          format: date
+          nullable: true
+          description: Nasiya muddati; bo'sh — mijoz/sozlama defaulti
         note:
           type: string
           default: ''
@@ -6320,6 +8163,91 @@ components:
       - amount
       - currency
       - price_type
+    ShiftActualRequest:
+      type: object
+      properties:
+        currency:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+      required:
+      - amount
+      - currency
+    ShiftBalance:
+      type: object
+      properties:
+        cashbox:
+          type: integer
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        currency_decimal_places:
+          type: integer
+          readOnly: true
+        opening_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        current_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        expected_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+        actual_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+        difference:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+      required:
+      - actual_balance
+      - cashbox
+      - currency_code
+      - currency_decimal_places
+      - current_balance
+      - difference
+      - expected_balance
+      - opening_balance
+    ShiftCloseRequest:
+      type: object
+      properties:
+        actual:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShiftActualRequest'
+        note:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - actual
+    ShiftOpenRequest:
+      type: object
+      properties:
+        branch:
+          type: integer
+        note:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - branch
     SourceEnum:
       enum:
       - cbu

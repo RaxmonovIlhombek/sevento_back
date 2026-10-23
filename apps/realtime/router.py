@@ -217,9 +217,80 @@ def _payment_payload(e: Event) -> dict:
         "amount": str(e.amount),
         "is_cash": e.is_cash,
         "cashbox_id": e.cashbox_id,
+        "customer_id": getattr(e, "customer_id", None),
         "document": {"type": e.document_type, "id": e.document_id},
     }
 
 
 route("payment.received", groups=_branch_group, payload=_payment_payload)
 route("payment.refunded", groups=_branch_group, payload=_payment_payload)
+
+
+# --- 6-bosqich: nasiya, qarz, kassa smenasi ---
+
+route(
+    "payment.received",
+    groups=lambda e: _capability_users("dashboard.view"),
+    msg_type="dashboard.updated",
+    payload=_dashboard_payload("payment.received"),
+)
+
+
+def _debt_changed(e: Event) -> dict:
+    return {"branch_id": e.branch_id, "debt_id": e.debt_id, "customer_id": e.customer_id}  # type: ignore[attr-defined]
+
+
+for _name in ("debt.registered", "debt.settled", "debt.cancelled"):
+    route(_name, groups=_branch_group, msg_type="debt.changed", payload=_debt_changed)
+
+# buxgalter va rahbar (qarzlarni boshqaradiganlar) — rol nomi emas, huquq
+route(
+    "debt.overdue",
+    groups=lambda e: _capability_users("debts.manage"),
+    payload=lambda e: {  # type: ignore[attr-defined]
+        "branch_id": e.branch_id,
+        "debt_id": e.debt_id,
+        "customer_id": e.customer_id,
+        "customer_name": e.customer_name,
+        "amount_remaining": str(e.amount_remaining),
+        "currency": e.currency,
+        "due_date": e.due_date.isoformat(),
+        "days_overdue": e.days_overdue,
+    },
+)
+route(
+    "customer.credit_limit_warning",
+    groups=lambda e: _capability_users("debts.manage"),
+    payload=lambda e: {  # type: ignore[attr-defined]
+        "customer_id": e.customer_id,
+        "customer_name": e.customer_name,
+        "used_base": str(e.used_base),
+        "limit_base": str(e.limit_base),
+        "percent": str(e.percent),
+        "base_currency": e.base_currency,
+    },
+)
+
+
+def _cash_payload(reason: str):
+    return lambda e: {"branch_id": e.branch_id, "reason": reason}
+
+
+route(
+    "cash_shift.opened",
+    groups=_branch_group,
+    msg_type="cash.updated",
+    payload=_cash_payload("shift_opened"),
+)
+route(
+    "cash_shift.closed",
+    groups=_branch_group,
+    msg_type="cash.updated",
+    payload=_cash_payload("shift_closed"),
+)
+route(
+    "cash_entry.created",
+    groups=_branch_group,
+    msg_type="cash.updated",
+    payload=_cash_payload("manual_entry"),
+)

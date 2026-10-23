@@ -30,6 +30,9 @@ class CashFlowCategory(models.Model):
     code = models.SlugField(max_length=30, unique=True)
     name = models.CharField(max_length=60)
     direction = models.CharField(max_length=4, default="both", help_text="in | out | both")
+    is_manual = models.BooleanField(
+        default=False, help_text="Kassaga qo'lda kiritiladimi (kiritish, inkassatsiya, xarajat)"
+    )
 
     class Meta:
         ordering = ["code"]
@@ -60,6 +63,39 @@ class Cashbox(TimeStampedModel):
         return self.name
 
 
+class Customer(TimeStampedModel):
+    """Mijoz (barcha nuqtalar uchun umumiy). Qarzlari nuqta bo'yicha, balans — hammasi bo'yicha."""
+
+    name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=30, blank=True, db_index=True)
+    tin = models.CharField(max_length=20, blank=True, help_text="STIR / JSHSHIR")
+    address = models.CharField(max_length=255, blank=True)
+    note = models.TextField(blank=True)
+    credit_limit_base = models.DecimalField(
+        max_digits=20,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        help_text="Asosiy valyutada; null — sozlamadagi default",
+    )
+    default_due_days = models.PositiveIntegerField(
+        null=True, blank=True, help_text="null — sozlamadagi default"
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["name", "id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(credit_limit_base__isnull=True) | Q(credit_limit_base__gte=0),
+                name="customer_credit_limit_gte_0",
+            )
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class Payment(models.Model):
     class Status(models.TextChoices):
         COMPLETED = "completed", "Bajarildi"
@@ -68,6 +104,9 @@ class Payment(models.Model):
     number = models.CharField(max_length=40, unique=True)
     branch = models.ForeignKey("branches.Branch", on_delete=models.PROTECT, related_name="+")
     method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT, related_name="payments")
+    customer = models.ForeignKey(
+        Customer, null=True, blank=True, on_delete=models.PROTECT, related_name="payments"
+    )
     kind = models.CharField(max_length=20, choices=PaymentKind.choices)
     direction = models.CharField(max_length=3, choices=Direction.choices)
     currency = models.ForeignKey("currency.Currency", on_delete=models.PROTECT, related_name="+")
@@ -103,6 +142,57 @@ class Payment(models.Model):
         return self.number
 
 
+class CashShift(models.Model):
+    """Kassa smenasi (nuqta bo'yicha, barcha valyutalar); ochiq smenada yozuvlar unga bog'lanadi."""
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Ochiq"
+        CLOSED = "closed", "Yopilgan"
+
+    branch = models.ForeignKey("branches.Branch", on_delete=models.PROTECT, related_name="+")
+    status = models.CharField(max_length=6, choices=Status.choices, default=Status.OPEN)
+    opened_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
+    opened_at = models.DateTimeField()
+    closed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    closed_at = models.DateTimeField(null=True, blank=True)
+    note = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-opened_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["branch"], condition=Q(status="open"), name="one_open_shift_per_branch"
+            )
+        ]
+
+    def __str__(self):
+        return f"Smena #{self.pk}"
+
+
+class CashShiftBalance(models.Model):
+    """Smenadagi har valyuta kassasi: ochilishdagi qoldiq, yopilishda kutilgan va sanalgan."""
+
+    shift = models.ForeignKey(CashShift, on_delete=models.CASCADE, related_name="balances")
+    cashbox = models.ForeignKey("Cashbox", on_delete=models.PROTECT, related_name="+")
+    opening_balance = models.DecimalField(max_digits=20, decimal_places=4)
+    expected_balance = models.DecimalField(max_digits=20, decimal_places=4, null=True, blank=True)
+    actual_balance = models.DecimalField(max_digits=20, decimal_places=4, null=True, blank=True)
+    difference = models.DecimalField(max_digits=20, decimal_places=4, null=True, blank=True)
+
+    class Meta:
+        ordering = ["cashbox_id"]
+        constraints = [
+            models.UniqueConstraint(fields=["shift", "cashbox"], name="shift_cashbox_uniq")
+        ]
+
+    def __str__(self):
+        return f"{self.shift_id}:{self.cashbox_id}"
+
+
 class CashTransaction(models.Model):
     """Kassa jurnali — faqat INSERT. balance_after — shu yozuvdan keyingi qoldiq."""
 
@@ -113,6 +203,9 @@ class CashTransaction(models.Model):
     balance_after = models.DecimalField(max_digits=20, decimal_places=4)
     payment = models.ForeignKey(
         Payment, null=True, blank=True, on_delete=models.PROTECT, related_name="cash_transactions"
+    )
+    shift = models.ForeignKey(
+        CashShift, null=True, blank=True, on_delete=models.PROTECT, related_name="transactions"
     )
     document_type = models.CharField(max_length=30, blank=True)
     document_id = models.BigIntegerField(null=True, blank=True)
@@ -133,3 +226,111 @@ class CashTransaction(models.Model):
 
     def __str__(self):
         return f"{self.cashbox} {self.direction} {self.amount}"
+
+
+class Debt(models.Model):
+    """Nasiya qarzi — savdo valyutasida qoladi (USD qarz USD da). Qoldiq = amount - paid_amount."""
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Ochiq"
+        PAID = "paid", "To'langan"
+        CANCELLED = "cancelled", "Bekor qilingan"
+
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name="debts")
+    branch = models.ForeignKey("branches.Branch", on_delete=models.PROTECT, related_name="+")
+    currency = models.ForeignKey("currency.Currency", on_delete=models.PROTECT, related_name="+")
+    amount = models.DecimalField(max_digits=20, decimal_places=4)
+    paid_amount = models.DecimalField(max_digits=20, decimal_places=4, default=0)
+    due_date = models.DateField()
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.OPEN)
+    # hujjat (savdo): FK emas — payments savdoni bilmaydi
+    document_type = models.CharField(max_length=30)
+    document_id = models.BigIntegerField()
+    document_number = models.CharField(max_length=40, blank=True)
+    overdue_notified_at = models.DateTimeField(null=True, blank=True)
+    settled_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["due_date", "id"]
+        indexes = [
+            models.Index(fields=["customer", "status"]),
+            models.Index(fields=["status", "due_date"]),
+            models.Index(fields=["document_type", "document_id"]),
+        ]
+        constraints = [
+            models.CheckConstraint(condition=Q(amount__gt=0), name="debt_amount_gt_0"),
+            models.CheckConstraint(
+                condition=Q(paid_amount__gte=0) & Q(paid_amount__lte=models.F("amount")),
+                name="debt_paid_between_0_and_amount",
+            ),
+        ]
+
+    def __str__(self):
+        return f"Qarz #{self.pk} ({self.customer_id})"
+
+    @property
+    def remaining(self):
+        return self.amount - self.paid_amount
+
+
+class DebtAllocation(models.Model):
+    """To'lovning qaysi qarzga qancha tushgani (qarz valyutasida)."""
+
+    payment = models.ForeignKey(Payment, on_delete=models.PROTECT, related_name="allocations")
+    debt = models.ForeignKey(Debt, on_delete=models.PROTECT, related_name="allocations")
+    amount = models.DecimalField(max_digits=20, decimal_places=4, help_text="qarz valyutasida")
+    payment_amount = models.DecimalField(
+        max_digits=20, decimal_places=4, help_text="to'lov valyutasida"
+    )
+
+    class Meta:
+        ordering = ["id"]
+        constraints = [
+            models.CheckConstraint(condition=Q(amount__gt=0), name="debt_alloc_amount_gt_0"),
+        ]
+
+    def __str__(self):
+        return f"{self.payment_id}→{self.debt_id}: {self.amount}"
+
+
+class CustomerLedgerEntry(models.Model):
+    """Mijoz hisobi (akt-sverka) — faqat INSERT. amount ishorali: qarz +, to'lov −.
+
+    balance_after — shu mijoz × valyuta bo'yicha qarz qoldig'i.
+    """
+
+    class Type(models.TextChoices):
+        DEBT = "debt", "Nasiya"
+        PAYMENT = "payment", "To'lov"
+        REFUND = "refund", "To'lov qaytarildi"
+        CANCEL = "cancel", "Qarz bekor qilindi"
+
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name="ledger")
+    currency = models.ForeignKey("currency.Currency", on_delete=models.PROTECT, related_name="+")
+    type = models.CharField(max_length=10, choices=Type.choices)
+    amount = models.DecimalField(max_digits=20, decimal_places=4)
+    balance_after = models.DecimalField(max_digits=20, decimal_places=4)
+    debt = models.ForeignKey(
+        Debt, null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    payment = models.ForeignKey(
+        Payment, null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    document_type = models.CharField(max_length=30, blank=True)
+    document_id = models.BigIntegerField(null=True, blank=True)
+    document_number = models.CharField(max_length=40, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [models.Index(fields=["customer", "currency", "-created_at"])]
+
+    def __str__(self):
+        return f"{self.customer_id} {self.type} {self.amount}"

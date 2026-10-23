@@ -6,7 +6,7 @@ from core.models import TimeStampedModel
 
 
 class Sale(TimeStampedModel):
-    """Savdo. 5-bosqich: naqd (to'liq to'lov); nasiya va mijoz — 6-bosqichda."""
+    """Savdo: to'liq to'lov yoki qisman/to'liq nasiya (mijoz bilan, kredit limiti doirasida)."""
 
     class Status(models.TextChoices):
         COMPLETED = "completed", "Yakunlandi"
@@ -16,6 +16,9 @@ class Sale(TimeStampedModel):
     branch = models.ForeignKey("branches.Branch", on_delete=models.PROTECT, related_name="+")
     seller = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
     price_type = models.ForeignKey("catalog.PriceType", on_delete=models.PROTECT, related_name="+")
+    customer = models.ForeignKey(
+        "payments.Customer", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.COMPLETED)
     currency = models.ForeignKey("currency.Currency", on_delete=models.PROTECT, related_name="+")
     rate_to_base = models.DecimalField(max_digits=24, decimal_places=12)
@@ -28,6 +31,10 @@ class Sale(TimeStampedModel):
         max_digits=20, decimal_places=4, help_text="to'lovlar savdo valyutasida"
     )
     change_amount = models.DecimalField(max_digits=20, decimal_places=4, default=0)
+    debt_amount = models.DecimalField(
+        max_digits=20, decimal_places=4, default=0, help_text="nasiya (savdo valyutasida)"
+    )
+    due_date = models.DateField(null=True, blank=True)
     completed_at = models.DateTimeField()
     cancelled_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name="+"

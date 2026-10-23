@@ -18,7 +18,9 @@ def _scoped(user) -> QuerySet[Sale]:
 
 
 def sales_queryset(user) -> QuerySet[Sale]:
-    qs = _scoped(user).select_related("branch", "seller", "currency", "price_type", "cancelled_by")
+    qs = _scoped(user).select_related(
+        "branch", "seller", "currency", "price_type", "cancelled_by", "customer"
+    )
     return qs.annotate(items_count=Count("items"))
 
 

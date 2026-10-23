@@ -11,15 +11,24 @@ from django.utils import timezone
 
 from apps.branches import selectors as branch_selectors
 from apps.currency import selectors as currency_selectors
+from core import settings_service
 from core.access import ensure_branch_access
 from core.exceptions import BusinessRuleError
 from core.numbering import next_number
 
-from . import events, selectors
-from .exceptions import InsufficientCash, NoCashMethod, PaymentDeclined
-from .models import Cashbox, CashFlowCategory, CashTransaction, Payment, PaymentMethod
-from .providers import get_provider
-from .types import Direction, PaymentDoc, PaymentKind
+from .. import events, selectors
+from ..exceptions import InsufficientCash, NoCashMethod, PaymentDeclined, ShiftClosed
+from ..models import (
+    Cashbox,
+    CashFlowCategory,
+    CashShift,
+    CashTransaction,
+    Customer,
+    Payment,
+    PaymentMethod,
+)
+from ..providers import get_provider
+from ..types import Direction, PaymentDoc, PaymentKind
 
 MONEY_PLACES = Decimal("0.0001")
 NUMBER_PREFIX = "T"
@@ -85,6 +94,9 @@ def _cash_move(
     doc: PaymentDoc | None = None,
     note: str = "",
 ) -> CashTransaction:
+    shift = CashShift.objects.filter(branch_id=branch_id, status=CashShift.Status.OPEN).first()
+    if shift is None and settings_service.get("cashbox.require_open_shift"):
+        raise ShiftClosed()
     cashbox = get_or_create_cashbox(branch_id, currency)
     cashbox = Cashbox.objects.select_for_update().get(pk=cashbox.pk)
     if direction == Direction.OUT:
@@ -109,6 +121,7 @@ def _cash_move(
         amount=amount,
         balance_after=cashbox.balance,
         payment=payment,
+        shift=shift,
         document_type=doc.type if doc else "",
         document_id=doc.id if doc else None,
         document_number=doc.number if doc else "",
@@ -133,6 +146,7 @@ def _create_payment(
     rate_to_base: Decimal | None = None,
     reversal_of: Payment | None = None,
     provider_reference: str = "",
+    customer: Customer | None = None,
     note: str = "",
 ) -> Payment:
     amount = Decimal(amount).quantize(MONEY_PLACES, rounding=ROUND_HALF_UP)
@@ -147,6 +161,7 @@ def _create_payment(
         number=next_number(doc_type=NUMBER_PREFIX, branch_id=branch.pk, branch_code=branch.code),
         branch=branch,
         method=method,
+        customer=customer,
         kind=kind,
         direction=direction,
         currency=currency,
@@ -173,9 +188,14 @@ def receive_payment(
     amount: Decimal,
     doc: PaymentDoc,
     category: str = "sale",
+    customer: Customer | None = None,
     note: str = "",
+    publish: bool = True,
 ) -> Payment:
-    """Mijozdan pul: provayder (naqd — darhol), to'lov yozuvi, naqd bo'lsa kassaga kirim."""
+    """Mijozdan pul: provayder (naqd — darhol), to'lov yozuvi, naqd bo'lsa kassaga kirim.
+
+    publish=False — chaqiruvchi (qarz to'lovi) hodisani taqsimotdan keyin o'zi chiqaradi.
+    """
     ensure_branch_access(actor, branch.pk)
     if not method.is_active:
         raise BusinessRuleError(f"«{method.name}» to'lov turi faol emas", code="method_inactive")
@@ -195,6 +215,7 @@ def receive_payment(
             amount=amount,
             doc=doc,
             provider_reference=result.reference,
+            customer=customer,
             note=note,
         )
         cashbox_id = None
@@ -210,22 +231,30 @@ def receive_payment(
                 doc=doc,
             )
             cashbox_id = tx.cashbox_id
-        events.PaymentReceived.publish_from(
-            actor=actor,
-            branch_id=branch.pk,
-            payment_id=payment.pk,
-            number=payment.number,
-            method=method.code,
-            currency=currency.code,
-            amount=payment.amount,
-            amount_base=payment.amount_base,
-            is_cash=method.is_cash,
-            cashbox_id=cashbox_id,
-            document_type=doc.type,
-            document_id=doc.id,
-            document_number=doc.number,
-        )
+        payment.cashbox_id = cashbox_id  # hodisa uchun (modelda maydon emas)
+        if publish:
+            publish_payment_received(actor, payment)
     return payment
+
+
+def publish_payment_received(actor, payment: Payment, allocated: list[dict] | None = None) -> None:
+    events.PaymentReceived.publish_from(
+        actor=actor,
+        branch_id=payment.branch_id,
+        payment_id=payment.pk,
+        number=payment.number,
+        method=payment.method.code,
+        currency=payment.currency.code,
+        amount=payment.amount,
+        amount_base=payment.amount_base,
+        is_cash=payment.method.is_cash,
+        cashbox_id=getattr(payment, "cashbox_id", None),
+        customer_id=payment.customer_id,
+        allocated=allocated or [],
+        document_type=payment.document_type,
+        document_id=payment.document_id,
+        document_number=payment.document_number,
+    )
 
 
 def give_change(
@@ -265,6 +294,70 @@ MIRROR = {
 }
 
 
+def reverse_payment(*, actor, original: Payment, doc: PaymentDoc, reason: str) -> Payment:
+    """Bitta to'lovni teskari yozish (asl kurs bilan): to'lov → qaytarish, qaytim → qaytdi."""
+    kind, direction, category = MIRROR[original.kind]
+    reference = ""
+    if original.kind == PaymentKind.PAYMENT:
+        result = get_provider(original.method.provider).refund(
+            amount=original.amount,
+            currency_code=original.currency.code,
+            original_reference=original.provider_reference,
+        )
+        if not result.ok:
+            raise PaymentDeclined(result.message or "Provayder pulni qaytarmadi")
+        reference = result.reference
+    mirror = _create_payment(
+        actor=actor,
+        branch=original.branch,
+        method=original.method,
+        kind=kind,
+        direction=direction,
+        currency=original.currency,
+        amount=original.amount,
+        doc=doc,
+        rate_to_base=original.rate_to_base,
+        reversal_of=original,
+        provider_reference=reference,
+        customer=original.customer,
+        note=reason[:255],
+    )
+    original.status = Payment.Status.REVERSED
+    original.save(update_fields=["status"])
+    cashbox_id = None
+    if original.method.is_cash:
+        tx = _cash_move(
+            actor=actor,
+            branch_id=original.branch_id,
+            currency=original.currency,
+            direction=direction,
+            category_code=category,
+            amount=original.amount,
+            payment=mirror,
+            doc=doc,
+            note=reason[:255],
+        )
+        cashbox_id = tx.cashbox_id
+    if kind == PaymentKind.REFUND:
+        events.PaymentRefunded.publish_from(
+            actor=actor,
+            branch_id=original.branch_id,
+            payment_id=mirror.pk,
+            original_payment_id=original.pk,
+            number=mirror.number,
+            method=original.method.code,
+            currency=original.currency.code,
+            amount=original.amount,
+            is_cash=original.method.is_cash,
+            cashbox_id=cashbox_id,
+            customer_id=original.customer_id,
+            document_type=doc.type,
+            document_id=doc.id,
+            reason=reason,
+        )
+    return mirror
+
+
 def reverse_document_payments(*, actor, doc: PaymentDoc, reason: str) -> list[Payment]:
     """Hujjat (savdo) bekor qilinganda uning barcha to'lovlarini teskari yozadi.
 
@@ -273,8 +366,8 @@ def reverse_document_payments(*, actor, doc: PaymentDoc, reason: str) -> list[Pa
     """
     with transaction.atomic():
         originals = list(
-            Payment.objects.select_for_update()
-            .select_related("method", "currency", "branch")
+            Payment.objects.select_for_update(of=("self",))
+            .select_related("method", "currency", "branch", "customer")
             .filter(
                 document_type=doc.type,
                 document_id=doc.id,
@@ -284,64 +377,7 @@ def reverse_document_payments(*, actor, doc: PaymentDoc, reason: str) -> list[Pa
             .order_by("id")
         )
         originals.sort(key=lambda p: 0 if p.kind == PaymentKind.CHANGE else 1)
-        mirrors = []
-        for original in originals:
-            kind, direction, category = MIRROR[original.kind]
-            reference = ""
-            if original.kind == PaymentKind.PAYMENT:
-                result = get_provider(original.method.provider).refund(
-                    amount=original.amount,
-                    currency_code=original.currency.code,
-                    original_reference=original.provider_reference,
-                )
-                if not result.ok:
-                    raise PaymentDeclined(result.message or "Provayder pulni qaytarmadi")
-                reference = result.reference
-            mirror = _create_payment(
-                actor=actor,
-                branch=original.branch,
-                method=original.method,
-                kind=kind,
-                direction=direction,
-                currency=original.currency,
-                amount=original.amount,
-                doc=doc,
-                rate_to_base=original.rate_to_base,
-                reversal_of=original,
-                provider_reference=reference,
-                note=reason[:255],
-            )
-            original.status = Payment.Status.REVERSED
-            original.save(update_fields=["status"])
-            cashbox_id = None
-            if original.method.is_cash:
-                tx = _cash_move(
-                    actor=actor,
-                    branch_id=original.branch_id,
-                    currency=original.currency,
-                    direction=direction,
-                    category_code=category,
-                    amount=original.amount,
-                    payment=mirror,
-                    doc=doc,
-                    note=reason[:255],
-                )
-                cashbox_id = tx.cashbox_id
-            if kind == PaymentKind.REFUND:
-                events.PaymentRefunded.publish_from(
-                    actor=actor,
-                    branch_id=original.branch_id,
-                    payment_id=mirror.pk,
-                    original_payment_id=original.pk,
-                    number=mirror.number,
-                    method=original.method.code,
-                    currency=original.currency.code,
-                    amount=original.amount,
-                    is_cash=original.method.is_cash,
-                    cashbox_id=cashbox_id,
-                    document_type=doc.type,
-                    document_id=doc.id,
-                    reason=reason,
-                )
-            mirrors.append(mirror)
-    return mirrors
+        return [
+            reverse_payment(actor=actor, original=original, doc=doc, reason=reason)
+            for original in originals
+        ]

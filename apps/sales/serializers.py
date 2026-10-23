@@ -32,6 +32,9 @@ class SaleListSerializer(_HideCostMixin, serializers.ModelSerializer):
     currency_decimal_places = serializers.IntegerField(
         source="currency.decimal_places", read_only=True
     )
+    customer_name = serializers.CharField(
+        source="customer.name", read_only=True, default=None, allow_null=True
+    )
     items_count = serializers.IntegerField(read_only=True)
     cost_base = serializers.DecimalField(
         max_digits=20, decimal_places=4, read_only=True, allow_null=True
@@ -61,6 +64,10 @@ class SaleListSerializer(_HideCostMixin, serializers.ModelSerializer):
             "profit_base",
             "paid_total",
             "change_amount",
+            "customer",
+            "customer_name",
+            "debt_amount",
+            "due_date",
             "items_count",
             "completed_at",
             "cancelled_at",
@@ -116,6 +123,17 @@ class SalePaymentSerializer(serializers.Serializer):
     received_at = serializers.DateTimeField()
 
 
+class SaleDebtSerializer(serializers.Serializer):
+    """Savdo nasiyasining hozirgi holati (payments.Debt)."""
+
+    id = serializers.IntegerField()
+    amount = serializers.DecimalField(max_digits=20, decimal_places=4)
+    paid_amount = serializers.DecimalField(max_digits=20, decimal_places=4)
+    remaining = serializers.DecimalField(max_digits=20, decimal_places=4)
+    due_date = serializers.DateField()
+    status = serializers.CharField()
+
+
 class SaleDetailSerializer(SaleListSerializer):
     price_type_name = serializers.CharField(source="price_type.name", read_only=True)
     cancelled_by_name = serializers.CharField(
@@ -125,6 +143,7 @@ class SaleDetailSerializer(SaleListSerializer):
     payments = serializers.SerializerMethodField()
     base_currency = serializers.SerializerMethodField()
     can_cancel = serializers.SerializerMethodField()
+    debt = serializers.SerializerMethodField()
 
     class Meta(SaleListSerializer.Meta):
         fields = SaleListSerializer.Meta.fields + [
@@ -138,6 +157,7 @@ class SaleDetailSerializer(SaleListSerializer):
             "payments",
             "base_currency",
             "can_cancel",
+            "debt",
         ]
         read_only_fields = fields
 
@@ -152,6 +172,11 @@ class SaleDetailSerializer(SaleListSerializer):
 
     def get_base_currency(self, sale) -> str:
         return currency_selectors.base_currency_code()
+
+    @extend_schema_field(SaleDebtSerializer(allow_null=True))
+    def get_debt(self, sale) -> dict | None:
+        debt = payment_selectors.document_debt("sale", sale.pk) if sale.debt_amount else None
+        return SaleDebtSerializer(debt).data if debt else None
 
     def get_can_cancel(self, sale) -> bool:
         return sale.status == Sale.Status.COMPLETED and self.context.get("can_cancel", False)
@@ -183,7 +208,16 @@ class SaleWriteSerializer(serializers.Serializer):
         queryset=catalog_selectors.price_types_queryset(), required=False, allow_null=True
     )
     items = SaleItemWriteSerializer(many=True, allow_empty=False)
-    payments = SalePaymentWriteSerializer(many=True, allow_empty=False)
+    payments = SalePaymentWriteSerializer(many=True, allow_empty=True)
+    customer = serializers.PrimaryKeyRelatedField(
+        queryset=payment_selectors.customers_queryset().filter(is_active=True),
+        required=False,
+        allow_null=True,
+        help_text="Nasiya uchun majburiy; to'liq to'lovda ixtiyoriy (mijoz tarixi uchun)",
+    )
+    due_date = serializers.DateField(
+        required=False, allow_null=True, help_text="Nasiya muddati; bo'sh — mijoz/sozlama defaulti"
+    )
     note = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
     expected_total = serializers.DecimalField(
         max_digits=20,

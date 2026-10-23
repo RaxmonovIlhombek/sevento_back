@@ -21,6 +21,8 @@ class SaleCompleted(Event):
     items_count: int
     # [{method, currency, amount}]
     payments: list[dict] = field(default_factory=list)
+    customer_id: int | None = None
+    debt_amount: Decimal = Decimal(0)
 
 
 @dataclass(frozen=True, kw_only=True)

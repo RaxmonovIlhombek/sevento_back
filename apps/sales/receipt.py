@@ -58,6 +58,9 @@ def build_context(sale, payments) -> dict:
         "total": money(sale.total),
         "payments": paid,
         "change": money(sale.change_amount) if sale.change_amount else "",
+        "customer": sale.customer.name if sale.customer_id else "",
+        "debt": money(sale.debt_amount) if sale.debt_amount else "",
+        "due_date": sale.due_date.strftime("%d.%m.%Y") if sale.due_date else "",
         "cancelled": sale.status == "cancelled",
         "footer": settings_service.get("sales.receipt_footer"),
     }
