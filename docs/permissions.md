@@ -39,7 +39,7 @@
 | `sales.credit` | nasiyaga sotish |
 | `payments.view` / `payments.receive` | to'lov qabul qilish |
 | `payments.refund` | pul qaytarish |
-| `cashbox.view` / `cashbox.manage` | kassa qoldig'i va jurnali (5); smena, qo'lda kirim-chiqim (6) |
+| `cashbox.view` / `cashbox.manage` | kassa qoldig'i va jurnali; smena ochish/yopish, qo'lda kirim-chiqim (`manage`) |
 | `customers.view` / `customers.manage` | mijozlar |
 | `customers.credit_limit.manage` | kredit limitini o'zgartirish |
 | `debts.view` / `debts.manage` | qarzlar, muddatni o'zgartirish |
@@ -100,3 +100,10 @@ Testlar: har app `tests/test_permissions.py` — 4 rol × asosiy endpointlar mat
 - `<RequireCapability cap="reports.financial">` — route guard; huquq bo'lmasa `/403` sahifasi.
 - Nuqta tanlagich: `all_branches=true` bo'lsa hamma nuqtalar + "Hammasi"; aks holda faqat biriktirilgan nuqtalar, bitta bo'lsa tanlagich ko'rinmaydi.
 - Frontend yashirishi faqat qulaylik — backend har doim tekshiradi.
+
+## Nasiya va kassa bo'yicha qo'shimcha qoidalar (6-bosqich)
+
+- Mijozni sotuvchi ham yaratadi/tahrirlaydi (`customers.manage`), lekin kredit limiti va nasiya muddatini faqat `customers.credit_limit.manage` o'zgartiradi (maydon darajasida, service da tekshiriladi → 403 `credit_limit_forbidden`).
+- Mijozlar barcha nuqtalar uchun umumiy (kredit qarori umumiy qarzga qarab); qarzlar ro'yxati va to'lovlar jurnali — nuqta chegarasi bilan.
+- Qarz to'lovini qabul qilish — `payments.receive` (o'z nuqtasi kassasiga); qaytarish — `payments.refund` (faqat qarz to'lovi; savdo to'lovi — savdoni bekor qilib, `sales.cancel`).
+- Nasiyaga sotish — `sales.credit` (403 `credit_forbidden`).

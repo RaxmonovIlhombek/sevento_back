@@ -14,7 +14,8 @@ Frontend alohida repoda: [sevento_front](https://github.com/shaxobiddindev/seven
 | 3. Katalog, valyuta kursi (CBU adapteri, Celery Beat) | ✅ |
 | 4. Kirim, partiya (FIFO), tannarx taqsimlash, ombor harakatlari, `stock.changed` | ✅ |
 | 5. Naqd savdo (POS), FIFO chiqim, aralash valyuta va qaytim, chek PDF, kassa qoldig'i | ✅ |
-| 6. Nasiya, mijozlar, to'lovlar, kredit limiti, kassa smenasi | ⏳ keyingi |
+| 6. Nasiya, mijozlar, kredit limiti, qarz to'lovi, mijoz hisobi, kassa smenasi, qo'lda kirim-chiqim, muddati o'tgan qarz (Celery) | ✅ |
+| 7. Ko'chirish, inventarizatsiya, qaytarish, hisobdan chiqarish | ⏳ keyingi |
 
 Batafsil: [docs/roadmap.md](docs/roadmap.md).
 
@@ -87,4 +88,6 @@ CI (`.github/workflows/ci.yml`) shularni va `docs/api/openapi.yaml` yangiligini 
 - Ombor: `GET /api/v1/inventory/stock/` (qoldiq, `?below_minimum=true`, `?category=`, `?search=`; `PATCH stock/<id>/ {min_quantity}` — `inventory.manage`), `GET inventory/movements/` (harakatlar jurnali), `GET inventory/batches/` (partiyalar, `inventory.view_cost`). Tannarx maydonlari `inventory.view_cost` huquqisiz `null`.
 - Savdo: `POST /api/v1/sales/` (`Idempotency-Key`) — bitta so'rovda yakunlangan savdo: `items` (tovar, miqdor, chegirma), `payments` (to'lov turi, valyuta, summa), `expected_total`; narxni server belgilaydi. `GET sales/pos-products/` — kassa qidiruvi (narx + qoldiq, `?barcode=`, `?ids=`), `GET sales/pos-config/`, `GET sales/<id>/receipt/` — chek PDF, `POST sales/<id>/cancel/` (`sales.cancel`), `GET sales/summary/` — kunlik xulosa.
 - To'lov va kassa: `/api/v1/payments/methods/` (ro'yxat — kassir ham, o'zgartirish — `settings.manage`), `payments/cashboxes/` (qoldiq), `payments/cash-transactions/` (jurnal), `payments/cash-categories/`.
+- Nasiya: `POST /api/v1/sales/` ga `customer` (+ `due_date`) — to'lov jamidan kam bo'lsa qolgani qarz (limitdan oshsa 409 `credit_limit_exceeded`). Mijozlar: `/api/v1/payments/customers/` (karta: kredit holati, ochiq qarzlar), `POST customers/<id>/pay/` (`Idempotency-Key`) — qarz to'lovi, `GET customers/<id>/payoff/?currency=` — to'liq yopish summasi, `GET customers/<id>/ledger/` — akt-sverka. Qarzlar: `payments/debts/` (`?overdue=true`), to'lovlar jurnali: `payments/payments/` (`POST <id>/refund/`).
+- Kassa smenasi: `GET payments/shifts/current/?branch=`, `POST payments/shifts/open/`, `POST payments/shifts/<id>/close/ {actual: [{currency, amount}]}`; qo'lda yozuv: `POST payments/cash-transactions/`. Muddati o'tgan qarzlar — Celery Beat `payments: muddati o'tgan qarzlar` (08:05).
 - WebSocket `/ws/v1/`: `POST /api/v1/realtime/ticket/` → 30 s lik bir martalik ticket → ulanishdan keyin birinchi xabar `{"type":"auth","payload":{"ticket"}}` → `auth.ok`. Xabar formati `{type, payload, timestamp}`, turlar ro'yxati — [realtime.md](docs/realtime.md).

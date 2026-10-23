@@ -18,6 +18,7 @@ from apps.payments.models import (
     CashTransaction,
     Customer,
     CustomerLedgerEntry,
+    Debt,
     Payment,
     PaymentMethod,
 )
@@ -112,7 +113,8 @@ def test_customer_list_balances_and_filters(owner, owner_client, customer, branc
         "UZS": D("125000"),
         "USD": D("5"),
     }
-    assert D(row["debt_base"]) == D("15")  # 10 + 5 USD
+    assert row["debt_base"] == "15.0000"  # 10 + 5 USD (satr — float emas)
+    assert row["effective_credit_limit"] == "1000.0000"
     assert row["has_overdue"] is True
     assert owner_client.get(CUSTOMERS, {"overdue": "true"}).json()["count"] == 1
     assert owner_client.get(CUSTOMERS, {"search": "5554"}).json()["count"] == 1
@@ -167,6 +169,27 @@ def test_payment_exceeding_debt_rejected(
     assert error["code"] == "payment_exceeds_debt"
     assert error["details"][0]["message"] == "25000"
     assert Payment.objects.count() == 0
+
+
+def test_payoff_amount(owner, owner_client, customer, branch, uzs, usd, cash):
+    currency_services.set_rate(actor=owner, currency=usd, rate=D("12650.45"))
+    debt(owner, customer, branch, usd, "7.5", doc_id=1)
+    debt(owner, customer, branch, usd, "7.5", doc_id=2)
+    debt(owner, customer, branch, uzs, "1000", doc_id=3)
+    data = owner_client.get(f"{CUSTOMERS}{customer.id}/payoff/", {"currency": "UZS"}).json()
+    # 2 × 94 878,375 + 1 000 = 190 756,75 → 190 757
+    assert data == {"currency": "UZS", "amount": "190757.0000"}
+    services.receive_debt_payment(
+        actor=owner,
+        customer=customer,
+        branch=branch,
+        method=cash,
+        currency=uzs,
+        amount=D(data["amount"]),
+    )
+    assert not Debt.objects.filter(status="open").exists()
+    usd_payoff = owner_client.get(f"{CUSTOMERS}{customer.id}/payoff/", {"currency": "USD"}).json()
+    assert usd_payoff["amount"] == "0.0000"
 
 
 def test_rounding_dust_accepted(owner, customer, branch, uzs, usd, cash):

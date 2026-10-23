@@ -71,7 +71,7 @@ Guruhlarga a'zolikni **server** hal qiladi, mijoz "obuna bo'laman" deb so'ramayd
 | Guruh | Kim a'zo | Nima keladi |
 |---|---|---|
 | `user_{id}` | shu foydalanuvchi (barcha ulanishlari) | `report.ready`, `session.revoked` (o'chirildi, rol/nuqta/parol o'zgardi), shaxsiy bildirishnomalar |
-| `role_{code}` | shu roldagi hamma (`role_owner`, `role_accountant`, `role_storekeeper`, `role_seller`) | rolga qaratilgan: `payment.received` (buxgalter), `debt.overdue`, `dashboard.updated` (rahbar); rol huquqlari o'zgarsa `session.revoked` |
+| `role_{code}` | shu roldagi hamma (`role_owner`, `role_accountant`, `role_storekeeper`, `role_seller`) | rol huquqlari o'zgarsa `session.revoked`. Bildirishnomalar (`dashboard.updated`, `debt.overdue`, `customer.credit_limit_warning`) rol nomiga emas, **huquq** bo'yicha `user_{id}` guruhlariga yuboriladi — rollar MB da o'zgaradi |
 | `branch_{id}` | `UserBranch` orqali shu nuqtaga biriktirilganlar; `branches.view_all` huquqi borlar **barcha** faol nuqtalarga | `stock.changed`, `stock.below_minimum`, `transfer.*` |
 | `broadcast` | hamma autentifikatsiyadan o'tganlar | `currency.rate_updated`, `system.notice` |
 
@@ -118,10 +118,12 @@ Boshqa hech qanday mijoz xabari qabul qilinmaydi (noma'lum `type` → e'tiborsiz
 | `stock.changed` | `branch_{id}` | `{branch_id, product_id, quantity, delta, movement_type, document: {type, id, number}}` — tannarx yo'q | `['inventory']`, `['sales','pos']` (kassa qidiruvidagi qoldiq; debounce 1,5 s) | 4 ✅ (kirim), 5 ✅ (savdo, bekor qilish) |
 | `stock.below_minimum` | `branch_{id}` (omborchi, sotuvchi; rahbar `branches.view_all` orqali barcha nuqtalar guruhida) | `{branch_id, product_id, product_name, quantity, min_quantity, unit}` | `['inventory']` + ogohlantirish toast "Kam qoldi: …" | 4 ✅ |
 | `dashboard.updated` | `dashboard.view` huquqi borlarning `user_{id}` guruhlari (rollar MB da o'zgaradi — rol nomi emas, huquq) | `{branch_id, reason: "sale.completed" \| "sale.cancelled"}` (keyin `sale_return.completed`) | `['sales','summary']`, `['sales','list']` (debounce 2 s) | 5 ✅, 8 |
-| `payment.received` | `branch_{id}` | `{branch_id, payment_id, method, currency, amount, is_cash, cashbox_id, document: {type, id}}` | `['payments']` (kassa qoldig'i, jurnal), `['sales','list']`, `['sales','summary']` (debounce 1 s) | 5 ✅; 6 da mijoz/qarz kalitlari |
+| `payment.received` | `branch_{id}` | `{branch_id, payment_id, method, currency, amount, is_cash, cashbox_id, customer_id, document: {type, id}}` | `['payments']` (kassa, jurnal, mijoz kartasi, qarzlar), `['sales','list']`, `['sales','summary']` (debounce 1 s) | 5–6 ✅ |
+| `debt.changed` | `branch_{id}` | `{branch_id, debt_id, customer_id}` (nasiya yozildi, yopildi, bekor qilindi) | `['payments']`, `['sales','list']` (debounce 1 s) | 6 ✅ |
+| `cash.updated` | `branch_{id}` | `{branch_id, reason: "shift_opened" \| "shift_closed" \| "manual_entry"}` | `['payments']` (debounce 0,5 s) | 6 ✅ |
 | `payment.refunded` | `branch_{id}` | xuddi shunday | xuddi shunday | 5 ✅ |
-| `debt.overdue` | `role_accountant`, `role_owner` | `{debt_id, customer_id, customer_name, amount_remaining, currency, due_date, days_overdue}` | `['debts']`, `['customers', customer_id]` + ogohlantirish | 6 |
-| `customer.credit_limit_warning` | `role_accountant`, `role_owner` | `{customer_id, customer_name, used_base, limit_base, percent}` | `['customers', customer_id]` + toast | 6 |
+| `debt.overdue` | `debts.manage` huquqi borlar (`user_{id}`) | `{branch_id, debt_id, customer_id, customer_name, amount_remaining, currency, due_date, days_overdue}` | `['payments']` + ogohlantirish toast | 6 ✅ |
+| `customer.credit_limit_warning` | `debts.manage` huquqi borlar | `{customer_id, customer_name, used_base, limit_base, percent, base_currency}` | `['payments','customer', id]` + toast | 6 ✅ |
 | `transfer.sent` | `branch_{to}` | `{transfer_id, number, from_branch_id, from_branch_name, to_branch_id, items_count}` | `['transfers']` + bildirishnoma (omborchi) | 7 |
 | `transfer.received` | `branch_{from}`, `branch_{to}`, farq bo'lsa `role_owner` | `{transfer_id, number, from_branch_id, to_branch_id, has_discrepancy}` | `['transfers']`, `['stock', from]`, `['stock', to]` | 7 |
 | `transfer.cancelled` | ikkala nuqta | `{transfer_id, number, reason}` | `['transfers']` | 7 |
@@ -138,7 +140,7 @@ domen hodisasi (on_commit) → realtime.subscribers → realtime.router (hodisa 
 → RealtimeConsumer.notify() → self.send_json(message)
 ```
 
-- `realtime.router` — oddiy jadval: `{"stock.changed": [to_branch_group], "payment.received": [role_accountant, role_owner, branch], ...}`. Yangi hodisa uchun bitta qator qo'shiladi.
+- `realtime.router` — oddiy jadval: `route("stock.changed", groups=_branch_group, payload=...)`. Yangi hodisa uchun bitta qator qo'shiladi; huquq bo'yicha guruh — `_capability_users("debts.manage")`.
 - Celery ichidan chiqqan hodisalar (kurs, muddati o'tgan qarz) ham xuddi shu yo'ldan o'tadi (`channel_layer` Redis orqali, worker dan ham ishlaydi).
 - `group_send` `transaction.on_commit` ichida bo'lgani uchun MB ga yozilmagan narsa haqida xabar ketmaydi.
 
@@ -163,6 +165,7 @@ Backend (`apps/realtime/tests/`, `WebsocketCommunicator`, ✅):
 - `currency.rate_updated` (kurs kiritilganda) `broadcast` orqali boshqa foydalanuvchiga yetib keladi (3 ✅, `apps/currency/tests/test_realtime.py`).
 - `stock.changed` faqat shu nuqta guruhiga ketadi, payloadda tannarx yo'q (4 ✅, `apps/inventory/tests/test_realtime.py`).
 - Savdo: har qator uchun `stock.changed` (nuqta guruhi), `dashboard.updated` faqat `dashboard.view` huquqi borlarga, `payment.received` nuqta guruhiga (5 ✅, `apps/sales/tests/test_realtime.py`).
+- Nasiya: `debt.overdue` buxgalter va rahbarga, sotuvchiga emas; `cash.updated` nuqta guruhiga (6 ✅, `apps/payments/tests/test_credit.py`).
 
 Frontend (`src/shared/realtime/*.test.ts`, soxta WebSocket + fake timers, ✅):
 - ticket → `auth` birinchi xabar → `auth.ok` → online; `pong` uzatilmaydi; buzuq JSON e'tiborsiz.

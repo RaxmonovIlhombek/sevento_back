@@ -50,6 +50,7 @@ from .serializers import (
     PaymentDetailSerializer,
     PaymentListSerializer,
     PaymentMethodSerializer,
+    PayoffSerializer,
     ReasonSerializer,
     ShiftCloseSerializer,
     ShiftOpenSerializer,
@@ -202,6 +203,7 @@ class CustomerViewSet(
         "list": "customers.view",
         "retrieve": "customers.view",
         "ledger": "customers.view",
+        "payoff": "customers.view",
         "create": "customers.manage",
         "update": "customers.manage",
         "pay": "payments.receive",
@@ -268,6 +270,26 @@ class CustomerViewSet(
         page = self.paginate_queryset(queryset)
         data = LedgerEntrySerializer(page, many=True).data
         return self.get_paginated_response(data)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("currency", OpenApiTypes.STR, required=True),
+            OpenApiParameter("debt_ids", OpenApiTypes.STR, required=False, description="1,2,3"),
+        ],
+        responses=PayoffSerializer,
+    )
+    @action(detail=True, methods=["get"], pagination_class=None)
+    def payoff(self, request, pk=None):
+        """Qarzni shu valyutada to'liq yopish summasi (joriy kurs, yuqoriga yaxlitlangan)."""
+        customer = self.get_object()
+        code = request.query_params.get("currency", "").upper()
+        currency = currency_selectors.get_currency(code)
+        if currency is None:
+            raise ValidationError({"currency": "Noma'lum valyuta"})
+        raw_ids = request.query_params.get("debt_ids", "")
+        ids = [int(x) for x in raw_ids.split(",") if x.strip().isdigit()]
+        amount = services.payoff_amount(customer, currency, ids or None)
+        return Response(PayoffSerializer({"currency": code, "amount": amount}).data)
 
     @extend_schema(
         request=DebtPaymentWriteSerializer,

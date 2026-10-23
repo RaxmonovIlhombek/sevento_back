@@ -7,7 +7,7 @@ Kredit limiti asosiy valyutada: ochiq qarzlar joriy kurs bilan o'tkazilib yig'il
 
 from dataclasses import dataclass
 from datetime import date, timedelta
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_HALF_UP, ROUND_UP, Decimal
 
 from django.db import transaction
 from django.db.models import F
@@ -290,6 +290,15 @@ def _convert(amount: Decimal, from_code: str, to_code: str) -> Decimal:
     return _q(
         amount * currency_selectors.rate_value(from_code) / currency_selectors.rate_value(to_code)
     )
+
+
+def payoff_amount(customer: Customer, currency, debt_ids: list[int] | None = None) -> Decimal:
+    """Ochiq qarzlarni shu valyutada to'liq yopish uchun summa (eng kichik birlikka yuqoriga)."""
+    qs = Debt.objects.filter(customer=customer, status=Debt.Status.OPEN).select_related("currency")
+    if debt_ids:
+        qs = qs.filter(pk__in=debt_ids)
+    total = sum((_convert(d.remaining, d.currency.code, currency.code) for d in qs), Decimal(0))
+    return total.quantize(Decimal(1).scaleb(-currency.decimal_places), rounding=ROUND_UP)
 
 
 def receive_debt_payment(

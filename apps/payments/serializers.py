@@ -148,6 +148,14 @@ class CurrencyAmountSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=20, decimal_places=4)
 
 
+_MONEY_FIELD = serializers.DecimalField(max_digits=20, decimal_places=4)
+
+
+def _money(value) -> str:
+    """SerializerMethodField Decimal ni float qilib yubormasin — DecimalField formati (satr)."""
+    return _MONEY_FIELD.to_representation(value)
+
+
 class CustomerSerializer(serializers.ModelSerializer):
     """Ro'yxat: qarz qoldig'i valyuta kesimida va asosiy valyutada (joriy kurs bilan)."""
 
@@ -181,21 +189,21 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(CurrencyAmountSerializer(many=True))
     def get_balances(self, customer) -> list[dict]:
-        return [
-            {"currency": code, "amount": amount}
-            for code, amount in sorted(self._info(customer).get("balances", {}).items())
-        ]
+        rows = sorted(self._info(customer).get("balances", {}).items())
+        return CurrencyAmountSerializer(
+            [{"currency": code, "amount": amount} for code, amount in rows], many=True
+        ).data
 
     @extend_schema_field(serializers.DecimalField(max_digits=20, decimal_places=4))
-    def get_debt_base(self, customer) -> Decimal:
-        return self._info(customer).get("debt_base", Decimal(0))
+    def get_debt_base(self, customer) -> str:
+        return _money(self._info(customer).get("debt_base", Decimal(0)))
 
     def get_has_overdue(self, customer) -> bool:
         return self._info(customer).get("overdue", False)
 
     @extend_schema_field(serializers.DecimalField(max_digits=20, decimal_places=4))
-    def get_effective_credit_limit(self, customer) -> Decimal:
-        return self._info(customer).get("limit_base", Decimal(0))
+    def get_effective_credit_limit(self, customer) -> str:
+        return _money(self._info(customer).get("limit_base", Decimal(0)))
 
 
 class CustomerWriteSerializer(serializers.Serializer):
@@ -285,6 +293,11 @@ class CustomerDetailSerializer(CustomerSerializer):
     @extend_schema_field(DebtSerializer(many=True))
     def get_open_debts(self, customer) -> list[dict]:
         return DebtSerializer(self.context["open_debts"], many=True).data
+
+
+class PayoffSerializer(serializers.Serializer):
+    currency = serializers.CharField()
+    amount = serializers.DecimalField(max_digits=20, decimal_places=4)
 
 
 class LedgerEntrySerializer(serializers.ModelSerializer):

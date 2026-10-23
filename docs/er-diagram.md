@@ -388,6 +388,7 @@ erDiagram
     int branch_id FK
     int seller_id FK
     int price_type_id FK
+    int customer_id FK "nasiyada majburiy, to'liq to'lovda ixtiyoriy"
     string status "completed, cancelled"
     int currency_id FK "savdo valyutasi"
     decimal rate_to_base "1 savdo valyutasi = N asosiy; savdo paytida qotiriladi"
@@ -398,6 +399,8 @@ erDiagram
     decimal cost_base "FIFO tannarx yig'indisi"
     decimal paid_total "to'lovlar savdo valyutasida (4 xona)"
     decimal change_amount "qaytim, savdo valyutasida"
+    decimal debt_amount "nasiya (payments.Debt)"
+    date due_date
     datetime completed_at
     int cancelled_by_id FK
     datetime cancelled_at
@@ -443,10 +446,11 @@ erDiagram
   SaleItem ||--o{ SaleReturnItem : ""
 ```
 
-- 5-bosqichda amalga oshirildi: `Sale`, `SaleItem` (naqd/karta/o'tkazma, to'liq to'lov). Mijoz va nasiya (`customer_id`, `debt_amount`) — 6-bosqich, qaytarish (`SaleReturn`) — 7-bosqich.
+- 5–6-bosqichda amalga oshirildi: `Sale` (+ `customer_id`, `debt_amount`, `due_date`), `SaleItem`. Qaytarish (`SaleReturn`) — 7-bosqich.
+- Nasiya: to'lov jamidan kam bo'lsa va mijoz tanlangan bo'lsa qolgani `payments.services.register_debt()` bilan qarz bo'ladi (`sales.credit` huquqi, kredit limiti — oshsa 409 `credit_limit_exceeded`, tovar chiqimidan oldin tekshiriladi). Qarz kasr qoldig'i yuqoriga yaxlitlanadi; muddat — kiritilgan (bugundan oldin emas) yoki mijoz/sozlama defaulti.
 - Savdo bitta so'rovda va bitta tranzaksiyada yakunlanadi: narx (katalog; savdo valyutasida bo'lmasa — sozlama ruxsat bersa — joriy kurs bilan o'tkaziladi) → chegirma tekshiruvi → FIFO chiqim (`inventory.services.issue_stock`, tovar id tartibida qulflanadi) → to'lovlar (`payments.services.receive_payment`) → qaytim (`give_change`, faqat naqd) → `sale.completed`.
 - Narxni server belgilaydi (kassir narxni o'zgartira olmaydi). Mijoz ekrandagi jamini `expected_total` sifatida yuboradi; farq bo'lsa 409 `total_mismatch` (narx o'zgargan).
-- Bekor qilish (`sales.cancel`): tovar **asl partiyalarga** qaytadi (`inventory.services.restore_stock`, `sale_cancel` harakati, tannarx saqlanadi), to'lovlar teskari yoziladi (`payments.services.reverse_document_payments`). Kassada naqd yetmasa — 409 `insufficient_cash`.
+- Bekor qilish (`sales.cancel`): nasiya bekor qilinadi (to'lov qilingan bo'lsa 409 `debt_has_payments`), tovar **asl partiyalarga** qaytadi (`inventory.services.restore_stock`, `sale_cancel` harakati, tannarx saqlanadi), to'lovlar teskari yoziladi (`payments.services.reverse_document_payments`). Kassada naqd yetmasa — 409 `insufficient_cash`.
 
 ## 7. payments
 
@@ -454,9 +458,9 @@ erDiagram
 erDiagram
   PaymentMethod {
     int id PK
-    string code UK "cash, card_terminal, transfer, click, payme"
+    string code UK "cash, card, transfer (keyin click, payme)"
     string name
-    string provider "manual | click | payme"
+    string provider "providers reyestri: manual (keyin click, payme)"
     bool is_cash "kassa qoldig'iga ta'sir qiladimi"
     bool is_active
     int sort_order
@@ -466,66 +470,79 @@ erDiagram
     int branch_id FK
     int currency_id FK
     string name
-    decimal balance "CashTransaction dan hisoblanadi, kesh"
+    decimal balance "CHECK >= 0"
     bool is_active
   }
   CashFlowCategory {
     int id PK
-    string code UK "sale, debt_payment, refund, expense, deposit, withdrawal, transfer"
+    string code UK "sale, refund, debt_payment, expense, deposit, withdrawal, adjustment"
     string name
     string direction "in | out | both"
+    bool is_manual "qo'lda kiritiladimi (deposit, withdrawal, expense)"
+  }
+  CashShift {
+    int id PK
+    int branch_id FK "nuqtada bitta ochiq smena (partial UNIQUE)"
+    string status "open | closed"
+    int opened_by_id FK
+    datetime opened_at
+    int closed_by_id FK
+    datetime closed_at
+    string note
+  }
+  CashShiftBalance {
+    int id PK
+    int shift_id FK
+    int cashbox_id FK "har valyuta kassasi"
+    decimal opening_balance
+    decimal expected_balance
+    decimal actual_balance "sanalgan"
+    decimal difference
   }
   CashTransaction {
     int id PK
     int cashbox_id FK
-    int shift_id FK
+    int shift_id FK "ochiq smena bo'lsa"
     string direction "in | out"
     int category_id FK
-    decimal amount
-    decimal balance_after
-    int payment_id FK "null = qo'lda kirim/chiqim"
+    decimal amount "CHECK > 0"
+    decimal balance_after "CHECK >= 0"
+    int payment_id FK "null = qo'lda yozuv yoki smena farqi"
     string document_type
-    int document_id
+    bigint document_id
+    string document_number
     int created_by_id FK
     string note
-  }
-  CashShift {
-    int id PK
-    int cashbox_id FK
-    int opened_by_id FK
-    datetime opened_at
-    decimal opening_balance
-    int closed_by_id FK
-    datetime closed_at
-    decimal expected_balance
-    decimal actual_balance
-    decimal difference
-    string status "open | closed"
   }
   Customer {
     int id PK
     string name
     string phone
+    string tin
     string address
-    decimal credit_limit_base "null = sozlamadagi default"
-    int default_due_days
+    decimal credit_limit_base "asosiy valyutada; null = sozlama"
+    int default_due_days "null = sozlama"
     bool is_active
     string note
   }
   Payment {
     int id PK
-    string number UK
+    string number UK "T-<nuqta>-<yil>-<raqam>"
     int branch_id FK
-    int customer_id FK
-    int sale_id FK "savdo paytidagi to'lov"
     int method_id FK
+    int customer_id FK "nasiya mijozi, qarz to'lovi"
+    string kind "payment, change, refund, change_return"
     string direction "in | out"
     int currency_id FK
-    decimal amount
-    decimal rate
+    decimal amount "CHECK > 0"
+    decimal rate_to_base
     decimal amount_base
-    string status "completed, refunded, failed"
-    string provider_reference "Click/Payme tranzaksiya id"
+    string status "completed | reversed"
+    int reversal_of_id FK "teskari yozuv (1:1)"
+    string provider_reference
+    string document_type "sale | customer (qarz to'lovi)"
+    bigint document_id
+    string document_number
     int received_by_id FK
     datetime received_at
     string note
@@ -533,39 +550,46 @@ erDiagram
   Debt {
     int id PK
     int customer_id FK
-    int sale_id FK
     int branch_id FK
-    int currency_id FK
-    decimal amount
-    decimal paid_amount
+    int currency_id FK "savdo valyutasi — qarz shu valyutada qoladi"
+    decimal amount "CHECK > 0"
+    decimal paid_amount "0 <= paid <= amount"
     date due_date
-    string status "open, partially_paid, paid, overdue"
+    string status "open, paid, cancelled (muddati o'tgani — due_date < bugun)"
+    string document_type "sale"
+    bigint document_id
+    string document_number
+    datetime overdue_notified_at "debt.overdue bir marta"
     datetime settled_at
+    int created_by_id FK
   }
   DebtAllocation {
     int id PK
     int payment_id FK
     int debt_id FK
     decimal amount "qarz valyutasida"
-    decimal rate "to'lov valyutasi boshqa bo'lsa"
+    decimal payment_amount "to'lov valyutasida"
   }
   CustomerLedgerEntry {
     int id PK
     int customer_id FK
     int currency_id FK
-    string type "debt, payment, refund, adjustment"
-    decimal amount "ishorali"
-    decimal balance_after
+    string type "debt, payment, refund, cancel"
+    decimal amount "ishorali: qarz +, to'lov -"
+    decimal balance_after "mijoz x valyuta qarz qoldig'i"
+    int debt_id FK
+    int payment_id FK
     string document_type
-    int document_id
+    bigint document_id
+    string document_number
     int created_by_id FK
   }
   Cashbox ||--o{ CashTransaction : ""
-  Cashbox ||--o{ CashShift : ""
+  CashShift ||--|{ CashShiftBalance : ""
   CashShift ||--o{ CashTransaction : ""
   CashFlowCategory ||--o{ CashTransaction : ""
   PaymentMethod ||--o{ Payment : ""
-  Payment ||--o| CashTransaction : ""
+  Payment ||--o{ CashTransaction : ""
   Customer ||--o{ Payment : ""
   Customer ||--o{ Debt : ""
   Payment ||--o{ DebtAllocation : ""
@@ -573,11 +597,12 @@ erDiagram
   Customer ||--o{ CustomerLedgerEntry : ""
 ```
 
-- 5-bosqichda amalga oshirildi: `PaymentMethod` (seed: naqd, karta, o'tkazma), `CashFlowCategory` (seed), `Cashbox` (`UNIQUE (branch, currency)`, `CHECK balance >= 0`), `CashTransaction` (faqat INSERT, `CHECK balance_after >= 0`), `Payment`. Rejadan farq: `Payment` da `sale_id` o'rniga umumiy `document_type/document_id/document_number` (payments savdoni bilmaydi — bog'liqlik yo'nalishi sales → payments), `kind` (`payment`, `change` — qaytim, `refund`, `change_return`) va `reversal_of` (teskari yozuv), `status`: `completed | reversed`. `Customer`, `Debt`, `CashShift` va boshqalar — 6-bosqich.
-- Qaytim ham `Payment` (`kind=change`, `direction=out`, naqd) — kassa jurnali va hisobotlar bitta jadvaldan.
-- Kassa: har nuqta × valyuta uchun alohida `Cashbox` (TSH1-USD, TSH1-UZS), birinchi naqd harakatda avtomatik yaratiladi. Faqat `PaymentMethod.is_cash=true` to'lovlar kassa qoldig'ini o'zgartiradi; terminal/Click/Payme alohida "bank" hisobida ko'rinadi (hisobotda).
-- Mijoz balansi `CustomerLedgerEntry` dan valyuta kesimida; kredit limiti tekshiruvida barcha ochiq qarzlar asosiy valyutaga joriy kurs bilan o'tkazilib yig'iladi.
-- Qarz to'lovi FIFO: eng eski ochiq qarzdan boshlab yopiladi (`DebtAllocation`), foydalanuvchi aniq qarzni tanlashi ham mumkin.
+- 5–6-bosqichda amalga oshirildi. Rejadan farqlar: `Payment` da `sale_id` o'rniga umumiy `document_type/document_id/document_number` (payments savdoni bilmaydi — bog'liqlik yo'nalishi sales → payments); `kind` va `reversal_of` (teskari yozuvlar); `Debt.status` da `partially_paid`/`overdue` yo'q — qisman to'langani `paid_amount > 0`, muddati o'tgani `due_date < bugun` dan hisoblanadi; smena **nuqta** bo'yicha (barcha valyutalar bitta smenada, qoldiqlar `CashShiftBalance` da).
+- Kassa: har nuqta × valyuta uchun alohida `Cashbox`, birinchi naqd harakatda avtomatik yaratiladi. Faqat `PaymentMethod.is_cash=true` to'lovlar kassa qoldig'ini o'zgartiradi. Qaytim ham `Payment` (`kind=change`, naqd, `out`).
+- Nasiya: `register_debt` mijoz qatorini qulflaydi (`select_for_update`) — bir mijozga parallel nasiyalar limitni chetlab o'tolmaydi. Limit asosiy valyutada; ochiq qarzlar **joriy kurs** bilan yig'iladi. Limit sozlamasi: mijozda yoki `payments.default_credit_limit_base` (default 0 — nasiya yo'q).
+- Qarz to'lovi FIFO: eng eski muddatdan boshlab yopiladi (yoki tanlangan qarzlar), boshqa valyutadagi to'lov to'lov paytidagi kurs bilan o'tkaziladi; qarzdan ortiq summa rad etiladi (to'lov valyutasining bitta eng kichik birligidan kam yaxlitlash qoldig'i e'tiborsiz). To'liq yopish summasi — `GET customers/<id>/payoff/?currency=`.
+- Qarz to'lovini qaytarish (`payments.refund`): qarzlar qayta ochiladi, mijoz hisobiga `refund` yozuvi, naqd bo'lsa kassadan chiqim. Savdo to'lovi — faqat savdoni bekor qilish orqali.
+- Smena yopilganda sanalgan va kutilgan farqi `adjustment` kassa yozuvi bilan tenglashtiriladi — tizimdagi qoldiq doim haqiqiy naqdga teng. Sozlama `cashbox.require_open_shift=true` bo'lsa naqd harakat faqat ochiq smenada.
 
 ## 8. core, audit, reports
 

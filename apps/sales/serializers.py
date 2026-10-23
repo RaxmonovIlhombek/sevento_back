@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -226,6 +227,11 @@ class SaleWriteSerializer(serializers.Serializer):
         allow_null=True,
         help_text="Kassada ko'rsatilgan jami; serverdagidan farq qilsa 409 total_mismatch",
     )
+
+    def validate_due_date(self, value):
+        if value is not None and value < timezone.localdate():
+            raise serializers.ValidationError("Muddat bugundan oldin bo'lmasin", code="past_date")
+        return value
 
 
 class SaleCancelSerializer(serializers.Serializer):

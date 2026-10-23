@@ -212,7 +212,7 @@ Strelka = "shu modulning service/selector funksiyasini chaqiradi". Teskari yo'na
 | `currency` | Currency, ExchangeRate | `selectors.get_rate()`, `services.convert()`, `selectors.base_currency()` |
 | `inventory` | StockLevel, Batch, StockMovement, Transfer(+Item), StockCount(+Item), WriteOff(+Item), WriteOffReason | `services.receive_stock()`, `services.issue_stock()`, `services.reverse_receipt()`, `selectors.get_quantity()`, `selectors.is_source_untouched()`; `types.DocRef`, `types.MovementType` (boshqa app lar `models` ni emas, shularni import qiladi) |
 | `purchasing` | Supplier, Purchase, PurchaseItem, PurchaseExpense, ExpenseType | `selectors.*` (hisobotlar uchun) |
-| `payments` | PaymentMethod, Cashbox, CashTransaction, CashFlowCategory, Customer, Payment, Debt, DebtAllocation, CustomerLedgerEntry | `services.receive_payment()`, `services.give_change()`, `services.reverse_document_payments()`, `selectors.payments_for_document()`; `types.PaymentDoc`; 6-bosqich: `register_debt()`, `available_credit()` |
+| `payments` | PaymentMethod, Cashbox, CashTransaction, CashFlowCategory, CashShift(+Balance), Customer, Payment, Debt, DebtAllocation, CustomerLedgerEntry | `services` paketi (`payments.py`, `credit.py`, `cash.py`): `receive_payment()`, `give_change()`, `reverse_document_payments()`, `register_debt()`, `cancel_document_debts()`, `receive_debt_payment()`, `credit_status()`; `selectors.payments_for_document()`, `document_debt()`; `types.PaymentDoc` |
 | `sales` | Sale, SaleItem, SaleReturn, SaleReturnItem | `selectors.*` (hisobotlar uchun) |
 | `reports` | ReportJob | — |
 | `audit` | AuditLog | — |
@@ -354,9 +354,10 @@ sequenceDiagram
 | `sales.default_currency` | `"UZS"` | kassada boshlang'ich savdo valyutasi |
 | `sales.convert_missing_price` | `true` | savdo valyutasida narx bo'lmasa, boshqa valyutadagi narx joriy kurs bilan |
 | `sales.receipt_header` / `sales.receipt_footer` | `""` / `"Xaridingiz uchun rahmat!"` | chek sarlavhasi (bo'sh — nuqta nomi) va oxiri |
-| `payments.default_credit_limit` | `{"amount": "0", "currency": "USD"}` | yangi mijoz kredit limiti |
+| `payments.default_credit_limit_base` | `"0"` | mijozda alohida berilmagan bo'lsa kredit limiti (asosiy valyutada; 0 — nasiya yo'q) |
 | `payments.credit_limit_warning_percent` | `"80"` | limitga yaqinlashganda ogohlantirish chegarasi |
 | `payments.default_due_days` | `30` | nasiya muddati (kun) |
+| `cashbox.require_open_shift` | `false` | naqd harakat faqat ochiq smenada |
 | `currency.rate_provider` | `"cbu"` | kurs manbai |
 | `currency.base_code` | `"USD"` | tannarx va foyda hisoblanadigan asosiy valyuta |
 
@@ -367,7 +368,7 @@ sequenceDiagram
 | Vazifa | Jadval (default) | Nima qiladi |
 |---|---|---|
 | `currency.tasks.fetch_rates` | har kuni 09:05 (MB da o'zgaradi) | provider dan kurslarni oladi, `ExchangeRate` ga yozadi, `currency.rate_updated` hodisasi |
-| `payments.tasks.detect_overdue_debts` | har kuni 08:05 | muddati o'tgan qarzlarni `overdue` qiladi, `debt.overdue` hodisasi |
+| `payments.detect_overdue_debts` | har kuni 08:05 (MB da o'zgaradi) | muddati o'tgan ochiq qarzlar uchun bir martalik `debt.overdue` hodisasi (`overdue_notified_at`) ✅ |
 | `reports.tasks.generate_report` | so'rov bo'yicha | og'ir PDF/Excel hisobotlar, natija `ReportJob.file` ga |
 | `core.tasks.redispatch_outbox` | har daqiqa | jo'natilmay qolgan hodisalarni qayta jo'natadi |
 | `core.tasks.cleanup` | har kuni tunda | eski idempotency yozuvlari va jo'natilgan outbox ni tozalaydi |

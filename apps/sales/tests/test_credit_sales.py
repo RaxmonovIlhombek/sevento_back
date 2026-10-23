@@ -180,3 +180,18 @@ def test_receipt_shows_credit(seller_client, branch, uzs, products, stocked, cus
     assert ctx["customer"] == "Aliyev Vali"
     assert ctx["debt"] == "20 000"
     assert ctx["due_date"] == sale.due_date.strftime("%d.%m.%Y")
+
+
+def test_due_date_validation(seller_client, branch, uzs, products, stocked, customer):
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    past = (timezone.localdate() - timedelta(days=1)).isoformat()
+    body = sale_payload(branch, uzs, cola(products, "1"), [], customer=customer.id, due_date=past)
+    response = seller_client.post(URL, body, format="json")
+    assert response.status_code == 400
+    assert response.json()["error"]["details"][0]["field"] == "due_date"
+    future = (timezone.localdate() + timedelta(days=7)).isoformat()
+    ok = seller_client.post(URL, {**body, "due_date": future}, format="json")
+    assert ok.status_code == 201 and ok.json()["due_date"] == future
