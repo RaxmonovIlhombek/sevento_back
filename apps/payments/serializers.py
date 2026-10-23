@@ -247,6 +247,7 @@ class DebtSerializer(serializers.ModelSerializer):
             "currency_decimal_places",
             "amount",
             "paid_amount",
+            "returned_amount",
             "remaining",
             "due_date",
             "status",

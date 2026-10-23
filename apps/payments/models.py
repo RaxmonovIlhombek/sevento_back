@@ -229,7 +229,10 @@ class CashTransaction(models.Model):
 
 
 class Debt(models.Model):
-    """Nasiya qarzi — savdo valyutasida qoladi (USD qarz USD da). Qoldiq = amount - paid_amount."""
+    """Nasiya qarzi — savdo valyutasida qoladi (USD qarz USD da).
+
+    Qoldiq = amount - paid_amount - returned_amount (qaytarilgan tovar qarzdan ayiriladi).
+    """
 
     class Status(models.TextChoices):
         OPEN = "open", "Ochiq"
@@ -241,6 +244,9 @@ class Debt(models.Model):
     currency = models.ForeignKey("currency.Currency", on_delete=models.PROTECT, related_name="+")
     amount = models.DecimalField(max_digits=20, decimal_places=4)
     paid_amount = models.DecimalField(max_digits=20, decimal_places=4, default=0)
+    returned_amount = models.DecimalField(
+        max_digits=20, decimal_places=4, default=0, help_text="qaytarilgan tovar summasi"
+    )
     due_date = models.DateField()
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.OPEN)
     # hujjat (savdo): FK emas — payments savdoni bilmaydi
@@ -264,8 +270,10 @@ class Debt(models.Model):
         constraints = [
             models.CheckConstraint(condition=Q(amount__gt=0), name="debt_amount_gt_0"),
             models.CheckConstraint(
-                condition=Q(paid_amount__gte=0) & Q(paid_amount__lte=models.F("amount")),
-                name="debt_paid_between_0_and_amount",
+                condition=Q(paid_amount__gte=0)
+                & Q(returned_amount__gte=0)
+                & Q(paid_amount__lte=models.F("amount") - models.F("returned_amount")),
+                name="debt_paid_returned_within_amount",
             ),
         ]
 
@@ -274,7 +282,7 @@ class Debt(models.Model):
 
     @property
     def remaining(self):
-        return self.amount - self.paid_amount
+        return self.amount - self.paid_amount - self.returned_amount
 
 
 class DebtAllocation(models.Model):
@@ -308,6 +316,7 @@ class CustomerLedgerEntry(models.Model):
         PAYMENT = "payment", "To'lov"
         REFUND = "refund", "To'lov qaytarildi"
         CANCEL = "cancel", "Qarz bekor qilindi"
+        RETURN = "return", "Tovar qaytarildi"
 
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name="ledger")
     currency = models.ForeignKey("currency.Currency", on_delete=models.PROTECT, related_name="+")

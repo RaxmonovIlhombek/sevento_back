@@ -13,11 +13,11 @@ from django.utils import timezone
 
 from apps.catalog import selectors as catalog_selectors
 
-from . import events
-from .costing import get_strategy
-from .exceptions import BatchConsumed, InsufficientStock
-from .models import Batch, StockLevel, StockMovement
-from .types import BatchAllocation, DocRef, IssueResult, MovementType
+from .. import events
+from ..costing import get_strategy
+from ..exceptions import BatchConsumed, InsufficientStock
+from ..models import Batch, StockLevel, StockMovement
+from ..types import BatchAllocation, DocRef, IssueResult, MovementType
 
 MONEY_PLACES = Decimal("0.0001")
 UNIT_COST_PLACES = Decimal("0.000001")
@@ -236,6 +236,49 @@ def restore_stock(
             )
         StockMovement.objects.bulk_create(rows)
     return total_qty
+
+
+def adjust_to_counted(
+    *,
+    actor,
+    branch_id: int,
+    product_id: int,
+    counted: Decimal,
+    surplus_unit_cost_base: Decimal,
+    doc: DocRef,
+) -> tuple[Decimal, Decimal, Decimal]:
+    """Inventarizatsiya: qoldiqni sanalgan miqdorga tenglashtiradi (qulf ostida joriy qoldiq bilan).
+
+    Ortiqcha — yangi partiya (berilgan tannarx), kamomad — FIFO chiqim.
+    Qaytaradi: (hisobdagi qoldiq, farq, tannarx farqi).
+    """
+    with transaction.atomic():
+        level = _lock_level(branch_id, product_id)
+        expected = level.quantity
+        diff = counted - expected
+        cost = Decimal(0)
+        if diff > 0:
+            batch = receive_stock(
+                actor=actor,
+                branch_id=branch_id,
+                product_id=product_id,
+                quantity=diff,
+                unit_cost_base=surplus_unit_cost_base,
+                movement_type=MovementType.COUNT_SURPLUS,
+                doc=doc,
+            )
+            cost = (diff * batch.unit_cost_base).quantize(MONEY_PLACES, ROUND_HALF_UP)
+        elif diff < 0:
+            result = issue_stock(
+                actor=actor,
+                branch_id=branch_id,
+                product_id=product_id,
+                quantity=-diff,
+                movement_type=MovementType.COUNT_SHORTAGE,
+                doc=doc,
+            )
+            cost = -result.total_cost_base
+    return expected, diff, cost
 
 
 def reverse_receipt(*, actor, doc_type: str, doc_id: int, doc_number: str = "") -> int:

@@ -9,7 +9,7 @@ from apps.catalog import selectors as catalog_selectors
 from apps.currency import selectors as currency_selectors
 from apps.payments import selectors as payment_selectors
 
-from .models import Sale, SaleItem
+from .models import Sale, SaleItem, SaleReturn, SaleReturnItem
 
 COST_FIELDS = ("cost_base", "profit_base")
 
@@ -43,6 +43,9 @@ class SaleListSerializer(_HideCostMixin, serializers.ModelSerializer):
     profit_base = serializers.DecimalField(
         max_digits=20, decimal_places=4, read_only=True, allow_null=True
     )
+    return_state = serializers.ChoiceField(
+        choices=[("none", "none"), ("partial", "partial"), ("full", "full")], read_only=True
+    )
 
     class Meta:
         model = Sale
@@ -69,6 +72,8 @@ class SaleListSerializer(_HideCostMixin, serializers.ModelSerializer):
             "customer_name",
             "debt_amount",
             "due_date",
+            "returned_total",
+            "return_state",
             "items_count",
             "completed_at",
             "cancelled_at",
@@ -102,6 +107,7 @@ class SaleItemSerializer(_HideCostMixin, serializers.ModelSerializer):
             "discount_amount",
             "line_total",
             "cost_base",
+            "returned_quantity",
         ]
         read_only_fields = fields
 
@@ -130,9 +136,32 @@ class SaleDebtSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     amount = serializers.DecimalField(max_digits=20, decimal_places=4)
     paid_amount = serializers.DecimalField(max_digits=20, decimal_places=4)
+    returned_amount = serializers.DecimalField(max_digits=20, decimal_places=4)
     remaining = serializers.DecimalField(max_digits=20, decimal_places=4)
     due_date = serializers.DateField()
     status = serializers.CharField()
+
+
+class SaleReturnBriefSerializer(serializers.ModelSerializer):
+    refund_method_name = serializers.CharField(
+        source="refund_method.name", read_only=True, default=None, allow_null=True
+    )
+    created_by_name = serializers.CharField(source="created_by.full_name", read_only=True)
+
+    class Meta:
+        model = SaleReturn
+        fields = [
+            "id",
+            "number",
+            "total",
+            "debt_reduction",
+            "refund_amount",
+            "refund_method_name",
+            "reason",
+            "created_by_name",
+            "created_at",
+        ]
+        read_only_fields = fields
 
 
 class SaleDetailSerializer(SaleListSerializer):
@@ -144,7 +173,9 @@ class SaleDetailSerializer(SaleListSerializer):
     payments = serializers.SerializerMethodField()
     base_currency = serializers.SerializerMethodField()
     can_cancel = serializers.SerializerMethodField()
+    can_return = serializers.SerializerMethodField()
     debt = serializers.SerializerMethodField()
+    returns = SaleReturnBriefSerializer(many=True, read_only=True)
 
     class Meta(SaleListSerializer.Meta):
         fields = SaleListSerializer.Meta.fields + [
@@ -158,7 +189,10 @@ class SaleDetailSerializer(SaleListSerializer):
             "payments",
             "base_currency",
             "can_cancel",
+            "can_return",
             "debt",
+            "returned_total_base",
+            "returns",
         ]
         read_only_fields = fields
 
@@ -180,7 +214,19 @@ class SaleDetailSerializer(SaleListSerializer):
         return SaleDebtSerializer(debt).data if debt else None
 
     def get_can_cancel(self, sale) -> bool:
-        return sale.status == Sale.Status.COMPLETED and self.context.get("can_cancel", False)
+        # qaytarish bo'lgan savdo bekor qilinmaydi (qolganini qaytarish orqali)
+        return (
+            sale.status == Sale.Status.COMPLETED
+            and self.context.get("can_cancel", False)
+            and not sale.returns.all()
+        )
+
+    def get_can_return(self, sale) -> bool:
+        return (
+            sale.status == Sale.Status.COMPLETED
+            and self.context.get("can_return", False)
+            and any(i.returned_quantity < i.quantity for i in sale.items.all())
+        )
 
 
 # --- yozish ---
@@ -292,5 +338,108 @@ class DailySummarySerializer(serializers.Serializer):
     by_currency = SummaryCurrencySerializer(many=True)
     total_base = serializers.DecimalField(max_digits=20, decimal_places=4)
     cost_base = serializers.DecimalField(max_digits=20, decimal_places=4, allow_null=True)
+    returns_count = serializers.IntegerField()
+    returns_total_base = serializers.DecimalField(max_digits=20, decimal_places=4)
     profit_base = serializers.DecimalField(max_digits=20, decimal_places=4, allow_null=True)
     base_currency = serializers.CharField()
+
+
+# --- qaytarish ---
+
+
+class SaleReturnListSerializer(_HideCostMixin, serializers.ModelSerializer):
+    sale_number = serializers.CharField(source="sale.number", read_only=True)
+    branch_name = serializers.CharField(source="branch.name", read_only=True)
+    customer_name = serializers.CharField(
+        source="customer.name", read_only=True, default=None, allow_null=True
+    )
+    currency_code = serializers.CharField(source="currency.code", read_only=True)
+    currency_decimal_places = serializers.IntegerField(
+        source="currency.decimal_places", read_only=True
+    )
+    refund_method_name = serializers.CharField(
+        source="refund_method.name", read_only=True, default=None, allow_null=True
+    )
+    created_by_name = serializers.CharField(source="created_by.full_name", read_only=True)
+    items_count = serializers.IntegerField(read_only=True, default=0)
+    cost_base = serializers.DecimalField(
+        max_digits=20, decimal_places=4, read_only=True, allow_null=True
+    )
+
+    class Meta:
+        model = SaleReturn
+        fields = [
+            "id",
+            "number",
+            "sale",
+            "sale_number",
+            "branch",
+            "branch_name",
+            "customer",
+            "customer_name",
+            "currency_code",
+            "currency_decimal_places",
+            "total",
+            "total_base",
+            "cost_base",
+            "debt_reduction",
+            "refund_amount",
+            "refund_method",
+            "refund_method_name",
+            "reason",
+            "items_count",
+            "created_by_name",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+
+class SaleReturnItemSerializer(_HideCostMixin, serializers.ModelSerializer):
+    product_name = serializers.CharField(source="product.name", read_only=True)
+    unit_code = serializers.CharField(source="product.unit.code", read_only=True)
+    unit_decimal_places = serializers.IntegerField(
+        source="product.unit.decimal_places", read_only=True
+    )
+    cost_base = serializers.DecimalField(
+        max_digits=20, decimal_places=4, read_only=True, allow_null=True
+    )
+
+    class Meta:
+        model = SaleReturnItem
+        fields = [
+            "id",
+            "sale_item",
+            "product",
+            "product_name",
+            "unit_code",
+            "unit_decimal_places",
+            "quantity",
+            "amount",
+            "cost_base",
+        ]
+        read_only_fields = fields
+
+
+class SaleReturnDetailSerializer(SaleReturnListSerializer):
+    items = SaleReturnItemSerializer(many=True, read_only=True)
+
+    class Meta(SaleReturnListSerializer.Meta):
+        fields = SaleReturnListSerializer.Meta.fields + ["items"]
+        read_only_fields = fields
+
+
+class SaleReturnLineSerializer(serializers.Serializer):
+    sale_item = serializers.IntegerField()
+    quantity = serializers.DecimalField(max_digits=14, decimal_places=3, min_value=Decimal("0.001"))
+
+
+class SaleReturnWriteSerializer(serializers.Serializer):
+    sale = serializers.PrimaryKeyRelatedField(queryset=Sale.objects.all())
+    items = SaleReturnLineSerializer(many=True, allow_empty=False)
+    reason = serializers.CharField(max_length=255)
+    refund_method = serializers.PrimaryKeyRelatedField(
+        queryset=payment_selectors.active_payment_methods(),
+        required=False,
+        allow_null=True,
+        help_text="Pul qaytarish turi; bo'sh — naqd",
+    )

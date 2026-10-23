@@ -3,10 +3,12 @@ from decimal import Decimal
 from django.db.models import (
     BooleanField,
     Case,
+    Count,
     DecimalField,
     ExpressionWrapper,
     F,
     OuterRef,
+    Q,
     QuerySet,
     Subquery,
     Sum,
@@ -18,7 +20,16 @@ from django.db.models.functions import Coalesce
 from core import settings_service
 from core.access import scope_queryset_to_user
 
-from .models import Batch, StockLevel, StockMovement
+from .models import (
+    Batch,
+    StockCount,
+    StockCountItem,
+    StockLevel,
+    StockMovement,
+    Transfer,
+    WriteOff,
+    WriteOffReason,
+)
 
 QTY_FIELD = DecimalField(max_digits=14, decimal_places=3)
 MONEY_FIELD = DecimalField(max_digits=24, decimal_places=4)
@@ -100,3 +111,94 @@ def is_source_untouched(source_type: str, source_id: int) -> bool:
         .exclude(quantity_remaining=F("quantity_initial"))
         .exists()
     )
+
+
+def latest_unit_cost(branch_id: int, product_id: int) -> Decimal:
+    """Ortiqcha tovar tannarxi: shu nuqtadagi oxirgi partiya, bo'lmasa boshqa nuqtadagi, yoki 0."""
+    batches = Batch.objects.filter(product_id=product_id).order_by("-received_at", "-id")
+    batch = batches.filter(branch_id=branch_id).first() or batches.first()
+    return batch.unit_cost_base if batch else Decimal(0)
+
+
+# --- ko'chirish ---
+
+
+def transfers_queryset(user) -> QuerySet[Transfer]:
+    """Jo'natuvchi nuqtaniki — hammasi; qabul qiluvchiniki — qoralamadan tashqari."""
+    qs = Transfer.objects.select_related(
+        "from_branch", "to_branch", "created_by", "sent_by", "received_by", "cancelled_by"
+    ).annotate(items_count=Count("items"))
+    ids = user.accessible_branch_ids()
+    if ids is None:
+        return qs
+    return qs.filter(
+        Q(from_branch_id__in=ids) | (Q(to_branch_id__in=ids) & ~Q(status=Transfer.Status.DRAFT))
+    )
+
+
+def transfer_detail_queryset(user) -> QuerySet[Transfer]:
+    return transfers_queryset(user).prefetch_related("items__product__unit", "write_offs")
+
+
+def incoming_transfers_count(user) -> int:
+    """Qabul qilinishi kutilayotganlar (menyu nishoni uchun)."""
+    ids = user.accessible_branch_ids()
+    qs = Transfer.objects.filter(status=Transfer.Status.SENT)
+    if ids is not None:
+        qs = qs.filter(to_branch_id__in=ids)
+    return qs.count()
+
+
+# --- inventarizatsiya ---
+
+
+def counts_queryset(user) -> QuerySet[StockCount]:
+    qs = StockCount.objects.select_related(
+        "branch", "category", "created_by", "completed_by"
+    ).annotate(
+        items_count=Count("items", distinct=True),
+        counted_count=Count(
+            "items", filter=Q(items__counted_quantity__isnull=False), distinct=True
+        ),
+    )
+    return scope_queryset_to_user(qs, user, "branch")
+
+
+def count_items(count: StockCount) -> QuerySet[StockCountItem]:
+    """Qatorlar + hozirgi qoldiq; diff_value — yakunlanganda haqiqiy farq, qoralamada taxminiy."""
+    current = StockLevel.objects.filter(
+        branch_id=count.branch_id, product_id=OuterRef("product_id")
+    ).values("quantity")[:1]
+    qs = count.items.select_related("product", "product__unit", "product__category").annotate(
+        current_quantity=Coalesce(Subquery(current, output_field=QTY_FIELD), Value(Decimal(0)))
+    )
+    if count.status == StockCount.Status.DRAFT:
+        return qs.annotate(
+            diff_value=ExpressionWrapper(
+                F("counted_quantity") - F("current_quantity"), output_field=QTY_FIELD
+            )
+        )
+    return qs.annotate(diff_value=F("difference"))
+
+
+# --- hisobdan chiqarish ---
+
+
+def write_off_reasons(*, active_only: bool = False, manual_only: bool = False):
+    qs = WriteOffReason.objects.all()
+    if active_only:
+        qs = qs.filter(is_active=True)
+    if manual_only:
+        qs = qs.filter(is_system=False)
+    return qs
+
+
+def write_offs_queryset(user) -> QuerySet[WriteOff]:
+    qs = WriteOff.objects.select_related(
+        "branch", "reason", "created_by", "cancelled_by", "transfer"
+    ).annotate(items_count=Count("items"))
+    return scope_queryset_to_user(qs, user, "branch")
+
+
+def write_off_detail_queryset(user) -> QuerySet[WriteOff]:
+    return write_offs_queryset(user).prefetch_related("items__product__unit")

@@ -36,3 +36,26 @@ class SaleCancelled(Event):
     total: Decimal
     currency: str
     reason: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class SaleReturnCompleted(Event):
+    """Qaytarish: tovar omborga, summa — qarzdan ayirildi va/yoki pul qaytarildi."""
+
+    name = "sale_return.completed"
+    aggregate_type = "sale_return"
+    aggregate_id_field = "return_id"
+
+    return_id: int
+    number: str
+    sale_id: int
+    sale_number: str
+    currency: str
+    total: Decimal
+    total_base: Decimal
+    cost_base: Decimal
+    debt_reduction: Decimal
+    refund_amount: Decimal
+    items_count: int
+    customer_id: int | None = None
+    reason: str = ""

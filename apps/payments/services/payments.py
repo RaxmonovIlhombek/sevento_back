@@ -288,6 +288,79 @@ def give_change(
     return payment
 
 
+def refund_to_customer(
+    *,
+    actor,
+    branch,
+    currency,
+    amount: Decimal,
+    doc: PaymentDoc,
+    method: PaymentMethod | None = None,
+    customer: Customer | None = None,
+    reason: str = "",
+) -> Payment:
+    """Mijozga pul qaytarish (tovar qaytarilganda): default — naqd, kassadan chiqim.
+
+    Kassada yetmasa 409 insufficient_cash; boshqa to'lov turi — provayder orqali.
+    """
+    ensure_branch_access(actor, branch.pk)
+    method = method or selectors.cash_method()
+    if method is None:
+        raise NoCashMethod()
+    if not method.is_active:
+        raise BusinessRuleError(f"«{method.name}» to'lov turi faol emas", code="method_inactive")
+    with transaction.atomic():
+        result = get_provider(method.provider).refund(
+            amount=amount, currency_code=currency.code, original_reference=""
+        )
+        if not result.ok:
+            raise PaymentDeclined(result.message or "Provayder pulni qaytarmadi")
+        payment = _create_payment(
+            actor=actor,
+            branch=branch,
+            method=method,
+            kind=PaymentKind.REFUND,
+            direction=Direction.OUT,
+            currency=currency,
+            amount=amount,
+            doc=doc,
+            provider_reference=result.reference,
+            customer=customer,
+            note=reason[:255],
+        )
+        cashbox_id = None
+        if method.is_cash:
+            tx = _cash_move(
+                actor=actor,
+                branch_id=branch.pk,
+                currency=currency,
+                direction=Direction.OUT,
+                category_code="refund",
+                amount=payment.amount,
+                payment=payment,
+                doc=doc,
+                note=reason[:255],
+            )
+            cashbox_id = tx.cashbox_id
+        events.PaymentRefunded.publish_from(
+            actor=actor,
+            branch_id=branch.pk,
+            payment_id=payment.pk,
+            original_payment_id=None,
+            number=payment.number,
+            method=method.code,
+            currency=currency.code,
+            amount=payment.amount,
+            is_cash=method.is_cash,
+            cashbox_id=cashbox_id,
+            customer_id=customer.pk if customer else None,
+            document_type=doc.type,
+            document_id=doc.id,
+            reason=reason,
+        )
+    return payment
+
+
 MIRROR = {
     PaymentKind.PAYMENT: (PaymentKind.REFUND, Direction.OUT, "refund"),
     PaymentKind.CHANGE: (PaymentKind.CHANGE_RETURN, Direction.IN, "sale"),

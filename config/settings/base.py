@@ -203,6 +203,8 @@ SPECTACULAR_SETTINGS = {
         "PaymentDirectionEnum": "apps.payments.types.Direction",
         "PaymentStatusEnum": "apps.payments.models.Payment.Status",
         "SaleStatusEnum": "apps.sales.models.Sale.Status",
+        "TransferStatusEnum": "apps.inventory.models.Transfer.Status",
+        "StockCountStatusEnum": "apps.inventory.models.StockCount.Status",
     },
     "POSTPROCESSING_HOOKS": [
         "drf_spectacular.hooks.postprocess_schema_enums",

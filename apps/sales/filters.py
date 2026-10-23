@@ -3,7 +3,7 @@ from django.db.models import Q
 
 from core.api.filters import DateRangeFilterSet
 
-from .models import Sale
+from .models import Sale, SaleReturn
 
 
 class SaleFilter(DateRangeFilterSet):
@@ -29,3 +29,20 @@ class SaleFilter(DateRangeFilterSet):
         return queryset.filter(
             Q(number__icontains=value) | Q(items__product__name__icontains=value)
         ).distinct()
+
+
+class SaleReturnFilter(DateRangeFilterSet):
+    date_field = "created_at"
+
+    branch = django_filters.NumberFilter(field_name="branch_id")
+    sale = django_filters.NumberFilter(field_name="sale_id")
+    customer = django_filters.NumberFilter(field_name="customer_id")
+    search = django_filters.CharFilter(method="filter_search")
+
+    class Meta:
+        model = SaleReturn
+        fields = ["branch", "sale", "customer"]
+
+    def filter_search(self, queryset, name, value):
+        value = value.strip()
+        return queryset.filter(Q(number__icontains=value) | Q(sale__number__icontains=value))

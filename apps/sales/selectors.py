@@ -9,7 +9,7 @@ from apps.inventory import selectors as inventory_selectors
 from apps.payments import selectors as payment_selectors
 from core.access import scope_queryset_to_user
 
-from .models import Sale, SaleItem
+from .models import Sale, SaleItem, SaleReturn, SaleReturnItem
 from .pricing import resolve_prices
 
 
@@ -26,7 +26,29 @@ def sales_queryset(user) -> QuerySet[Sale]:
 
 def sale_detail_queryset(user) -> QuerySet[Sale]:
     return sales_queryset(user).prefetch_related(
-        Prefetch("items", queryset=SaleItem.objects.select_related("product", "product__unit"))
+        Prefetch("items", queryset=SaleItem.objects.select_related("product", "product__unit")),
+        Prefetch(
+            "returns",
+            queryset=SaleReturn.objects.select_related("created_by", "refund_method").order_by(
+                "created_at", "id"
+            ),
+        ),
+    )
+
+
+def returns_queryset(user) -> QuerySet[SaleReturn]:
+    qs = SaleReturn.objects.select_related(
+        "branch", "sale", "customer", "currency", "refund_method", "created_by"
+    ).annotate(items_count=Count("items"))
+    return scope_queryset_to_user(qs, user, "branch")
+
+
+def return_detail_queryset(user) -> QuerySet[SaleReturn]:
+    return returns_queryset(user).prefetch_related(
+        Prefetch(
+            "items",
+            queryset=SaleReturnItem.objects.select_related("product", "product__unit"),
+        )
     )
 
 
@@ -97,8 +119,18 @@ def daily_summary(user, *, on: date | None = None, branch_id: int | None = None)
     totals = completed.aggregate(
         count=Count("id"), total_base=Sum("total_base"), cost_base=Sum("cost_base")
     )
+    returns = scope_queryset_to_user(SaleReturn.objects.all(), user, "branch").filter(
+        created_at__date=on
+    )
+    if branch_id:
+        returns = returns.filter(branch_id=branch_id)
+    returned = returns.aggregate(
+        count=Count("id"), total_base=Sum("total_base"), cost_base=Sum("cost_base")
+    )
     total_base = totals["total_base"] or Decimal(0)
     cost_base = totals["cost_base"] or Decimal(0)
+    returns_total_base = returned["total_base"] or Decimal(0)
+    returns_cost_base = returned["cost_base"] or Decimal(0)
     return {
         "date": on,
         "branch": branch_id,
@@ -107,5 +139,8 @@ def daily_summary(user, *, on: date | None = None, branch_id: int | None = None)
         "by_currency": by_currency,
         "total_base": total_base,
         "cost_base": cost_base,
-        "profit_base": total_base - cost_base,
+        "returns_count": returned["count"] or 0,
+        "returns_total_base": returns_total_base,
+        # foyda — shu kungi qaytarishlar (sotuv narxi va tannarxi) ayirilgan
+        "profit_base": (total_base - returns_total_base) - (cost_base - returns_cost_base),
     }

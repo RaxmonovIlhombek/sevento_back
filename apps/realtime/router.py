@@ -240,7 +240,7 @@ def _debt_changed(e: Event) -> dict:
     return {"branch_id": e.branch_id, "debt_id": e.debt_id, "customer_id": e.customer_id}  # type: ignore[attr-defined]
 
 
-for _name in ("debt.registered", "debt.settled", "debt.cancelled"):
+for _name in ("debt.registered", "debt.settled", "debt.cancelled", "debt.reduced"):
     route(_name, groups=_branch_group, msg_type="debt.changed", payload=_debt_changed)
 
 # buxgalter va rahbar (qarzlarni boshqaradiganlar) — rol nomi emas, huquq
@@ -293,4 +293,80 @@ route(
     groups=_branch_group,
     msg_type="cash.updated",
     payload=_cash_payload("manual_entry"),
+)
+
+
+# --- 7-bosqich: ko'chirish holati ikkala nuqtada jonli ---
+# Bitta marshrut — bitta xabar (bitta id): ikkala guruhda bo'lgan foydalanuvchi uni bir marta oladi.
+
+
+def _transfer_payload(e: Event) -> dict:
+    return {  # type: ignore[attr-defined]
+        "transfer_id": e.transfer_id,
+        "number": e.number,
+        "from_branch_id": e.from_branch_id,
+        "from_branch_name": e.from_branch_name,
+        "to_branch_id": e.to_branch_id,
+        "to_branch_name": e.to_branch_name,
+        "actor_id": e.actor_id,
+    }
+
+
+def _transfer_branches(e: Event) -> list[str]:
+    return [f"branch_{e.from_branch_id}", f"branch_{e.to_branch_id}"]  # type: ignore[attr-defined]
+
+
+route(
+    "transfer.sent",
+    groups=_transfer_branches,
+    payload=lambda e: {**_transfer_payload(e), "status": "sent", "items_count": e.items_count},  # type: ignore[attr-defined]
+)
+route(
+    "transfer.received",
+    # farq bo'lsa rahbar (dashboard) ham xabardor bo'ladi — o'sha xabar, takrorsiz
+    groups=lambda e: _transfer_branches(e)
+    + (_capability_users("dashboard.view") if e.has_discrepancy else []),  # type: ignore[attr-defined]
+    payload=lambda e: {  # type: ignore[attr-defined]
+        **_transfer_payload(e),
+        "status": "received",
+        "has_discrepancy": e.has_discrepancy,
+        "discrepancies": [
+            {k: d[k] for k in ("product_name", "quantity", "quantity_received")}
+            for d in e.discrepancies
+        ],
+    },
+)
+route(
+    "transfer.cancelled",
+    # qoralama qabul qiluvchiga ko'rinmagan — unga faqat jo'natilgani bekor bo'lsa
+    groups=lambda e: _transfer_branches(e)
+    if e.previous_status == "sent"  # type: ignore[attr-defined]
+    else [f"branch_{e.from_branch_id}"],  # type: ignore[attr-defined]
+    payload=lambda e: {  # type: ignore[attr-defined]
+        **_transfer_payload(e),
+        "status": "cancelled",
+        "previous_status": e.previous_status,
+        "reason": e.reason,
+    },
+)
+
+
+# --- qaytarish: savdo ro'yxati (nuqta) va dashboard yangilanadi ---
+
+route(
+    "sale_return.completed",
+    groups=_branch_group,
+    payload=lambda e: {  # type: ignore[attr-defined]
+        "branch_id": e.branch_id,
+        "return_id": e.return_id,
+        "number": e.number,
+        "sale_id": e.sale_id,
+        "customer_id": e.customer_id,
+    },
+)
+route(
+    "sale_return.completed",
+    groups=lambda e: _capability_users("dashboard.view"),
+    msg_type="dashboard.updated",
+    payload=_dashboard_payload("sale_return.completed"),
 )

@@ -75,7 +75,7 @@ def customer_balances(customer_ids) -> dict[int, dict[str, Decimal]]:
     rows = (
         Debt.objects.filter(customer_id__in=list(customer_ids), status=Debt.Status.OPEN)
         .values("customer_id", "currency__code")
-        .annotate(total=Sum(F("amount") - F("paid_amount")))
+        .annotate(total=Sum(F("amount") - F("paid_amount") - F("returned_amount")))
         .order_by()
     )
     result: dict[int, dict[str, Decimal]] = {}
@@ -95,7 +95,7 @@ def overdue_customer_ids(customer_ids, today=None) -> set[int]:
 
 def debts_queryset(user) -> QuerySet[Debt]:
     qs = Debt.objects.select_related("customer", "currency", "branch", "created_by").annotate(
-        remaining_amount=F("amount") - F("paid_amount")
+        remaining_amount=F("amount") - F("paid_amount") - F("returned_amount")
     )
     return scope_queryset_to_user(qs, user, "branch")
 
@@ -105,7 +105,7 @@ def customer_debts(customer_id: int) -> QuerySet[Debt]:
     return (
         Debt.objects.filter(customer_id=customer_id)
         .select_related("currency", "branch")
-        .annotate(remaining_amount=F("amount") - F("paid_amount"))
+        .annotate(remaining_amount=F("amount") - F("paid_amount") - F("returned_amount"))
     )
 
 

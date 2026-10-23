@@ -37,7 +37,7 @@ class PaymentRefunded(Event):
     aggregate_id_field = "payment_id"
 
     payment_id: int
-    original_payment_id: int
+    original_payment_id: int | None  # tovar qaytarishda — asl to'lovsiz
     number: str
     method: str
     currency: str
@@ -88,6 +88,24 @@ class DebtRegistered(Event):
     document_type: str
     document_id: int
     document_number: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class DebtReduced(Event):
+    """Qaytarilgan tovar summasi qarzdan ayirildi."""
+
+    name = "debt.reduced"
+    aggregate_type = "debt"
+    aggregate_id_field = "debt_id"
+
+    debt_id: int
+    customer_id: int
+    amount: Decimal
+    currency: str
+    remaining: Decimal
+    document_type: str
+    document_id: int
+    document_number: str = ""
 
 
 @dataclass(frozen=True, kw_only=True)

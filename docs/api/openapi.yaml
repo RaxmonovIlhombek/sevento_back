@@ -1503,6 +1503,274 @@ paths:
               schema:
                 $ref: '#/components/schemas/Batch'
           description: ''
+  /api/v1/inventory/counts/:
+    get:
+      operationId: inventory_counts_list
+      description: 'Inventarizatsiya: yaratish → counted (sanash; qatorlar — /counts/{id}/items/)
+        → complete.'
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - cancelled
+            - completed
+            - draft
+        description: |-
+          * `draft` - Sanalmoqda
+          * `completed` - Yakunlandi
+          * `cancelled` - Bekor qilindi
+        explode: true
+        style: form
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStockCountListList'
+          description: ''
+    post:
+      operationId: inventory_counts_create
+      description: 'Inventarizatsiya: yaratish → counted (sanash; qatorlar — /counts/{id}/items/)
+        → complete.'
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockCountCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StockCountCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockCountList'
+          description: ''
+  /api/v1/inventory/counts/{count_pk}/items/:
+    get:
+      operationId: inventory_counts_items_list
+      description: |-
+        Inventarizatsiya qatorlari (sahifalangan): search, state=counted|uncounted|diff.
+
+        current_quantity — hozirgi qoldiq (qoralamada yakunlash shu bilan solishtiradi).
+      parameters:
+      - in: path
+        name: count_pk
+        schema:
+          type: integer
+        required: true
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: state
+        schema:
+          type: string
+          enum:
+          - counted
+          - diff
+          - uncounted
+        description: |-
+          * `counted` - counted
+          * `uncounted` - uncounted
+          * `diff` - diff
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStockCountItemList'
+          description: ''
+  /api/v1/inventory/counts/{id}/:
+    get:
+      operationId: inventory_counts_retrieve
+      description: 'Inventarizatsiya: yaratish → counted (sanash; qatorlar — /counts/{id}/items/)
+        → complete.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this stock count.
+        required: true
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockCountList'
+          description: ''
+  /api/v1/inventory/counts/{id}/cancel/:
+    post:
+      operationId: inventory_counts_cancel_create
+      description: 'Inventarizatsiya: yaratish → counted (sanash; qatorlar — /counts/{id}/items/)
+        → complete.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this stock count.
+        required: true
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockCountList'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/inventory/counts/{id}/complete/:
+    post:
+      operationId: inventory_counts_complete_create
+      description: 'Inventarizatsiya: yaratish → counted (sanash; qatorlar — /counts/{id}/items/)
+        → complete.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this stock count.
+        required: true
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockCountList'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/inventory/counts/{id}/counted/:
+    post:
+      operationId: inventory_counts_counted_create
+      description: Sanalgan miqdorlarni saqlash (bir nechta qator). null — sanalmagan
+        holatga qaytarish.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this stock count.
+        required: true
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountedWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CountedWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockCountList'
+          description: ''
   /api/v1/inventory/movements/:
     get:
       operationId: inventory_movements_list
@@ -1582,21 +1850,27 @@ paths:
             - purchase_in
             - sale_cancel
             - sale_out
+            - sale_return_cancel
             - sale_return_in
+            - transfer_cancel
             - transfer_in
             - transfer_out
             - write_off
+            - write_off_cancel
         description: |-
           * `purchase_in` - Kirim
           * `purchase_cancel` - Kirim bekor qilindi
           * `sale_out` - Savdo
           * `sale_cancel` - Savdo bekor qilindi
           * `sale_return_in` - Qaytarish
+          * `sale_return_cancel` - Qaytarish bekor qilindi
           * `transfer_out` - Ko'chirish (jo'natildi)
           * `transfer_in` - Ko'chirish (qabul qilindi)
+          * `transfer_cancel` - Ko'chirish bekor qilindi
           * `count_surplus` - Inventarizatsiya: ortiqcha
           * `count_shortage` - Inventarizatsiya: kamomad
           * `write_off` - Hisobdan chiqarish
+          * `write_off_cancel` - Hisobdan chiqarish bekor qilindi
         explode: true
         style: form
       tags:
@@ -1747,6 +2021,622 @@ paths:
               schema:
                 $ref: '#/components/schemas/StockLevel'
           description: ''
+  /api/v1/inventory/transfers/:
+    get:
+      operationId: inventory_transfers_list
+      description: |-
+        Nuqtalar orasida ko'chirish: qoralama → send → receive (farq bilan ham) | cancel.
+
+        Qabul qiluvchi nuqta qoralamani ko'rmaydi. Holat o'zgarishi ikkala nuqtaga WebSocket orqali.
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - in
+          - out
+        description: |-
+          * `in` - in
+          * `out` - out
+      - in: query
+        name: from_branch
+        schema:
+          type: number
+      - in: query
+        name: has_discrepancy
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - cancelled
+            - draft
+            - received
+            - sent
+        description: |-
+          * `draft` - Qoralama
+          * `sent` - Jo'natildi
+          * `received` - Qabul qilindi
+          * `cancelled` - Bekor qilindi
+        explode: true
+        style: form
+      - in: query
+        name: to_branch
+        schema:
+          type: number
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTransferListList'
+          description: ''
+    post:
+      operationId: inventory_transfers_create
+      description: |-
+        Nuqtalar orasida ko'chirish: qoralama → send → receive (farq bilan ham) | cancel.
+
+        Qabul qiluvchi nuqta qoralamani ko'rmaydi. Holat o'zgarishi ikkala nuqtaga WebSocket orqali.
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TransferWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferDetail'
+          description: ''
+  /api/v1/inventory/transfers/{id}/:
+    get:
+      operationId: inventory_transfers_retrieve
+      description: |-
+        Nuqtalar orasida ko'chirish: qoralama → send → receive (farq bilan ham) | cancel.
+
+        Qabul qiluvchi nuqta qoralamani ko'rmaydi. Holat o'zgarishi ikkala nuqtaga WebSocket orqali.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this transfer.
+        required: true
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferDetail'
+          description: ''
+    put:
+      operationId: inventory_transfers_update
+      description: |-
+        Nuqtalar orasida ko'chirish: qoralama → send → receive (farq bilan ham) | cancel.
+
+        Qabul qiluvchi nuqta qoralamani ko'rmaydi. Holat o'zgarishi ikkala nuqtaga WebSocket orqali.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this transfer.
+        required: true
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TransferWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferDetail'
+          description: ''
+    patch:
+      operationId: inventory_transfers_partial_update
+      description: |-
+        Nuqtalar orasida ko'chirish: qoralama → send → receive (farq bilan ham) | cancel.
+
+        Qabul qiluvchi nuqta qoralamani ko'rmaydi. Holat o'zgarishi ikkala nuqtaga WebSocket orqali.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this transfer.
+        required: true
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferList'
+          description: ''
+  /api/v1/inventory/transfers/{id}/cancel/:
+    post:
+      operationId: inventory_transfers_cancel_create
+      description: |-
+        Nuqtalar orasida ko'chirish: qoralama → send → receive (farq bilan ham) | cancel.
+
+        Qabul qiluvchi nuqta qoralamani ko'rmaydi. Holat o'zgarishi ikkala nuqtaga WebSocket orqali.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this transfer.
+        required: true
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryCancelRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InventoryCancelRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferDetail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/inventory/transfers/{id}/receive/:
+    post:
+      operationId: inventory_transfers_receive_create
+      description: 'Qabul: items berilmasa hammasi to''liq; kam kelgan qism avtomatik
+        hisobdan chiqariladi.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this transfer.
+        required: true
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferReceiveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TransferReceiveRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferDetail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/inventory/transfers/{id}/send/:
+    post:
+      operationId: inventory_transfers_send_create
+      description: 'Jo''natish: manbadan FIFO chiqim. Qoldiq yetmasa 409 insufficient_stock
+        (qator bilan).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this transfer.
+        required: true
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferDetail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/inventory/transfers/incoming/:
+    get:
+      operationId: inventory_transfers_incoming_retrieve
+      description: Foydalanuvchi nuqtalariga jo'natilgan, hali qabul qilinmaganlar
+        soni (menyu nishoni).
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomingTransfers'
+          description: ''
+  /api/v1/inventory/write-off-reasons/:
+    get:
+      operationId: inventory_write_off_reasons_list
+      description: Hisobdan chiqarish sabablari (ma'lumotnoma). Tizim sababi qo'lda
+        tanlanmaydi.
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: is_system
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WriteOffReason'
+          description: ''
+    post:
+      operationId: inventory_write_off_reasons_create
+      description: Hisobdan chiqarish sabablari (ma'lumotnoma). Tizim sababi qo'lda
+        tanlanmaydi.
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WriteOffReasonRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WriteOffReasonRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOffReason'
+          description: ''
+  /api/v1/inventory/write-off-reasons/{id}/:
+    put:
+      operationId: inventory_write_off_reasons_update
+      description: Hisobdan chiqarish sabablari (ma'lumotnoma). Tizim sababi qo'lda
+        tanlanmaydi.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this write off reason.
+        required: true
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WriteOffReasonRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WriteOffReasonRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOffReason'
+          description: ''
+    patch:
+      operationId: inventory_write_off_reasons_partial_update
+      description: Hisobdan chiqarish sabablari (ma'lumotnoma). Tizim sababi qo'lda
+        tanlanmaydi.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this write off reason.
+        required: true
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWriteOffReasonRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWriteOffReasonRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOffReason'
+          description: ''
+  /api/v1/inventory/write-offs/:
+    get:
+      operationId: inventory_write_offs_list
+      description: 'Hisobdan chiqarish: POST darhol yakunlaydi (FIFO chiqim); cancel
+        — asl partiyalarga.'
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: reason
+        schema:
+          type: number
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - cancelled
+            - completed
+        description: |-
+          * `completed` - Yakunlandi
+          * `cancelled` - Bekor qilindi
+        explode: true
+        style: form
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWriteOffListList'
+          description: ''
+    post:
+      operationId: inventory_write_offs_create
+      description: 'Hisobdan chiqarish: POST darhol yakunlaydi (FIFO chiqim); cancel
+        — asl partiyalarga.'
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WriteOffWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WriteOffWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOffDetail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/inventory/write-offs/{id}/:
+    get:
+      operationId: inventory_write_offs_retrieve
+      description: 'Hisobdan chiqarish: POST darhol yakunlaydi (FIFO chiqim); cancel
+        — asl partiyalarga.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this write off.
+        required: true
+      tags:
+      - inventory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOffDetail'
+          description: ''
+  /api/v1/inventory/write-offs/{id}/cancel/:
+    post:
+      operationId: inventory_write_offs_cancel_create
+      description: 'Hisobdan chiqarish: POST darhol yakunlaydi (FIFO chiqim); cancel
+        — asl partiyalarga.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this write off.
+        required: true
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryCancelRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InventoryCancelRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteOffDetail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
   /api/v1/payments/cash-categories/:
     get:
       operationId: payments_cash_categories_list
@@ -3857,6 +4747,128 @@ paths:
                 items:
                   $ref: '#/components/schemas/PosProduct'
           description: ''
+  /api/v1/sales/returns/:
+    get:
+      operationId: sales_returns_list
+      description: Qaytarishlar. POST — tovar omborga, summa qarzdan ayiriladi, qolgani
+        mijozga qaytariladi.
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: customer
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: sale
+        schema:
+          type: number
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - sales
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSaleReturnListList'
+          description: ''
+    post:
+      operationId: sales_returns_create
+      description: Qaytarishlar. POST — tovar omborga, summa qarzdan ayiriladi, qolgani
+        mijozga qaytariladi.
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleReturnWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaleReturnWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleReturnDetail'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Xato
+  /api/v1/sales/returns/{id}/:
+    get:
+      operationId: sales_returns_retrieve
+      description: Qaytarishlar. POST — tovar omborga, summa qarzdan ayiriladi, qolgani
+        mijozga qaytariladi.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sale return.
+        required: true
+      tags:
+      - sales
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleReturnDetail'
+          description: ''
   /api/v1/sales/summary/:
     get:
       operationId: sales_summary_retrieve
@@ -4801,6 +5813,28 @@ components:
       - landed_unit_cost_base
       - line_total
       - line_total_base
+    CountedLineRequest:
+      type: object
+      properties:
+        product:
+          type: integer
+        counted_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+      required:
+      - counted_quantity
+      - product
+    CountedWriteRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CountedLineRequest'
+      required:
+      - items
     CreditStatus:
       type: object
       properties:
@@ -5175,6 +6209,12 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
           nullable: true
+        returns_count:
+          type: integer
+        returns_total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
         profit_base:
           type: string
           format: decimal
@@ -5191,6 +6231,8 @@ components:
       - count
       - date
       - profit_base
+      - returns_count
+      - returns_total_base
       - total_base
     Debt:
       type: object
@@ -5232,6 +6274,12 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
           readOnly: true
+        returned_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: qaytarilgan tovar summasi
         remaining:
           type: string
           format: decimal
@@ -5289,6 +6337,7 @@ components:
       - is_overdue
       - paid_amount
       - remaining
+      - returned_amount
       - settled_at
       - status
     DebtPaymentWriteRequest:
@@ -5327,6 +6376,16 @@ components:
         * `open` - Ochiq
         * `paid` - To'langan
         * `cancelled` - Bekor qilingan
+    DocumentRef:
+      type: object
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+      required:
+      - id
+      - number
     ErrorBody:
       type: object
       properties:
@@ -5491,6 +6550,22 @@ components:
       - db
       - redis
       - status
+    IncomingTransfers:
+      type: object
+      properties:
+        count:
+          type: integer
+      required:
+      - count
+    InventoryCancelRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 255
+      required:
+      - reason
     LatestRate:
       type: object
       properties:
@@ -5606,12 +6681,14 @@ components:
       - payment
       - refund
       - cancel
+      - return
       type: string
       description: |-
         * `debt` - Nasiya
         * `payment` - To'lov
         * `refund` - To'lov qaytarildi
         * `cancel` - Qarz bekor qilindi
+        * `return` - Tovar qaytarildi
     LevelEnum:
       enum:
       - info
@@ -5622,6 +6699,18 @@ components:
         * `info` - info
         * `warning` - warning
         * `error` - error
+    LineWriteRequest:
+      type: object
+      properties:
+        product:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+      required:
+      - product
+      - quantity
     LoginRequest:
       type: object
       properties:
@@ -5690,11 +6779,14 @@ components:
       - sale_out
       - sale_cancel
       - sale_return_in
+      - sale_return_cancel
       - transfer_out
       - transfer_in
+      - transfer_cancel
       - count_surplus
       - count_shortage
       - write_off
+      - write_off_cancel
       type: string
       description: |-
         * `purchase_in` - Kirim
@@ -5702,11 +6794,14 @@ components:
         * `sale_out` - Savdo
         * `sale_cancel` - Savdo bekor qilindi
         * `sale_return_in` - Qaytarish
+        * `sale_return_cancel` - Qaytarish bekor qilindi
         * `transfer_out` - Ko'chirish (jo'natildi)
         * `transfer_in` - Ko'chirish (qabul qilindi)
+        * `transfer_cancel` - Ko'chirish bekor qilindi
         * `count_surplus` - Inventarizatsiya: ortiqcha
         * `count_shortage` - Inventarizatsiya: kamomad
         * `write_off` - Hisobdan chiqarish
+        * `write_off_cancel` - Hisobdan chiqarish bekor qilindi
     NoticeRequest:
       type: object
       properties:
@@ -6070,6 +7165,81 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SaleList'
+    PaginatedSaleReturnListList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleReturnList'
+    PaginatedStockCountItemList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockCountItem'
+    PaginatedStockCountListList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockCountList'
     PaginatedStockLevelList:
       type: object
       required:
@@ -6145,6 +7315,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Supplier'
+    PaginatedTransferListList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferList'
     PaginatedUserList:
       type: object
       required:
@@ -6170,6 +7365,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+    PaginatedWriteOffListList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WriteOffList'
     PatchedBranchRequest:
       type: object
       properties:
@@ -6417,6 +7637,19 @@ components:
         is_active:
           type: boolean
           default: true
+    PatchedWriteOffReasonRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 30
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        is_active:
+          type: boolean
     PaymentDetail:
       type: object
       description: Hujjat ichida ko'rsatish uchun (savdo tafsiloti, chek).
@@ -7548,6 +8781,16 @@ components:
           type: string
       required:
       - access
+    ReturnStateEnum:
+      enum:
+      - none
+      - partial
+      - full
+      type: string
+      description: |-
+        * `none` - none
+        * `partial` - partial
+        * `full` - full
     Role:
       type: object
       properties:
@@ -7640,6 +8883,10 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        returned_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
         remaining:
           type: string
           format: decimal
@@ -7655,6 +8902,7 @@ components:
       - id
       - paid_amount
       - remaining
+      - returned_amount
       - status
     SaleDetail:
       type: object
@@ -7755,6 +9003,15 @@ components:
           format: date
           readOnly: true
           nullable: true
+        returned_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        return_state:
+          allOf:
+          - $ref: '#/components/schemas/ReturnStateEnum'
+          readOnly: true
         items_count:
           type: integer
           readOnly: true
@@ -7804,16 +9061,30 @@ components:
         can_cancel:
           type: boolean
           readOnly: true
+        can_return:
+          type: boolean
+          readOnly: true
         debt:
           allOf:
           - $ref: '#/components/schemas/SaleDebt'
           nullable: true
+          readOnly: true
+        returned_total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        returns:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleReturnBrief'
           readOnly: true
       required:
       - base_currency
       - branch
       - branch_name
       - can_cancel
+      - can_return
       - cancel_reason
       - cancelled_at
       - cancelled_by_name
@@ -7840,6 +9111,10 @@ components:
       - price_type_name
       - profit_base
       - rate_to_base
+      - return_state
+      - returned_total
+      - returned_total_base
+      - returns
       - seller
       - seller_name
       - status
@@ -7898,6 +9173,11 @@ components:
           pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
           readOnly: true
           nullable: true
+        returned_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
       required:
       - cost_base
       - discount_amount
@@ -7908,6 +9188,7 @@ components:
       - product_name
       - product_sku
       - quantity
+      - returned_quantity
       - unit_code
       - unit_decimal_places
       - unit_price
@@ -8027,6 +9308,15 @@ components:
           format: date
           readOnly: true
           nullable: true
+        returned_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        return_state:
+          allOf:
+          - $ref: '#/components/schemas/ReturnStateEnum'
+          readOnly: true
         items_count:
           type: integer
           readOnly: true
@@ -8059,6 +9349,8 @@ components:
       - number
       - paid_total
       - profit_base
+      - return_state
+      - returned_total
       - seller
       - seller_name
       - status
@@ -8127,6 +9419,362 @@ components:
       - amount
       - currency
       - method
+    SaleReturnBrief:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: savdo valyutasida
+        debt_reduction:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        refund_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        refund_method_name:
+          type: string
+          readOnly: true
+          nullable: true
+        reason:
+          type: string
+          readOnly: true
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by_name
+      - debt_reduction
+      - id
+      - number
+      - reason
+      - refund_amount
+      - refund_method_name
+      - total
+    SaleReturnDetail:
+      type: object
+      description: Tannarx va foyda faqat `inventory.view_cost` huquqi borlarga (sotuvchiga
+        — yo'q).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        sale:
+          type: integer
+          readOnly: true
+        sale_number:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+          nullable: true
+        customer_name:
+          type: string
+          readOnly: true
+          nullable: true
+        currency_code:
+          type: string
+          readOnly: true
+        currency_decimal_places:
+          type: integer
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: savdo valyutasida
+        total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: savdo kursi bilan (foyda hisobi uchun)
+        cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+        debt_reduction:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        refund_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        refund_method:
+          type: integer
+          readOnly: true
+          nullable: true
+        refund_method_name:
+          type: string
+          readOnly: true
+          nullable: true
+        reason:
+          type: string
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+          default: 0
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleReturnItem'
+          readOnly: true
+      required:
+      - branch
+      - branch_name
+      - cost_base
+      - created_at
+      - created_by_name
+      - currency_code
+      - currency_decimal_places
+      - customer
+      - customer_name
+      - debt_reduction
+      - id
+      - items
+      - items_count
+      - number
+      - reason
+      - refund_amount
+      - refund_method
+      - refund_method_name
+      - sale
+      - sale_number
+      - total
+      - total_base
+    SaleReturnItem:
+      type: object
+      description: Tannarx va foyda faqat `inventory.view_cost` huquqi borlarga (sotuvchiga
+        — yo'q).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sale_item:
+          type: integer
+          readOnly: true
+        product:
+          type: integer
+          readOnly: true
+        product_name:
+          type: string
+          readOnly: true
+        unit_code:
+          type: string
+          readOnly: true
+        unit_decimal_places:
+          type: integer
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: savdo valyutasida
+        cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+      required:
+      - amount
+      - cost_base
+      - id
+      - product
+      - product_name
+      - quantity
+      - sale_item
+      - unit_code
+      - unit_decimal_places
+    SaleReturnLineRequest:
+      type: object
+      properties:
+        sale_item:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+      required:
+      - quantity
+      - sale_item
+    SaleReturnList:
+      type: object
+      description: Tannarx va foyda faqat `inventory.view_cost` huquqi borlarga (sotuvchiga
+        — yo'q).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        sale:
+          type: integer
+          readOnly: true
+        sale_number:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+          nullable: true
+        customer_name:
+          type: string
+          readOnly: true
+          nullable: true
+        currency_code:
+          type: string
+          readOnly: true
+        currency_decimal_places:
+          type: integer
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: savdo valyutasida
+        total_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          description: savdo kursi bilan (foyda hisobi uchun)
+        cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+        debt_reduction:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        refund_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        refund_method:
+          type: integer
+          readOnly: true
+          nullable: true
+        refund_method_name:
+          type: string
+          readOnly: true
+          nullable: true
+        reason:
+          type: string
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+          default: 0
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch
+      - branch_name
+      - cost_base
+      - created_at
+      - created_by_name
+      - currency_code
+      - currency_decimal_places
+      - customer
+      - customer_name
+      - debt_reduction
+      - id
+      - items_count
+      - number
+      - reason
+      - refund_amount
+      - refund_method
+      - refund_method_name
+      - sale
+      - sale_number
+      - total
+      - total_base
+    SaleReturnWriteRequest:
+      type: object
+      properties:
+        sale:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleReturnLineRequest'
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 255
+        refund_method:
+          type: integer
+          nullable: true
+          description: Pul qaytarish turi; bo'sh — naqd
+      required:
+      - items
+      - reason
+      - sale
     SaleStatusEnum:
       enum:
       - completed
@@ -8301,6 +9949,197 @@ components:
       description: |-
         * `cbu` - Markaziy bank
         * `manual` - Qo'lda
+    StockCountCreateRequest:
+      type: object
+      properties:
+        branch:
+          type: integer
+        category:
+          type: integer
+          nullable: true
+        include_zero:
+          type: boolean
+          default: false
+        note:
+          type: string
+          default: ''
+      required:
+      - branch
+    StockCountItem:
+      type: object
+      description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
+        olib tashlanadi.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        product:
+          type: integer
+          readOnly: true
+        product_name:
+          type: string
+          readOnly: true
+        product_sku:
+          type: string
+          readOnly: true
+        product_barcode:
+          type: string
+          readOnly: true
+        unit_code:
+          type: string
+          readOnly: true
+        unit_decimal_places:
+          type: integer
+          readOnly: true
+        category_name:
+          type: string
+          readOnly: true
+          nullable: true
+        expected_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        current_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+          nullable: true
+        counted_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+          nullable: true
+        difference:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        unit_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+          readOnly: true
+        cost_difference_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+      required:
+      - category_name
+      - cost_difference_base
+      - counted_quantity
+      - current_quantity
+      - difference
+      - expected_quantity
+      - id
+      - product
+      - product_barcode
+      - product_name
+      - product_sku
+      - unit_code
+      - unit_cost_base
+      - unit_decimal_places
+    StockCountList:
+      type: object
+      description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
+        olib tashlanadi.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        category:
+          type: integer
+          readOnly: true
+          nullable: true
+        category_name:
+          type: string
+          readOnly: true
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StockCountStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+          default: 0
+        counted_count:
+          type: integer
+          readOnly: true
+          default: 0
+        surplus_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        shortage_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        created_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        completed_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - branch
+      - branch_name
+      - category
+      - category_name
+      - completed_at
+      - completed_by_name
+      - counted_count
+      - created_at
+      - created_by_name
+      - id
+      - items_count
+      - note
+      - number
+      - shortage_cost_base
+      - status
+      - status_display
+      - surplus_cost_base
+    StockCountStatusEnum:
+      enum:
+      - draft
+      - completed
+      - cancelled
+      type: string
+      description: |-
+        * `draft` - Sanalmoqda
+        * `completed` - Yakunlandi
+        * `cancelled` - Bekor qilindi
     StockLevel:
       type: object
       description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
@@ -8624,6 +10463,358 @@ components:
       required:
       - expires_in
       - ticket
+    TransferDetail:
+      type: object
+      description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
+        olib tashlanadi.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        from_branch:
+          type: integer
+          readOnly: true
+        from_branch_name:
+          type: string
+          readOnly: true
+        to_branch:
+          type: integer
+          readOnly: true
+        to_branch_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/TransferStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+          default: 0
+        has_discrepancy:
+          type: boolean
+          readOnly: true
+        total_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        shortage_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        created_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        sent_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        received_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferItem'
+          readOnly: true
+        sent_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        received_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        receive_note:
+          type: string
+          readOnly: true
+        cancelled_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        cancelled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        cancel_reason:
+          type: string
+          readOnly: true
+        shortage_write_off:
+          allOf:
+          - $ref: '#/components/schemas/DocumentRef'
+          nullable: true
+          readOnly: true
+        allowed:
+          allOf:
+          - $ref: '#/components/schemas/TransferPermissions'
+          readOnly: true
+      required:
+      - allowed
+      - cancel_reason
+      - cancelled_at
+      - cancelled_by_name
+      - created_at
+      - created_by_name
+      - from_branch
+      - from_branch_name
+      - has_discrepancy
+      - id
+      - items
+      - items_count
+      - note
+      - number
+      - receive_note
+      - received_at
+      - received_by_name
+      - sent_at
+      - sent_by_name
+      - shortage_cost_base
+      - shortage_write_off
+      - status
+      - status_display
+      - to_branch
+      - to_branch_name
+      - total_cost_base
+    TransferItem:
+      type: object
+      description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
+        olib tashlanadi.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        product:
+          type: integer
+          readOnly: true
+        product_name:
+          type: string
+          readOnly: true
+        product_sku:
+          type: string
+          readOnly: true
+        product_barcode:
+          type: string
+          readOnly: true
+        unit_code:
+          type: string
+          readOnly: true
+        unit_decimal_places:
+          type: integer
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        quantity_received:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+          nullable: true
+        shortage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        unit_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+          readOnly: true
+        total_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+      required:
+      - id
+      - product
+      - product_barcode
+      - product_name
+      - product_sku
+      - quantity
+      - quantity_received
+      - shortage
+      - total_cost_base
+      - unit_code
+      - unit_cost_base
+      - unit_decimal_places
+    TransferList:
+      type: object
+      description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
+        olib tashlanadi.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        from_branch:
+          type: integer
+          readOnly: true
+        from_branch_name:
+          type: string
+          readOnly: true
+        to_branch:
+          type: integer
+          readOnly: true
+        to_branch_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/TransferStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+          default: 0
+        has_discrepancy:
+          type: boolean
+          readOnly: true
+        total_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        shortage_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        created_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        sent_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        received_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - created_at
+      - created_by_name
+      - from_branch
+      - from_branch_name
+      - has_discrepancy
+      - id
+      - items_count
+      - note
+      - number
+      - received_at
+      - sent_at
+      - shortage_cost_base
+      - status
+      - status_display
+      - to_branch
+      - to_branch_name
+      - total_cost_base
+    TransferPermissions:
+      type: object
+      properties:
+        edit:
+          type: boolean
+        send:
+          type: boolean
+        receive:
+          type: boolean
+        cancel:
+          type: boolean
+      required:
+      - cancel
+      - edit
+      - receive
+      - send
+    TransferReceiveLineRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        quantity_received:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+      required:
+      - id
+      - quantity_received
+    TransferReceiveRequest:
+      type: object
+      description: Berilmagan qatorlar to'liq qabul qilingan hisoblanadi.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferReceiveLineRequest'
+        note:
+          type: string
+          default: ''
+    TransferStatusEnum:
+      enum:
+      - draft
+      - sent
+      - received
+      - cancelled
+      type: string
+      description: |-
+        * `draft` - Qoralama
+        * `sent` - Jo'natildi
+        * `received` - Qabul qilindi
+        * `cancelled` - Bekor qilindi
+    TransferWriteRequest:
+      type: object
+      properties:
+        from_branch:
+          type: integer
+        to_branch:
+          type: integer
+        note:
+          type: string
+          default: ''
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineWriteRequest'
+      required:
+      - from_branch
+      - items
+      - to_branch
     Unit:
       type: object
       properties:
@@ -8843,6 +11034,306 @@ components:
       - password
       - role
       - username
+    WriteOffDetail:
+      type: object
+      description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
+        olib tashlanadi.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        reason:
+          type: integer
+          readOnly: true
+        reason_code:
+          type: string
+          readOnly: true
+        reason_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/SaleStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+          default: 0
+        total_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        transfer:
+          type: integer
+          readOnly: true
+          nullable: true
+        transfer_number:
+          type: string
+          readOnly: true
+          nullable: true
+        note:
+          type: string
+          readOnly: true
+        created_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WriteOffItem'
+          readOnly: true
+        cancelled_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        cancelled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        cancel_reason:
+          type: string
+          readOnly: true
+        can_cancel:
+          type: boolean
+          readOnly: true
+          default: false
+      required:
+      - branch
+      - branch_name
+      - can_cancel
+      - cancel_reason
+      - cancelled_at
+      - cancelled_by_name
+      - completed_at
+      - created_by_name
+      - id
+      - items
+      - items_count
+      - note
+      - number
+      - reason
+      - reason_code
+      - reason_name
+      - status
+      - status_display
+      - total_cost_base
+      - transfer
+      - transfer_number
+    WriteOffItem:
+      type: object
+      description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
+        olib tashlanadi.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        product:
+          type: integer
+          readOnly: true
+        product_name:
+          type: string
+          readOnly: true
+        product_sku:
+          type: string
+          readOnly: true
+        product_barcode:
+          type: string
+          readOnly: true
+        unit_code:
+          type: string
+          readOnly: true
+        unit_decimal_places:
+          type: integer
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        unit_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,6})?$
+          readOnly: true
+        total_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+      required:
+      - id
+      - product
+      - product_barcode
+      - product_name
+      - product_sku
+      - quantity
+      - total_cost_base
+      - unit_code
+      - unit_cost_base
+      - unit_decimal_places
+    WriteOffList:
+      type: object
+      description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
+        olib tashlanadi.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        reason:
+          type: integer
+          readOnly: true
+        reason_code:
+          type: string
+          readOnly: true
+        reason_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/SaleStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        items_count:
+          type: integer
+          readOnly: true
+          default: 0
+        total_cost_base:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        transfer:
+          type: integer
+          readOnly: true
+          nullable: true
+        transfer_number:
+          type: string
+          readOnly: true
+          nullable: true
+        note:
+          type: string
+          readOnly: true
+        created_by_name:
+          type: string
+          readOnly: true
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch
+      - branch_name
+      - completed_at
+      - created_by_name
+      - id
+      - items_count
+      - note
+      - number
+      - reason
+      - reason_code
+      - reason_name
+      - status
+      - status_display
+      - total_cost_base
+      - transfer
+      - transfer_number
+    WriteOffReason:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 30
+        name:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        is_system:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - is_system
+      - name
+      - updated_at
+    WriteOffReasonRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 30
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        is_active:
+          type: boolean
+      required:
+      - code
+      - name
+    WriteOffWriteRequest:
+      type: object
+      properties:
+        branch:
+          type: integer
+        reason:
+          type: integer
+        note:
+          type: string
+          default: ''
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineWriteRequest'
+      required:
+      - branch
+      - items
+      - reason
   securitySchemes:
     jwtAuth:
       type: http

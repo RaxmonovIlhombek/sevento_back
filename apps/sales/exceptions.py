@@ -16,3 +16,8 @@ class DiscountForbidden(BusinessRuleError):
     status_code = 403
     code = "discount_forbidden"
     message = "Chegirma berish huquqi yo'q"
+
+
+class SaleHasReturns(BusinessRuleError):
+    code = "sale_has_returns"
+    message = "Savdo bo'yicha qaytarish bor — bekor qilib bo'lmaydi (qolganini qaytarish orqali)"

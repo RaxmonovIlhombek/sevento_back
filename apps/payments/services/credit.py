@@ -95,14 +95,14 @@ def open_debts_base(customer_id: int) -> Decimal:
     total = Decimal(0)
     rows = (
         Debt.objects.filter(customer_id=customer_id, status=Debt.Status.OPEN)
-        .values_list("currency__code", "amount", "paid_amount")
+        .values_list("currency__code", "amount", "paid_amount", "returned_amount")
         .order_by()
     )
     rates: dict[str, Decimal] = {}
-    for code, amount, paid in rows:
+    for code, amount, paid, returned in rows:
         if code not in rates:
             rates[code] = currency_selectors.rate_to_base(code)
-        total += (amount - paid) * rates[code]
+        total += (amount - paid - returned) * rates[code]
     return _q(total)
 
 
@@ -265,7 +265,7 @@ def cancel_document_debts(*, actor, doc: PaymentDoc, reason: str) -> list[Debt]:
                 customer_id=debt.customer_id,
                 currency=debt.currency,
                 type=CustomerLedgerEntry.Type.CANCEL,
-                amount=-debt.amount,
+                amount=-debt.remaining,
                 debt=debt,
                 doc=doc,
             )
@@ -279,6 +279,67 @@ def cancel_document_debts(*, actor, doc: PaymentDoc, reason: str) -> list[Debt]:
                 reason=reason,
             )
     return debts
+
+
+def reduce_document_debt(*, actor, doc: PaymentDoc, currency, amount: Decimal) -> Decimal:
+    """Tovar qaytarilganda hujjat (savdo) qarzi shu summaga kamayadi (qoldiqdan oshmaydi).
+
+    Qaytaradi: qarzdan ayirilgan summa (`currency` da) — qolgani mijozga pul bilan qaytariladi.
+    """
+    amount = _q(amount)
+    reduced = Decimal(0)
+    with transaction.atomic():
+        debts = list(
+            Debt.objects.select_for_update(of=("self",))
+            .select_related("currency")
+            .filter(document_type=doc.type, document_id=doc.id, status=Debt.Status.OPEN)
+            .order_by("id")
+        )
+        now = timezone.now()
+        for debt in debts:
+            left = amount - reduced
+            if left <= 0:
+                break
+            take = min(_convert(left, currency.code, debt.currency.code), debt.remaining)
+            if take <= 0:
+                continue
+            debt.returned_amount += take
+            fields = ["returned_amount"]
+            if debt.remaining <= 0:
+                debt.status = Debt.Status.PAID
+                debt.settled_at = now
+                fields += ["status", "settled_at"]
+            debt.save(update_fields=fields)
+            _ledger(
+                actor=actor,
+                customer_id=debt.customer_id,
+                currency=debt.currency,
+                type=CustomerLedgerEntry.Type.RETURN,
+                amount=-take,
+                debt=debt,
+                doc=doc,
+            )
+            events.DebtReduced.publish_from(
+                actor=actor,
+                branch_id=debt.branch_id,
+                debt_id=debt.pk,
+                customer_id=debt.customer_id,
+                amount=take,
+                currency=debt.currency.code,
+                remaining=debt.remaining,
+                document_type=doc.type,
+                document_id=doc.id,
+                document_number=doc.number,
+            )
+            if debt.status == Debt.Status.PAID:
+                events.DebtSettled.publish_from(
+                    actor=actor,
+                    branch_id=debt.branch_id,
+                    debt_id=debt.pk,
+                    customer_id=debt.customer_id,
+                )
+            reduced += _convert(take, debt.currency.code, currency.code)
+    return min(reduced, amount)
 
 
 # --- qarz to'lovi ---
@@ -383,7 +444,7 @@ def receive_debt_payment(
             )
             debt.paid_amount += take
             fields = ["paid_amount"]
-            if debt.paid_amount >= debt.amount:
+            if debt.remaining <= 0:
                 debt.status = Debt.Status.PAID
                 debt.settled_at = now
                 fields += ["status", "settled_at"]

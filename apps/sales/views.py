@@ -15,8 +15,8 @@ from core.api.mixins import CapabilityViewSetMixin
 from core.api.schema import ERROR_RESPONSE
 
 from . import selectors, services
-from .filters import SaleFilter
-from .models import Sale
+from .filters import SaleFilter, SaleReturnFilter
+from .models import Sale, SaleReturn
 from .receipt import render_receipt_pdf
 from .serializers import (
     DailySummarySerializer,
@@ -26,6 +26,9 @@ from .serializers import (
     SaleCancelSerializer,
     SaleDetailSerializer,
     SaleListSerializer,
+    SaleReturnDetailSerializer,
+    SaleReturnListSerializer,
+    SaleReturnWriteSerializer,
     SaleWriteSerializer,
 )
 
@@ -67,6 +70,7 @@ class SaleViewSet(
         user = self.request.user
         context["can_view_cost"] = user.has_capability("inventory.view_cost")
         context["can_cancel"] = user.has_capability("sales.cancel")
+        context["can_return"] = user.has_capability("sales.returns.create")
         return context
 
     def _detail(self, sale_id: int) -> dict:
@@ -174,3 +178,52 @@ class SaleViewSet(
             data["cost_base"] = None
             data["profit_base"] = None
         return Response(DailySummarySerializer(data).data)
+
+
+@extend_schema(tags=["sales"])
+class SaleReturnViewSet(
+    CapabilityViewSetMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Qaytarishlar. POST — tovar omborga, summa qarzdan ayiriladi, qolgani mijozga qaytariladi."""
+
+    queryset = SaleReturn.objects.none()
+    serializer_class = SaleReturnListSerializer
+    capability_map = {"list": VIEW, "retrieve": VIEW, "create": "sales.returns.create"}
+    filterset_class = SaleReturnFilter
+    ordering_fields = ["created_at", "number", "total"]
+    ordering = ["-created_at", "-id"]
+
+    def get_queryset(self):
+        if self.action == "list":
+            return selectors.returns_queryset(self.request.user)
+        return selectors.return_detail_queryset(self.request.user)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["can_view_cost"] = self.request.user.has_capability("inventory.view_cost")
+        return context
+
+    def _detail(self, return_id: int) -> dict:
+        row = selectors.return_detail_queryset(self.request.user).get(pk=return_id)
+        return SaleReturnDetailSerializer(row, context=self.get_serializer_context()).data
+
+    @extend_schema(responses=SaleReturnDetailSerializer)
+    def retrieve(self, request, *args, **kwargs):
+        return Response(self._detail(self.get_object().pk))
+
+    @extend_schema(
+        request=SaleReturnWriteSerializer,
+        responses={201: SaleReturnDetailSerializer, 400: ERROR_RESPONSE, 409: ERROR_RESPONSE},
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = SaleReturnWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        def handler():
+            sale_return = services.create_return(actor=request.user, **serializer.validated_data)
+            return Response(self._detail(sale_return.pk), status=status.HTTP_201_CREATED)
+
+        return idempotent_call(request, handler)

@@ -5,6 +5,7 @@ To'lov (naqd, karta, o'tkazma, bir nechta valyuta aralash) jamidan kam bo'lsa, q
 nomiga nasiya yoziladi (`sales.credit` huquqi va kredit limiti bilan).
 """
 
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_DOWN, ROUND_HALF_UP, ROUND_UP, Decimal
@@ -16,7 +17,13 @@ from apps.catalog import selectors as catalog_selectors
 from apps.currency import selectors as currency_selectors
 from apps.inventory import services as inventory_services
 from apps.inventory.exceptions import InsufficientStock
-from apps.inventory.types import BatchAllocation, DocRef, MovementType
+from apps.inventory.types import (
+    BatchAllocation,
+    DocRef,
+    MovementType,
+    allocations_from_json,
+    allocations_to_json,
+)
 from apps.payments import services as payment_services
 from apps.payments.types import PaymentDoc
 from core import settings_service
@@ -25,8 +32,8 @@ from core.exceptions import BusinessRuleError, InvalidStatusTransition
 from core.numbering import next_number
 
 from . import events
-from .exceptions import DiscountForbidden, PaymentInsufficient, TotalMismatch
-from .models import Sale, SaleItem
+from .exceptions import DiscountForbidden, PaymentInsufficient, SaleHasReturns, TotalMismatch
+from .models import Sale, SaleItem, SaleReturn, SaleReturnItem
 from .pricing import line_gross, quantum, resolve_prices
 
 DOC_TYPE = "sale"
@@ -368,6 +375,8 @@ def cancel_sale(*, actor, sale: Sale, reason: str) -> Sale:
         sale = Sale.objects.select_for_update().get(pk=sale.pk)
         if sale.status != Sale.Status.COMPLETED:
             raise InvalidStatusTransition("Savdo allaqachon bekor qilingan")
+        if sale.returns.exists():
+            raise SaleHasReturns()
         doc = DocRef(type=DOC_TYPE, id=sale.pk, number=sale.number)
         items = sorted(sale.items.all(), key=lambda i: (i.product_id, i.position))
         for item in items:
@@ -407,3 +416,222 @@ def cancel_sale(*, actor, sale: Sale, reason: str) -> Sale:
             reason=reason,
         )
     return sale
+
+
+# --- qaytarish ---
+
+RETURN_DOC_TYPE = "sale_return"
+RETURN_PREFIX = "Q"
+
+
+def _return_amount(item: SaleItem, quantity: Decimal, places: int) -> Decimal:
+    """Qator summasidan (chegirma ayirilgan) proporsional ulush.
+
+    round(L·(r+q)/Q) − round(L·r/Q): hamma qaytarishlar yig'indisi aynan line_total ga teng.
+    """
+    q = quantum(places)
+
+    def share(qty: Decimal) -> Decimal:
+        return (item.line_total * qty / item.quantity).quantize(q, rounding=ROUND_HALF_UP)
+
+    return share(item.returned_quantity + quantity) - share(item.returned_quantity)
+
+
+def _return_allocations(item: SaleItem, quantity: Decimal) -> list[BatchAllocation]:
+    """Savdo partiyalaridan hali qaytarilmagan qism — oxirgi partiyadan boshlab."""
+    returned: dict[int, Decimal] = defaultdict(Decimal)
+    for row in item.returns.all():
+        for alloc in allocations_from_json(row.batch_allocations):
+            returned[alloc.batch_id] += alloc.quantity
+    result = []
+    need = quantity
+    for alloc in reversed(allocations_from_json(item.batch_allocations)):
+        if need <= 0:
+            break
+        take = min(alloc.quantity - returned[alloc.batch_id], need)
+        if take > 0:
+            result.append(BatchAllocation(alloc.batch_id, take, alloc.unit_cost_base))
+            need -= take
+    if need > 0:  # returned_quantity tekshiruvidan keyin bo'lmasligi kerak
+        raise BusinessRuleError("Qaytarish partiyalari mos kelmadi", code="return_allocation")
+    return result
+
+
+def _validate_return_lines(lines: list[dict], items: dict[int, SaleItem]) -> None:
+    errors, seen = [], set()
+    for index, line in enumerate(lines):
+        item = items.get(line["sale_item"])
+        field = f"items.{index}"
+        if item is None:
+            errors.append(_err(index, "sale_item", "not_in_sale", "Bu qator savdoda yo'q"))
+            continue
+        if item.pk in seen:
+            errors.append(_err(index, "sale_item", "duplicate", "Qator takrorlangan"))
+        seen.add(item.pk)
+        quantity: Decimal = line["quantity"]
+        available = item.quantity - item.returned_quantity
+        places = item.product.unit.decimal_places
+        if quantity > available:
+            errors.append(
+                {
+                    "field": f"{field}.quantity",
+                    "code": "exceeds_sold",
+                    "message": f"Qaytarish mumkin: {available.normalize():f}",
+                }
+            )
+        elif quantity != quantity.quantize(Decimal(1).scaleb(-places)):
+            errors.append(
+                _err(
+                    index,
+                    "quantity",
+                    "unit_precision",
+                    f"«{item.product.unit.name}» uchun ko'pi bilan {places} xona kasr",
+                )
+            )
+    if errors:
+        raise _validation_error("Qaytarish qatorlarida xato bor", errors)
+
+
+def create_return(
+    *, actor, sale: Sale, items: list[dict], reason: str, refund_method=None
+) -> SaleReturn:
+    """Qaytarish: tovar asl partiyalarga (tannarx saqlanadi) → summa avval savdo qarzidan
+    ayiriladi → qolgani mijozga qaytariladi (default naqd; kassada yetmasa 409)."""
+    ensure_branch_access(actor, sale.branch_id)
+    if not items:
+        raise _validation_error("Qaytariladigan tovar tanlanmagan", [{"field": "items"}])
+    with transaction.atomic():
+        sale = (
+            Sale.objects.select_for_update(of=("self",))
+            .select_related("branch", "currency", "customer")
+            .get(pk=sale.pk)
+        )
+        if sale.status != Sale.Status.COMPLETED:
+            raise InvalidStatusTransition("Bekor qilingan savdoni qaytarib bo'lmaydi")
+        sale_items = {
+            i.pk: i
+            for i in sale.items.select_for_update(of=("self",))
+            .select_related("product", "product__unit")
+            .prefetch_related("returns")
+        }
+        _validate_return_lines(items, sale_items)
+        places = sale.currency.decimal_places
+        sale_return = SaleReturn.objects.create(
+            number=next_number(
+                doc_type=RETURN_PREFIX, branch_id=sale.branch_id, branch_code=sale.branch.code
+            ),
+            sale=sale,
+            branch=sale.branch,
+            customer=sale.customer,
+            currency=sale.currency,
+            total=Decimal(0),
+            total_base=Decimal(0),
+            cost_base=Decimal(0),
+            refund_method=refund_method,
+            reason=reason,
+            created_by=actor,
+        )
+        total = cost_total = Decimal(0)
+        rows = []
+        lines = sorted(items, key=lambda line: (sale_items[line["sale_item"]].product_id,))
+        for line in lines:
+            item = sale_items[line["sale_item"]]
+            quantity = line["quantity"]
+            amount = _return_amount(item, quantity, places)
+            allocations = _return_allocations(item, quantity)
+            row = SaleReturnItem.objects.create(
+                sale_return=sale_return,
+                sale_item=item,
+                product=item.product,
+                quantity=quantity,
+                amount=amount,
+                cost_base=Decimal(0),
+                batch_allocations=allocations_to_json(allocations),
+            )
+            inventory_services.restore_stock(
+                actor=actor,
+                branch_id=sale.branch_id,
+                product_id=item.product_id,
+                allocations=allocations,
+                movement_type=MovementType.SALE_RETURN_IN,
+                doc=DocRef(
+                    type=RETURN_DOC_TYPE,
+                    id=sale_return.pk,
+                    number=sale_return.number,
+                    line_id=row.pk,
+                ),
+            )
+            row.cost_base = sum(
+                (
+                    (a.quantity * a.unit_cost_base).quantize(MONEY_PLACES, rounding=ROUND_HALF_UP)
+                    for a in allocations
+                ),
+                Decimal(0),
+            )
+            row.save(update_fields=["cost_base"])
+            rows.append(row)
+            item.returned_quantity += quantity
+            total += amount
+            cost_total += row.cost_base
+        SaleItem.objects.bulk_update(list(sale_items.values()), ["returned_quantity"])
+
+        reduced = Decimal(0)
+        if sale.debt_amount > 0 and total > 0:
+            reduced = payment_services.reduce_document_debt(
+                actor=actor,
+                doc=PaymentDoc(type=DOC_TYPE, id=sale.pk, number=sale.number),
+                currency=sale.currency,
+                amount=total,
+            )
+        refund = total - reduced
+        sale_return.refund_method = None
+        if refund > 0:
+            payment = payment_services.refund_to_customer(
+                actor=actor,
+                branch=sale.branch,
+                currency=sale.currency,
+                amount=refund,
+                doc=PaymentDoc(type=RETURN_DOC_TYPE, id=sale_return.pk, number=sale_return.number),
+                method=refund_method,
+                customer=sale.customer,
+                reason=f"{sale.number}: {reason}"[:255],
+            )
+            sale_return.refund_method = payment.method
+        sale_return.total = total
+        sale_return.total_base = (total * sale.rate_to_base).quantize(
+            MONEY_PLACES, rounding=ROUND_HALF_UP
+        )
+        sale_return.cost_base = cost_total
+        sale_return.debt_reduction = reduced
+        sale_return.refund_amount = refund
+        sale_return.save()
+
+        sale.returned_total += total
+        sale.returned_total_base += sale_return.total_base
+        sale.returned_cost_base += cost_total
+        sale.save(
+            update_fields=[
+                "returned_total",
+                "returned_total_base",
+                "returned_cost_base",
+                "updated_at",
+            ]
+        )
+        events.SaleReturnCompleted.publish_from(
+            actor=actor,
+            branch_id=sale.branch_id,
+            return_id=sale_return.pk,
+            number=sale_return.number,
+            sale_id=sale.pk,
+            sale_number=sale.number,
+            currency=sale.currency.code,
+            total=total,
+            total_base=sale_return.total_base,
+            cost_base=cost_total,
+            debt_reduction=reduced,
+            refund_amount=refund,
+            items_count=len(rows),
+            customer_id=sale.customer_id,
+            reason=reason,
+        )
+    return sale_return
