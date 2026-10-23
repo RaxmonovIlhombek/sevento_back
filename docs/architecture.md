@@ -331,9 +331,10 @@ sequenceDiagram
 - Cookie endpointlari (`refresh`, `logout`) uchun CSRF himoyasi: `SameSite=Strict` + `Origin` sarlavhasini `CSRF_TRUSTED_ORIGINS` bilan tekshirish.
 - Login uchun throttle, muvaffaqiyatsiz urinishlar audit ga yoziladi.
 - Har endpointda: `IsAuthenticated` + `HasCapability("sales.create")` + nuqta tekshiruvi (batafsil: [permissions.md](permissions.md)).
-- **Tauri haqida:** Tauri oynasining origin i (`tauri://localhost`) API domenidan farq qiladi, shuning uchun brauzer cookie si u yerda ishlamaydi.
-  Yechim: Tauri buildida HTTP so'rovlar `@tauri-apps/plugin-http` orqali yuboriladi (o'z cookie jari bor, refresh cookie odatdagidek ishlaydi).
-  Frontend API klienti `fetch` funksiyasini almashtirish imkoniyati bilan yoziladi, shuning uchun bu bitta adapter. WebSocket ticket bilan ishlagani uchun cookie ga bog'liq emas.
+- **Tauri (desktop) haqida** ✅ (9-bosqich): oyna origin i (`tauri://localhost`, Windows da `http://tauri.localhost`) API domenidan farq qiladi — WebView cookie si ishlamaydi.
+  - `login` / `refresh` / `logout` — Rust buyrug'i `auth_request` (`sevento_front/src-tauri/src/auth.rs`): o'z cookie jari, javobdagi `Set-Cookie` JS ga **berilmaydi** (httpOnly kafolati saqlanadi; `plugin-http` esa barcha sarlavhalarni JS ga qaytaradi — shuning uchun auth uchun ishlatilmaydi). Jar `session.json` da (0600), "Chiqish" uni tozalaydi. So'rov `Origin` siz — `check_origin` o'tkazadi (cookie avtomatik ketmaydigan mijoz).
+  - Qolgan REST — `@tauri-apps/plugin-http` (CORS yo'q; ruxsat faqat build da berilgan server manziliga: `VITE_API_URL` → capability scope). Backend o'zgarmaydi.
+  - WebSocket — WebView ning oddiy WebSocket i, ticket bilan (cookie ga bog'liq emas). `REALTIME_ALLOWED_ORIGINS` default ro'yxatida Tauri originlari bor (`apps/realtime/tests/test_origins.py`).
 
 ### PDF (chek, hisobotlar)
 

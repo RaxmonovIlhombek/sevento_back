@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 import pytest
+from django.utils import timezone
 
 from apps.inventory.models import StockLevel
 from apps.payments import services as payment_services
@@ -46,7 +47,8 @@ def test_partial_credit_sale(seller_client, branch, uzs, products, stocked, cash
     assert data["debt"]["status"] == "open" and D(data["debt"]["remaining"]) == D("100000")
     debt = Debt.objects.get()
     assert debt.currency.code == "UZS" and debt.document_number == data["number"]
-    assert (debt.due_date - debt.created_at.date()).days == 15
+    # muddat mahalliy sanadan (Toshkent) — UTC sanasi kechqurun bir kun orqada bo'ladi
+    assert (debt.due_date - timezone.localdate(debt.created_at)).days == 15
     entry = CustomerLedgerEntry.objects.get(customer=customer)
     assert (entry.type, entry.amount, entry.balance_after) == ("debt", D("100000"), D("100000"))
     assert payment_services.open_debts_base(customer.id) == D("8.0000")
