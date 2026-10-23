@@ -106,7 +106,7 @@ class ExchangeRateViewSet(
         return Response(ExchangeRateSerializer(row).data, status=status.HTTP_201_CREATED)
 
     @extend_schema(responses=LatestRateSerializer(many=True))
-    @action(detail=False, methods=["get"])
+    @action(detail=False, methods=["get"], pagination_class=None)
     def latest(self, request):
         """Har faol valyuta uchun joriy kurs (UZS dan tashqari)."""
         rows = []

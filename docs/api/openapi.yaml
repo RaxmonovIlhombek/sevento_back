@@ -911,18 +911,6 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
       - name: search
         required: false
         in: query
@@ -942,7 +930,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedProductPriceList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductPrice'
           description: ''
   /api/v1/catalog/products/{id}/set-price/:
     post:
@@ -1392,18 +1382,6 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
       - name: search
         required: false
         in: query
@@ -1429,7 +1407,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedLatestRateList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/LatestRate'
           description: ''
   /api/v1/health/:
     get:
@@ -2065,6 +2045,7 @@ components:
         parent_name:
           type: string
           readOnly: true
+          nullable: true
         sort_order:
           type: integer
           maximum: 32767
@@ -2120,9 +2101,9 @@ components:
         children:
           type: array
           items:
-            type: object
-            additionalProperties: {}
+            $ref: '#/components/schemas/CategoryTree'
       required:
+      - children
       - id
       - is_active
       - name
@@ -2305,6 +2286,7 @@ components:
         created_by_name:
           type: string
           readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
@@ -2542,31 +2524,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExchangeRate'
-    PaginatedLatestRateList:
-      type: object
-      required:
-      - count
-      - page
-      - page_size
-      - total_pages
-      - results
-      properties:
-        count:
-          type: integer
-          example: 120
-        page:
-          type: integer
-          example: 2
-        page_size:
-          type: integer
-          example: 25
-        total_pages:
-          type: integer
-          example: 5
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/LatestRate'
     PaginatedProductList:
       type: object
       required:
@@ -2592,31 +2549,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Product'
-    PaginatedProductPriceList:
-      type: object
-      required:
-      - count
-      - page
-      - page_size
-      - total_pages
-      - results
-      properties:
-        count:
-          type: integer
-          example: 120
-        page:
-          type: integer
-          example: 2
-        page_size:
-          type: integer
-          example: 25
-        total_pages:
-          type: integer
-          example: 5
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProductPrice'
     PaginatedRoleList:
       type: object
       required:
@@ -2916,6 +2848,7 @@ components:
         category_name:
           type: string
           readOnly: true
+          nullable: true
         unit:
           type: integer
           readOnly: true
@@ -2999,6 +2932,7 @@ components:
         branch_name:
           type: string
           readOnly: true
+          nullable: true
         amount:
           type: string
           format: decimal
@@ -3015,6 +2949,7 @@ components:
         created_by_name:
           type: string
           readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time

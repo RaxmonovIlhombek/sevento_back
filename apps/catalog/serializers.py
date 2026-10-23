@@ -8,7 +8,9 @@ from .models import Category, PriceType, Product, ProductPrice, Unit
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    parent_name = serializers.CharField(source="parent.name", read_only=True, default=None)
+    parent_name = serializers.CharField(
+        source="parent.name", read_only=True, default=None, allow_null=True
+    )
 
     class Meta:
         model = Category
@@ -35,13 +37,18 @@ class CategorySerializer(serializers.ModelSerializer):
         return attrs
 
 
+@extend_schema_field({"type": "array", "items": {"$ref": "#/components/schemas/CategoryTree"}})
+class _CategoryChildrenField(serializers.ListField):
+    pass
+
+
 class CategoryTreeSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField()
     sort_order = serializers.IntegerField()
     is_active = serializers.BooleanField()
     parent = serializers.IntegerField(allow_null=True)
-    children = serializers.ListField(child=serializers.DictField(), default=list)
+    children = _CategoryChildrenField(child=serializers.DictField())
 
 
 class UnitSerializer(serializers.ModelSerializer):
@@ -93,7 +100,9 @@ class CurrentPriceSerializer(serializers.Serializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(source="category.name", read_only=True, default=None)
+    category_name = serializers.CharField(
+        source="category.name", read_only=True, default=None, allow_null=True
+    )
     unit_code = serializers.CharField(source="unit.code", read_only=True)
     unit_name = serializers.CharField(source="unit.name", read_only=True)
     unit_decimal_places = serializers.IntegerField(source="unit.decimal_places", read_only=True)
@@ -175,9 +184,11 @@ class ProductPriceSerializer(serializers.ModelSerializer):
     price_type_code = serializers.CharField(source="price_type.code", read_only=True)
     price_type_name = serializers.CharField(source="price_type.name", read_only=True)
     currency_code = serializers.CharField(source="currency.code", read_only=True)
-    branch_name = serializers.CharField(source="branch.name", read_only=True, default=None)
+    branch_name = serializers.CharField(
+        source="branch.name", read_only=True, default=None, allow_null=True
+    )
     created_by_name = serializers.CharField(
-        source="created_by.full_name", read_only=True, default=None
+        source="created_by.full_name", read_only=True, default=None, allow_null=True
     )
 
     class Meta:

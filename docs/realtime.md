@@ -114,7 +114,7 @@ Boshqa hech qanday mijoz xabari qabul qilinmaydi (noma'lum `type` → e'tiborsiz
 | `pong` | ulanish | `{}` | — | 2 |
 | `session.revoked` | `user_{id}` / `role_{code}` | `{reason: "deactivated" \| "permissions_changed" \| "password_changed"}` — keyin server 4403 bilan yopadi | `deactivated` → logout; aks holda `me` qayta o'qiladi, yangi ticket bilan qayta ulanadi | 2 ✅ |
 | `system.notice` | `broadcast` | `{level: "info" \| "warning" \| "error", message}` (`POST /api/v1/realtime/notice/`, `settings.manage`) | — (toast) | 2 ✅ |
-| `currency.rate_updated` | `broadcast` | `{rates: [{currency, rate, date}], source}` | `['currency']`, `['products']` (narx UZS da ko'rsatilsa) + toast | 3 |
+| `currency.rate_updated` | `broadcast` | `{rates: [{currency, rate, date}], source}` | `['currency']`, `['products']` + toast "USD = 12 650,45 so'm" | 3 ✅ |
 | `stock.changed` | `branch_{id}` | `{branch_id, product_id, quantity, delta, movement_type, document: {type, id, number}}` | `['stock', branch_id]`, `['stock', branch_id, product_id]`, `['products', product_id]` | 5 |
 | `stock.below_minimum` | `branch_{id}` (omborchi, sotuvchi ko'radi), `role_owner` | `{branch_id, product_id, product_name, quantity, min_quantity, unit}` | `['stock','alerts']` + ogohlantirish toast | 5 |
 | `dashboard.updated` | `role_owner` | `{branch_id, reason: "sale.completed" \| "sale.cancelled" \| "sale_return.completed" \| "payment.received"}` | `['dashboard']` (debounce 2 s) | 5, 8 |
@@ -160,7 +160,8 @@ Backend (`apps/realtime/tests/`, `WebsocketCommunicator`, ✅):
 - hodisa tranzaksiya commit bo'lgandan keyin keladi; rollback bo'lsa kelmaydi.
 - `user.deactivated` → `session.revoked` + 4403 (boshqalarga ta'sir yo'q); rol huquqi o'zgarsa `role_{code}` guruhi; ism o'zgarsa jim.
 - ulanish limiti (4429) va yopilgach hisob kamayishi; `POST /realtime/notice/` → `broadcast`.
-- Keyingi bosqichlar: Celery vazifasidan chiqqan `currency.rate_updated` `broadcast` ga yetib kelishi (3), `stock.changed` savdodan keyin (5).
+- `currency.rate_updated` (kurs kiritilganda) `broadcast` orqali boshqa foydalanuvchiga yetib keladi (3 ✅, `apps/currency/tests/test_realtime.py`).
+- Keyingi bosqichlar: `stock.changed` savdodan keyin (5).
 
 Frontend (`src/shared/realtime/*.test.ts`, soxta WebSocket + fake timers, ✅):
 - ticket → `auth` birinchi xabar → `auth.ok` → online; `pong` uzatilmaydi; buzuq JSON e'tiborsiz.

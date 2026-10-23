@@ -82,9 +82,12 @@ Ustunlar: **Audit** — audit jurnaliga yoziladimi; **WS** — WebSocket ga chiq
 | Hodisa | Qachon | Payload | Audit | WS | Boshqa |
 |---|---|---|---|---|---|
 | `branch.created` / `branch.updated` | | branch_id, code, branch_name, type / changes | ✔ | — | |
-| `product.created` / `product.updated` | | product_id, changes | ✔ | — | |
-| `product.price_changed` | narx o'zgardi | product_id, price_type, old, new, currency, branch_id | ✔ | — | |
-| `currency.rate_updated` | Celery kursni yangiladi yoki qo'lda kiritildi | rates: [{currency, rate, date}], source | ✔ | ✔ hammaga | kesh tozalash |
+| `category.created` / `category.updated` | | category_id, category_name, parent_id / changes | ✔ | — | |
+| `unit.saved` / `price_type.saved` | ma'lumotnoma yaratildi/o'zgardi | id, code, changes | ✔ | — | |
+| `product.created` / `product.updated` | | product_id, sku, product_name / changes {maydon: {old, new}} | ✔ | — | |
+| `product.price_changed` | yangi narx qatori | product_id, price_type, currency, old_amount, new_amount; branch_id (meta) | ✔ | — | |
+| `currency.created` / `currency.updated` | valyuta jadvali o'zgardi | currency_id, code / changes | ✔ | — | |
+| `currency.rate_updated` | Celery (`currency.fetch_rates`) yoki qo'lda kiritildi | rates: [{currency, rate, date}], source (`cbu` / `manual`) | ✔ | ✔ `broadcast` | frontend: valyuta va tovar keshlari + toast |
 
 ### purchasing
 

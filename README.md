@@ -11,7 +11,8 @@ Frontend alohida repoda: [sevento_front](https://github.com/shaxobiddindev/seven
 | 0. Reja | ✅ `docs/` |
 | 1. Skelet, Docker, JWT (cookie refresh), rollar, nuqtalar, audit, hodisalar | ✅ |
 | 2. Realtime asosi (Channels, ticket, guruhlar, `session.revoked`, `system.notice`) | ✅ |
-| 3. Katalog, valyuta kursi (Celery Beat) | ⏳ keyingi |
+| 3. Katalog, valyuta kursi (CBU adapteri, Celery Beat) | ✅ |
+| 4. Kirim, partiya, tannarx taqsimlash, ombor harakatlari | ⏳ keyingi |
 
 Batafsil: [docs/roadmap.md](docs/roadmap.md).
 
@@ -76,4 +77,6 @@ CI (`.github/workflows/ci.yml`) shularni va `docs/api/openapi.yaml` yangiligini 
 - `GET /api/v1/auth/me/` — foydalanuvchi, rol, huquqlar ro'yxati, nuqtalar (frontend menyu va guard shu asosida).
 - Huquqlar: har endpointda `HasCapability` + nuqta chegarasi ([permissions.md](docs/permissions.md)).
 - Muhim `POST` lar `Idempotency-Key` sarlavhasini qo'llaydi (takroriy so'rov ikkinchi hujjat yaratmaydi).
+- Valyuta: `GET /api/v1/currency-rates/latest/` (joriy kurslar), `POST /api/v1/currency-rates/` (qo'lda), `POST /api/v1/currency-rates/fetch/` (manbadan hozir). Kunlik avtomatik yangilash — Celery Beat vazifasi `currency: kursni yangilash` (vaqti admin paneldagi *Periodic tasks* da, MB da). Manba — sozlama `currency.rate_provider` (`cbu` / `manual`), URL — `CURRENCY_CBU_URL`.
+- Katalog: `/api/v1/catalog/{categories,units,price-types,products}/`; `GET products/?branch=<id>` joriy narxlarni shu nuqtaga xos narxlar bilan qaytaradi; `POST products/<id>/set-price/` yangi narx (tarix saqlanadi).
 - WebSocket `/ws/v1/`: `POST /api/v1/realtime/ticket/` → 30 s lik bir martalik ticket → ulanishdan keyin birinchi xabar `{"type":"auth","payload":{"ticket"}}` → `auth.ok`. Xabar formati `{type, payload, timestamp}`, turlar ro'yxati — [realtime.md](docs/realtime.md).

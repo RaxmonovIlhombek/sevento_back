@@ -169,8 +169,12 @@ erDiagram
   Currency ||--o{ ExchangeRate : ""
 ```
 
-- `ProductPrice` da `UNIQUE (product, price_type, currency, branch, valid_from)`; amaldagi narx — eng so'nggi `valid_from <= now`. Narx tarixi shu jadvalning o'zida.
-- `ExchangeRate` da `UNIQUE (currency, date, source)`. UZS ning o'zi uchun kurs yozilmaydi (1).
+- `ProductPrice` — faqat qo'shiladi (tarix): amaldagi narx — eng so'nggi `valid_from <= now`; nuqtaga xos narx (`branch` to'ldirilgan) umumiy narxdan (`branch = null`) ustun. Indeks `(product, price_type, currency, branch, -valid_from)`.
+- `ExchangeRate` da `UNIQUE (currency, date)` — kuniga bitta kurs; qo'lda kiritilgan kurs shu kungi CBU kursini almashtiradi (`source` qaysi manbadan ekanini saqlaydi). Kurs 6 xonagacha. UZS uchun kurs yozilmaydi (1).
+- `Product.barcode` — bo'sh bo'lishi mumkin, to'ldirilganlari `UNIQUE` (qisman indeks); `sku` katta harfga keltiriladi.
+- `Category` da `UNIQUE (parent, name)` (ildizlar uchun ham — `NULLS NOT DISTINCT`); sikl service da tekshiriladi.
+- Seed: valyutalar USD (2 xona), UZS (0 xona); birliklar dona, kg, g, l, m, m2, qadoq; narx turlari Chakana (default), Ulgurji. Hammasi MB da, admin/API orqali o'zgaradi.
+- 3-bosqichda amalga oshirildi; rejadan farq: `Currency.sort_order`, `PriceType.sort_order`, `Unit.is_active` qo'shildi.
 
 ## 4. inventory
 

@@ -200,7 +200,7 @@ class ProductViewSet(
         return Response(self._serialize(product, many=False).data)
 
     @extend_schema(responses=ProductPriceSerializer(many=True))
-    @action(detail=True, methods=["get"])
+    @action(detail=True, methods=["get"], pagination_class=None)
     def prices(self, request, pk=None):
         """Narx tarixi (barcha nuqtalar, barcha turlar)."""
         return Response(
