@@ -115,8 +115,8 @@ Boshqa hech qanday mijoz xabari qabul qilinmaydi (noma'lum `type` → e'tiborsiz
 | `session.revoked` | `user_{id}` / `role_{code}` | `{reason: "deactivated" \| "permissions_changed" \| "password_changed"}` — keyin server 4403 bilan yopadi | `deactivated` → logout; aks holda `me` qayta o'qiladi, yangi ticket bilan qayta ulanadi | 2 ✅ |
 | `system.notice` | `broadcast` | `{level: "info" \| "warning" \| "error", message}` (`POST /api/v1/realtime/notice/`, `settings.manage`) | — (toast) | 2 ✅ |
 | `currency.rate_updated` | `broadcast` | `{rates: [{currency, rate, date}], source}` | `['currency']`, `['products']` + toast "USD = 12 650,45 so'm" | 3 ✅ |
-| `stock.changed` | `branch_{id}` | `{branch_id, product_id, quantity, delta, movement_type, document: {type, id, number}}` | `['stock', branch_id]`, `['stock', branch_id, product_id]`, `['products', product_id]` | 5 |
-| `stock.below_minimum` | `branch_{id}` (omborchi, sotuvchi ko'radi), `role_owner` | `{branch_id, product_id, product_name, quantity, min_quantity, unit}` | `['stock','alerts']` + ogohlantirish toast | 5 |
+| `stock.changed` | `branch_{id}` | `{branch_id, product_id, quantity, delta, movement_type, document: {type, id, number}}` — tannarx yo'q | `['inventory']` (qoldiq, harakatlar, partiyalar; debounce 1,5 s) | 4 ✅ (kirim), 5 (savdo) |
+| `stock.below_minimum` | `branch_{id}` (omborchi, sotuvchi; rahbar `branches.view_all` orqali barcha nuqtalar guruhida) | `{branch_id, product_id, product_name, quantity, min_quantity, unit}` | `['inventory']` + ogohlantirish toast "Kam qoldi: …" | 4 ✅ |
 | `dashboard.updated` | `role_owner` | `{branch_id, reason: "sale.completed" \| "sale.cancelled" \| "sale_return.completed" \| "payment.received"}` | `['dashboard']` (debounce 2 s) | 5, 8 |
 | `payment.received` | `role_accountant`, `role_owner`, `branch_{id}` | `{payment_id, number, branch_id, customer_id, amount, currency, method, direction}` | `['payments']`, `['cashboxes', branch_id]`, `['customers', customer_id]`, `['debts']` | 6 |
 | `payment.refunded` | xuddi shunday | `{payment_id, ...}` | xuddi shunday | 6 |
@@ -161,6 +161,7 @@ Backend (`apps/realtime/tests/`, `WebsocketCommunicator`, ✅):
 - `user.deactivated` → `session.revoked` + 4403 (boshqalarga ta'sir yo'q); rol huquqi o'zgarsa `role_{code}` guruhi; ism o'zgarsa jim.
 - ulanish limiti (4429) va yopilgach hisob kamayishi; `POST /realtime/notice/` → `broadcast`.
 - `currency.rate_updated` (kurs kiritilganda) `broadcast` orqali boshqa foydalanuvchiga yetib keladi (3 ✅, `apps/currency/tests/test_realtime.py`).
+- `stock.changed` faqat shu nuqta guruhiga ketadi, payloadda tannarx yo'q (4 ✅, `apps/inventory/tests/test_realtime.py`).
 - Keyingi bosqichlar: `stock.changed` savdodan keyin (5).
 
 Frontend (`src/shared/realtime/*.test.ts`, soxta WebSocket + fake timers, ✅):

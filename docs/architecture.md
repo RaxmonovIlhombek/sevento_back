@@ -211,7 +211,7 @@ Strelka = "shu modulning service/selector funksiyasini chaqiradi". Teskari yo'na
 | `branches` | Branch | `selectors.get_branch()`, `selectors.active_branches()` |
 | `catalog` | Category, Unit, Product, PriceType, ProductPrice | `selectors.get_product()`, `selectors.get_price()` |
 | `currency` | Currency, ExchangeRate | `selectors.get_rate()`, `services.convert()`, `selectors.base_currency()` |
-| `inventory` | StockLevel, Batch, StockMovement, Transfer(+Item), StockCount(+Item), WriteOff(+Item), WriteOffReason | `services.receive_stock()`, `services.issue_stock()`, `services.return_stock()`, `selectors.get_stock()` |
+| `inventory` | StockLevel, Batch, StockMovement, Transfer(+Item), StockCount(+Item), WriteOff(+Item), WriteOffReason | `services.receive_stock()`, `services.issue_stock()`, `services.reverse_receipt()`, `selectors.get_quantity()`, `selectors.is_source_untouched()`; `types.DocRef`, `types.MovementType` (boshqa app lar `models` ni emas, shularni import qiladi) |
 | `purchasing` | Supplier, Purchase, PurchaseItem, PurchaseExpense, ExpenseType | `selectors.*` (hisobotlar uchun) |
 | `payments` | PaymentMethod, Cashbox, CashTransaction, CashFlowCategory, Customer, Payment, Debt, DebtAllocation, CustomerLedgerEntry | `services.receive_payment()`, `services.register_debt()`, `services.refund()`, `selectors.available_credit()` |
 | `sales` | Sale, SaleItem, SaleReturn, SaleReturnItem | `selectors.*` (hisobotlar uchun) |
@@ -345,7 +345,6 @@ sequenceDiagram
 |---|---|---|
 | `inventory.costing_method` | `"fifo"` | tannarx strategiyasi |
 | `inventory.default_min_quantity` | `"5"` | tovar/nuqta uchun alohida berilmagan bo'lsa minimal qoldiq |
-| `inventory.allow_negative_stock` | `false` | manfiy qoldiqqa ruxsat |
 | `sales.max_seller_discount_percent` | `"10"` | sotuvchi bera oladigan maksimal chegirma |
 | `payments.default_credit_limit` | `{"amount": "0", "currency": "USD"}` | yangi mijoz kredit limiti |
 | `payments.credit_limit_warning_percent` | `"80"` | limitga yaqinlashganda ogohlantirish chegarasi |

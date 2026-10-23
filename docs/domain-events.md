@@ -93,15 +93,19 @@ Ustunlar: **Audit** — audit jurnaliga yoziladimi; **WS** — WebSocket ga chiq
 
 | Hodisa | Qachon | Payload | Audit | WS | Boshqa |
 |---|---|---|---|---|---|
-| `purchase.received` | kirim tasdiqlandi (tovar omborga kirdi) | purchase_id, number, branch_id, supplier_id, total_base, items | ✔ | — | **inventory** emas! kirim service i `inventory.services.receive_stock()` ni to'g'ridan-to'g'ri chaqiradi (bir tranzaksiyada bo'lishi shart), hodisa faqat xabar uchun |
-| `purchase.cancelled` | tasdiqlangan kirim bekor qilindi | purchase_id, reason | ✔ | — | |
+| `supplier.saved` | yetkazib beruvchi yaratildi/o'zgardi | supplier_id, supplier_name, created, changes | ✔ | — | 4 ✅ |
+| `expense_type.saved` | xarajat turi yaratildi/o'zgardi | expense_type_id, code, changes | ✔ | — | 4 ✅ |
+| `purchase.created` | kirim qoralamasi yaratildi | purchase_id, number, supplier_id; branch_id (meta) | ✔ | — | 4 ✅ |
+| `purchase.received` | kirim tasdiqlandi (tovar omborga kirdi) | purchase_id, number, supplier_id, currency, rate_to_base, subtotal, expenses_total_base, total_base, items [{product_id, quantity, landed_unit_cost_base}]; branch_id (meta) | ✔ | — | 4 ✅. **inventory** emas! kirim service i `inventory.services.receive_stock()` ni to'g'ridan-to'g'ri chaqiradi (bir tranzaksiyada bo'lishi shart), hodisa faqat xabar uchun |
+| `purchase.cancelled` | qoralama yoki tasdiqlangan kirim bekor qilindi | purchase_id, number, previous_status, reason | ✔ | — | 4 ✅ |
 
 ### inventory
 
 | Hodisa | Qachon | Payload | Audit | WS | Boshqa |
 |---|---|---|---|---|---|
-| `stock.changed` | har qanday qoldiq o'zgarishi (kirim, savdo, qaytarish, ko'chirish, inventarizatsiya, hisobdan chiqarish) | branch_id, product_id, quantity_before, quantity_after, delta, movement_type, document {type, id, number} | — (harakat jurnali o'zi tarix) | ✔ `branch_{id}` | `stock.below_minimum` tekshiruvi |
-| `stock.below_minimum` | `stock.changed` dan keyin qoldiq min dan tushsa (faqat chegaradan **o'tish** paytida, har safar emas) | branch_id, product_id, product_name, quantity, min_quantity | ✔ | ✔ `branch_{id}` omborchi + `role_owner` | |
+| `stock.changed` | har qanday qoldiq o'zgarishi (kirim, kirim bekor qilish; keyin savdo, qaytarish, ko'chirish, inventarizatsiya, hisobdan chiqarish) | branch_id, product_id, quantity_before, quantity_after, delta, movement_type, document_type, document_id, document_number | — (`audit=False`: harakat jurnali o'zi tarix) | ✔ `branch_{id}` (tannarxsiz) | 4 ✅ (kirim); `stock.below_minimum` tekshiruvi shu joyda |
+| `stock.below_minimum` | qoldiq kamayib minimaldan **pastga o'tganda** (har chiqimda emas: `StockLevel.below_minimum` bayrog'i bilan) | branch_id, product_id, product_name, quantity, min_quantity, unit | ✔ | ✔ `branch_{id}` | 4 ✅. Minimal: nuqta bo'yicha → tovar → sozlama `inventory.default_min_quantity` |
+| `stock.min_quantity_changed` | nuqta bo'yicha minimal qoldiq o'zgartirildi | product_id, old_value, new_value; branch_id (meta) | ✔ | — | 4 ✅ |
 | `transfer.sent` | ko'chirish jo'natildi | transfer_id, number, from_branch_id, to_branch_id, items_count | ✔ | ✔ `branch_{to}` | |
 | `transfer.received` | qabul qilindi (qisman farq bilan ham) | transfer_id, number, from_branch_id, to_branch_id, has_discrepancy | ✔ | ✔ `branch_{from}`, `branch_{to}` | farq bo'lsa `role_owner` ga ham |
 | `transfer.cancelled` | | transfer_id, reason | ✔ | ✔ ikkala nuqta | |

@@ -12,7 +12,8 @@ Frontend alohida repoda: [sevento_front](https://github.com/shaxobiddindev/seven
 | 1. Skelet, Docker, JWT (cookie refresh), rollar, nuqtalar, audit, hodisalar | ✅ |
 | 2. Realtime asosi (Channels, ticket, guruhlar, `session.revoked`, `system.notice`) | ✅ |
 | 3. Katalog, valyuta kursi (CBU adapteri, Celery Beat) | ✅ |
-| 4. Kirim, partiya, tannarx taqsimlash, ombor harakatlari | ⏳ keyingi |
+| 4. Kirim, partiya (FIFO), tannarx taqsimlash, ombor harakatlari, `stock.changed` | ✅ |
+| 5. Savdo (naqd), chek PDF, kassa qoldig'i | ⏳ keyingi |
 
 Batafsil: [docs/roadmap.md](docs/roadmap.md).
 
@@ -79,4 +80,6 @@ CI (`.github/workflows/ci.yml`) shularni va `docs/api/openapi.yaml` yangiligini 
 - Muhim `POST` lar `Idempotency-Key` sarlavhasini qo'llaydi (takroriy so'rov ikkinchi hujjat yaratmaydi).
 - Valyuta: `GET /api/v1/currency-rates/latest/` (joriy kurslar), `POST /api/v1/currency-rates/` (qo'lda), `POST /api/v1/currency-rates/fetch/` (manbadan hozir). Kunlik avtomatik yangilash — Celery Beat vazifasi `currency: kursni yangilash` (vaqti admin paneldagi *Periodic tasks* da, MB da). Manba — sozlama `currency.rate_provider` (`cbu` / `manual`), URL — `CURRENCY_CBU_URL`.
 - Katalog: `/api/v1/catalog/{categories,units,price-types,products}/`; `GET products/?branch=<id>` joriy narxlarni shu nuqtaga xos narxlar bilan qaytaradi; `POST products/<id>/set-price/` yangi narx (tarix saqlanadi).
+- Kirim: `/api/v1/purchasing/{suppliers,expense-types,purchases}/`; `GET purchases/<id>/preview/` — joriy kurs bilan tannarx oldindan hisobi, `POST purchases/<id>/receive/` (`Idempotency-Key`) — qabul (partiyalar yaratiladi, kurs qotiriladi), `POST purchases/<id>/cancel/ {reason}` — bekor qilish (partiyalardan chiqim bo'lmagan bo'lsa).
+- Ombor: `GET /api/v1/inventory/stock/` (qoldiq, `?below_minimum=true`, `?category=`, `?search=`; `PATCH stock/<id>/ {min_quantity}` — `inventory.manage`), `GET inventory/movements/` (harakatlar jurnali), `GET inventory/batches/` (partiyalar, `inventory.view_cost`). Tannarx maydonlari `inventory.view_cost` huquqisiz `null`.
 - WebSocket `/ws/v1/`: `POST /api/v1/realtime/ticket/` → 30 s lik bir martalik ticket → ulanishdan keyin birinchi xabar `{"type":"auth","payload":{"ticket"}}` → `auth.ok`. Xabar formati `{type, payload, timestamp}`, turlar ro'yxati — [realtime.md](docs/realtime.md).

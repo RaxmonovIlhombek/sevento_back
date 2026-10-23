@@ -26,6 +26,7 @@
 | `currency.rates.manage` | kursni qo'lda kiritish |
 | `inventory.view` | qoldiq va harakatlar jurnali |
 | `inventory.view_cost` | tannarx va partiya narxini ko'rish |
+| `inventory.manage` | nuqta bo'yicha minimal qoldiqni o'zgartirish |
 | `purchasing.view` / `purchasing.manage` | kirimlar |
 | `inventory.transfers.create` / `inventory.transfers.receive` / `inventory.transfers.cancel` | ko'chirish |
 | `inventory.counts.manage` | inventarizatsiya |

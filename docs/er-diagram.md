@@ -184,35 +184,39 @@ erDiagram
     int id PK
     int branch_id FK
     int product_id FK
-    decimal quantity
-    decimal min_quantity "null = Product.min_quantity"
+    decimal quantity "CHECK >= 0"
+    decimal min_quantity "null = Product.min_quantity, keyin sozlama"
     bool below_minimum "chegaradan o'tishni aniqlash uchun"
+    datetime updated_at
   }
   Batch {
     int id PK
     int branch_id FK
     int product_id FK
-    int purchase_item_id FK "null = ko'chirish, inventarizatsiya, boshlang'ich qoldiq"
-    int source_batch_id FK "ko'chirishda asl partiya"
-    datetime received_at "FIFO tartibi"
+    string source_type "purchase (keyin transfer, stock_count, sale_return)"
+    bigint source_id "manba hujjat (FK emas: app lar bog'lanmasin)"
+    bigint source_line_id "manba qatori, masalan PurchaseItem.id"
+    string source_number "K-TSH1-26-000001"
+    int parent_id FK "ko'chirishda asl partiya"
+    datetime received_at "FIFO tartibi (received_at, id)"
     decimal quantity_initial
-    decimal quantity_remaining "CHECK >= 0"
-    decimal unit_cost_base
-    int cost_currency_id FK
-    decimal unit_cost_original
-    decimal rate
+    decimal quantity_remaining "CHECK 0 <= remaining <= initial"
+    decimal unit_cost_base "asosiy valyutada, 6 xona"
+    datetime created_at
   }
   StockMovement {
     int id PK
     int branch_id FK
     int product_id FK
     int batch_id FK
-    string type "purchase_in, sale_out, sale_return_in, transfer_out, transfer_in, count_surplus, count_shortage, write_off, opening"
+    string type "purchase_in, purchase_cancel, sale_out, sale_return_in, transfer_out, transfer_in, count_surplus, count_shortage, write_off"
     decimal quantity "ishorali: kirim +, chiqim -"
     decimal unit_cost_base
+    decimal total_cost_base "ishorali"
     decimal balance_after "nuqta bo'yicha shu tovar qoldig'i"
     string document_type
-    int document_id
+    bigint document_id
+    string document_number
     int created_by_id FK
     datetime created_at
   }
@@ -287,9 +291,13 @@ erDiagram
   WriteOffReason ||--o{ WriteOff : ""
 ```
 
-- `StockLevel`: `UNIQUE (branch, product)`, `CHECK (quantity >= 0)` (sozlama `allow_negative_stock=false` bo'lsa; `true` bo'lsa constraint migratsiya bilan olib tashlanmaydi — bu sozlama faqat servicedagi tekshiruvni yumshatadi, demak hozircha MVP da manfiy qoldiq **yo'q**).
+- `StockLevel`: `UNIQUE (branch, product)`, `CHECK (quantity >= 0)`. Manfiy qoldiq **yo'q** (rejadagi `allow_negative_stock` sozlamasi olib tashlandi: FIFO partiyasiz chiqimni tannarxsiz qoldirardi).
 - `StockLevel.quantity` doim `SUM(Batch.quantity_remaining)` ga teng — bu invariantni test tekshiradi.
-- `StockMovement` — faqat `INSERT`; har qoldiq o'zgarishi bitta qator. Hisobotlar va "tovar kartasi" shu jadvaldan.
+- `StockMovement` — faqat `INSERT`; har qoldiq o'zgarishi bitta qator (chiqim bir nechta partiyadan bo'lsa — har partiyaga bitta qator). Hisobotlar va "tovar kartasi" shu jadvaldan.
+- Bir vaqtdagi chiqimlar: avval `StockLevel` keyin partiyalar `SELECT ... FOR UPDATE` bilan qulflanadi (doim shu tartibda — deadlock bo'lmasin).
+- `Batch.source_*` — umumiy havola (`GenericForeignKey` emas, oddiy maydonlar): inventory boshqa app modellarini bilmaydi. Bekor qilishda `reverse_receipt(doc_type, doc_id)` shu maydonlar bo'yicha partiyalarni topadi.
+- Ko'chirish, inventarizatsiya, hisobdan chiqarish jadvallari (`Transfer`, `StockCount`, `WriteOff` va qatorlari) 7-bosqichda; yuqoridagi diagrammada reja sifatida.
+- 4-bosqichda amalga oshirildi: `StockLevel`, `Batch`, `StockMovement`.
 - Ko'chirish qabul qilinganda qabul qiluvchi nuqtada yangi `Batch` lar yaratiladi (`source_batch_id` bilan), tannarx saqlanib qoladi. Jo'natilgan va qabul qilingan miqdor farqi — "yo'lda yo'qolgan" sifatida `write_off` (sabab `transfer_shortage`) yoziladi va rahbarga xabar ketadi.
 
 ## 5. purchasing
@@ -301,42 +309,51 @@ erDiagram
     string name
     string phone
     string contact_person
+    string tin "STIR"
+    string address
     string note
     bool is_active
   }
   Purchase {
     int id PK
-    string number UK
+    string number UK "K-<nuqta>-<yil>-<raqam>"
     int branch_id FK
     int supplier_id FK
     string status "draft, received, cancelled"
     string invoice_number
     date invoice_date
     int currency_id FK
-    decimal rate
-    decimal subtotal
+    decimal rate_to_base "1 kirim valyutasi = N asosiy; qabulda qotiriladi"
+    decimal subtotal "kirim valyutasida"
+    decimal subtotal_base
     decimal expenses_total_base
     decimal total_base
     int created_by_id FK
     int received_by_id FK
     datetime received_at
+    int cancelled_by_id FK
+    datetime cancelled_at
+    string cancel_reason
     string note
   }
   PurchaseItem {
     int id PK
     int purchase_id FK
     int product_id FK
-    decimal quantity
+    int position
+    decimal quantity "birlik aniqligi tekshiriladi (dona 0, kg 3 xona)"
     decimal unit_price "kirim valyutasida"
     decimal line_total
+    decimal line_total_base
     decimal allocated_expense_base
-    decimal landed_unit_cost_base "tannarx = (narx + xarajat ulushi) / miqdor"
+    decimal landed_unit_cost_base "(line_total_base + ulush) / miqdor, 6 xona"
   }
   ExpenseType {
     int id PK
     string code UK "transport, customs, loading"
     string name
     string default_allocation "by_value | by_quantity"
+    bool is_active
   }
   PurchaseExpense {
     int id PK
@@ -344,9 +361,9 @@ erDiagram
     int expense_type_id FK
     int currency_id FK
     decimal amount
-    decimal rate
-    decimal amount_base
     string allocation_method
+    decimal rate_to_base
+    decimal amount_base
     string note
   }
   Supplier ||--o{ Purchase : ""
@@ -355,8 +372,10 @@ erDiagram
   ExpenseType ||--o{ PurchaseExpense : ""
 ```
 
-- `draft` → `received` o'tishida: xarajatlar taqsimlanadi, `landed_unit_cost_base` hisoblanadi, `inventory.services.receive_stock()` har qator uchun `Batch` yaratadi, `purchase.received` hodisasi.
-- `received` dan `cancelled` ga faqat partiyadan hali hech narsa sotilmagan bo'lsa (`quantity_remaining == quantity_initial`).
+- `draft` → `received` o'tishida: shu kungi kurs qotiriladi, xarajatlar taqsimlanadi (`distribute` — 0,0001 gacha pastga yaxlitlab, qoldiq eng katta ulushga: yig'indi doim aniq), `landed_unit_cost_base` hisoblanadi, `inventory.services.receive_stock()` har qator uchun `Batch` yaratadi, `purchase.received` hodisasi. Takroriy so'rov `Idempotency-Key` bilan bir marta bajariladi.
+- `draft` → `cancelled` doim; `received` → `cancelled` faqat partiyalardan hali hech narsa chiqmagan bo'lsa (`quantity_remaining == quantity_initial`), aks holda 409 `batch_consumed`. Bekor qilishda `purchase_cancel` harakatlari yoziladi.
+- Kurs yo'q bo'lsa (kirim yoki xarajat valyutasi uchun) oldindan hisob ham, qabul ham 409 `rate_unavailable`.
+- Seed: xarajat turlari Transport (qiymat bo'yicha), Bojxona (qiymat bo'yicha), Yuklash-tushirish (miqdor bo'yicha).
 - Yetkazib beruvchiga qarz/to'lov hisobi MVP da yo'q, keyin `SupplierPayment` qo'shilishi uchun joy qoldirilgan (`payments` da `direction` va `counterparty_type` maydonlari).
 
 ## 6. sales
