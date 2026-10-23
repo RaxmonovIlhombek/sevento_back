@@ -196,6 +196,7 @@ SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
         "AllocationMethodEnum": "apps.purchasing.models.AllocationMethod",
         "MovementTypeEnum": "apps.inventory.types.MovementType",
+        "PurchaseStatusEnum": "apps.purchasing.models.Purchase.Status",
     },
     "POSTPROCESSING_HOOKS": [
         "drf_spectacular.hooks.postprocess_schema_enums",

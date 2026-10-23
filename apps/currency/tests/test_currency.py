@@ -60,7 +60,7 @@ def test_create_currency_api(owner_client, django_capture_on_commit_callbacks):
 def test_currency_list_for_everyone_write_for_owner(seller_client, usd):
     response = seller_client.get("/api/v1/currencies/")
     assert response.status_code == 200
-    assert [c["code"] for c in response.json()] == ["USD", "UZS"]
+    assert [(c["code"], c["is_base"]) for c in response.json()] == [("USD", True), ("UZS", False)]
     assert seller_client.patch(f"/api/v1/currencies/{usd.id}/", {"name": "x"}).status_code == 403
 
 

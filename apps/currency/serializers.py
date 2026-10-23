@@ -1,9 +1,12 @@
 from rest_framework import serializers
 
+from . import selectors
 from .models import Currency, ExchangeRate
 
 
 class CurrencySerializer(serializers.ModelSerializer):
+    is_base = serializers.SerializerMethodField()
+
     class Meta:
         model = Currency
         fields = [
@@ -14,11 +17,16 @@ class CurrencySerializer(serializers.ModelSerializer):
             "decimal_places",
             "is_active",
             "sort_order",
+            "is_base",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
         extra_kwargs = {"code": {"validators": []}}
+
+    def get_is_base(self, currency) -> bool:
+        """Tannarx, foyda va kredit limiti shu valyutada (sozlama currency.base_code)."""
+        return currency.code == selectors.base_currency_code()
 
     def validate_code(self, value):
         value = value.strip().upper()

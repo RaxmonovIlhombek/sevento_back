@@ -3159,6 +3159,10 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+        is_base:
+          type: boolean
+          description: Tannarx, foyda va kredit limiti shu valyutada (sozlama currency.base_code).
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -3171,6 +3175,7 @@ components:
       - code
       - created_at
       - id
+      - is_base
       - name
       - updated_at
     CurrencyRequest:
@@ -4308,7 +4313,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/PurchaseStatusEnum'
           readOnly: true
         status_display:
           type: string
@@ -4615,7 +4620,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/PurchaseStatusEnum'
           readOnly: true
         status_display:
           type: string
@@ -4680,6 +4685,16 @@ components:
       - supplier
       - supplier_name
       - total_base
+    PurchaseStatusEnum:
+      enum:
+      - draft
+      - received
+      - cancelled
+      type: string
+      description: |-
+        * `draft` - Qoralama
+        * `received` - Qabul qilindi
+        * `cancelled` - Bekor qilindi
     PurchaseWriteRequest:
       type: object
       properties:
@@ -4842,16 +4857,6 @@ components:
       description: |-
         * `cbu` - Markaziy bank
         * `manual` - Qo'lda
-    StatusEnum:
-      enum:
-      - draft
-      - received
-      - cancelled
-      type: string
-      description: |-
-        * `draft` - Qoralama
-        * `received` - Qabul qilindi
-        * `cancelled` - Bekor qilindi
     StockLevel:
       type: object
       description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
