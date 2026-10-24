@@ -300,3 +300,33 @@ def test_cbu_url_setting(settings):
 
     CbuRateProvider(transport=_transport(handler)).fetch_rates(["USD"])
     assert seen["url"] == "https://example.test/rates.json"
+
+
+def test_update_currency_records_changes_once(
+    owner_client, usd, django_capture_on_commit_callbacks
+):
+    with django_capture_on_commit_callbacks(execute=True):
+        response = owner_client.patch(
+            f"/api/v1/currencies/{usd.id}/", {"name": "AQSh dollari", "symbol": "$"}
+        )
+    assert response.status_code == 200, response.json()
+    event = OutboxEvent.objects.get(name="currency.updated")
+    assert event.payload["code"] == "USD"
+    assert event.payload["changes"]["name"]["new"] == "AQSh dollari"
+    assert "decimal_places" not in event.payload["changes"]
+
+    # o'zgarishsiz saqlash hodisa chiqarmaydi
+    with django_capture_on_commit_callbacks(execute=True):
+        owner_client.patch(f"/api/v1/currencies/{usd.id}/", {"name": "AQSh dollari"})
+    assert OutboxEvent.objects.filter(name="currency.updated").count() == 1
+
+
+def test_fetch_rates_without_foreign_currencies_does_nothing(monkeypatch, usd):
+    Currency.objects.exclude(code="UZS").update(is_active=False)
+
+    class NoCall:
+        def fetch_rates(self, codes):
+            pytest.fail("valyuta yo'q — provayderga murojaat qilinmasin")
+
+    monkeypatch.setattr(services, "get_provider", lambda key, **kw: NoCall())
+    assert services.fetch_rates() == []

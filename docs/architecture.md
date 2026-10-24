@@ -216,6 +216,7 @@ Strelka = "shu modulning service/selector funksiyasini chaqiradi". Teskari yo'na
 | `sales` | Sale, SaleItem, SaleReturn, SaleReturnItem | `selectors.*` (hisobotlar uchun); qaytarish `services.create_return()` — `inventory.restore_stock()` + `payments.reduce_document_debt()` / `refund_to_customer()` |
 | `reports` | ReportJob | — (boshqa app lar `reports` ga bog'lanmaydi — import-linter kontrakti). O'zi `sales`/`payments`/`inventory`/`purchasing`/`catalog`/`currency` selectorlarini o'qiydi; `dashboard.build_dashboard()` ham shu orqali |
 | `audit` | AuditLog | — |
+| `demo` | — (modelsiz) | `manage.py seed_demo` — demo ma'lumotlar faqat boshqa app servislari/selectorlari orqali (import-linter kontrakti) |
 | `realtime` | — (ticket Redis da) | `services.issue_ticket()` |
 | `core` | OutboxEvent, SystemSetting, DocumentSequence, IdempotencyRecord | `events.publish()`, `numbering.next_number()`, `settings_service.get()` |
 

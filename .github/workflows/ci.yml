@@ -50,8 +50,8 @@ jobs:
       - name: Modul chegaralari (import-linter)
         run: lint-imports
       - name: Testlar
-        run: pytest -q
+        run: pytest -q --cov --cov-report=term
       - name: OpenAPI sxema yangiligi
         run: |
-          python manage.py spectacular --file /tmp/openapi.yaml --validate
+          python manage.py spectacular --file /tmp/openapi.yaml --validate --fail-on-warn
           diff -u docs/api/openapi.yaml /tmp/openapi.yaml

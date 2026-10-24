@@ -17,6 +17,10 @@ done
 if [ "${RUN_MIGRATIONS:-1}" = "1" ]; then
   python manage.py migrate --noinput
   python manage.py bootstrap
+  # Demo ma'lumotlar (faqat sinov/ko'rgazma uchun; idempotent). Parol: DEMO_PASSWORD yoki tasodifiy
+  if [ "${SEED_DEMO:-0}" = "1" ]; then
+    python manage.py seed_demo
+  fi
 fi
 
 exec "$@"

@@ -468,3 +468,38 @@ source_modules = [
     "apps.sales",
 ]
 forbidden_modules = ["apps.reports"]
+
+[[tool.importlinter.contracts]]
+name = "demo faqat servis va selectorlar orqali yozadi"
+type = "forbidden"
+allow_indirect_imports = true
+ignore_imports = ["apps.demo.tests.** -> apps.**"]
+source_modules = ["apps.demo"]
+forbidden_modules = [
+    "apps.accounts.models",
+    "apps.branches.models",
+    "apps.catalog.models",
+    "apps.currency.models",
+    "apps.inventory.models",
+    "apps.payments.models",
+    "apps.purchasing.models",
+    "apps.sales.models",
+    "apps.reports.models",
+]
+
+[tool.coverage.run]
+source = ["apps", "core", "config"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "config/settings/dev.py",
+    "config/settings/prod.py",
+    "config/wsgi.py",
+]
+
+[tool.coverage.report]
+# CI shu chegaradan pastga tushsa qizil (hozir ~97%)
+fail_under = 95
+show_missing = true
+skip_covered = true
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]
