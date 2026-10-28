@@ -40,9 +40,12 @@ class CustomerFilter(django_filters.FilterSet):
 
     def filter_search(self, queryset, name, value):
         value = value.strip()
-        return queryset.filter(
-            Q(name__icontains=value) | Q(phone__icontains=value) | Q(tin__icontains=value)
-        )
+        # Agar telefon raqam qidirilayotgan bo'lsa (bo'shliq, qavs, chiziqchalarni tozalab solishtirish uchun)
+        digits = "".join(filter(str.isdigit, value))
+        q = Q(name__icontains=value) | Q(phone__icontains=value) | Q(tin__icontains=value)
+        if digits and len(digits) >= 3:
+            q |= Q(phone__icontains=digits)
+        return queryset.filter(q)
 
     def filter_has_debt(self, queryset, name, value):
         open_debt = Exists(Debt.objects.filter(customer=OuterRef("pk"), status=Debt.Status.OPEN))
