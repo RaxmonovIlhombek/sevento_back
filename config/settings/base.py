@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # uchinchi tomon
+    "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "corsheaders.middleware.CorsMiddleware",  # CORS — SecurityMiddleware dan keyin, boshqa middlewaredan oldin
     "core.middleware.RequestContextMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -216,6 +218,21 @@ SPECTACULAR_SETTINGS = {
 
 # --- Valyuta kursi manbai ---
 CURRENCY_CBU_URL = env("CURRENCY_CBU_URL", default="https://cbu.uz/uz/arkhiv-kursov-valyut/json/")
+
+# --- CORS (django-cors-headers) ---
+# Netlify va boshqa tashqi frontendlar uchun. Muhit o'zgaruvchisidan o'qiladi.
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=CSRF_TRUSTED_ORIGINS,
+)
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "idempotency-key",
+    "x-requested-with",
+]
 
 # --- WebSocket (apps.realtime) ---
 REALTIME = {
