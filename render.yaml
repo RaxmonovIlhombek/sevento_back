@@ -11,14 +11,15 @@ services:
     plan: free
     ipAllowList: []
 
-  # Backend — asosiy web server (uvicorn/ASGI)
+  # Backend — uvicorn + celery worker + celery beat (supervisord bilan bitta konteynerda)
+  # Render bepul rejasida Background Worker yo'q, shuning uchun hammasi shu yerda
   - type: web
     name: sevento-backend
     runtime: docker
     plan: free
     repo: https://github.com/RaxmonovIlhombek/sevento_back
     branch: main
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.render
     healthCheckPath: /api/v1/health/
     envVars:
       - key: DJANGO_SETTINGS_MODULE
@@ -62,61 +63,3 @@ services:
         value: Rahbar
       - key: RUN_MIGRATIONS
         value: "1"
-
-  # Celery Worker — fon vazifalari (hisobotlar, email va boshqalar)
-  - type: worker
-    name: sevento-celery-worker
-    runtime: docker
-    plan: free
-    repo: https://github.com/RaxmonovIlhombek/sevento_back
-    branch: main
-    dockerfilePath: ./Dockerfile
-    dockerCommand: celery -A config worker -l info
-    envVars:
-      - key: DJANGO_SETTINGS_MODULE
-        value: config.settings.prod
-      - key: DJANGO_SECRET_KEY
-        fromService:
-          name: sevento-backend
-          type: web
-          envVarKey: DJANGO_SECRET_KEY
-      - key: DATABASE_URL
-        fromDatabase:
-          name: sevento-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: sevento-redis
-          type: keyvalue
-          property: connectionString
-      - key: RUN_MIGRATIONS
-        value: "0"
-
-  # Celery Beat — jadval (davriy vazifalar, valyuta kursi yangilash va boshqalar)
-  - type: worker
-    name: sevento-celery-beat
-    runtime: docker
-    plan: free
-    repo: https://github.com/RaxmonovIlhombek/sevento_back
-    branch: main
-    dockerfilePath: ./Dockerfile
-    dockerCommand: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    envVars:
-      - key: DJANGO_SETTINGS_MODULE
-        value: config.settings.prod
-      - key: DJANGO_SECRET_KEY
-        fromService:
-          name: sevento-backend
-          type: web
-          envVarKey: DJANGO_SECRET_KEY
-      - key: DATABASE_URL
-        fromDatabase:
-          name: sevento-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: sevento-redis
-          type: keyvalue
-          property: connectionString
-      - key: RUN_MIGRATIONS
-        value: "0"
