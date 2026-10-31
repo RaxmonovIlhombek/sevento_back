@@ -1,5 +1,9 @@
 """Foydalanuvchi, rol va autentifikatsiya biznes mantig'i (yozish)."""
 
+import time
+
+from django.core.cache import cache
+
 from django.contrib.auth import authenticate
 from django.db import transaction
 from django.utils import timezone
@@ -15,8 +19,37 @@ from .models import Role, User, UserBranch
 
 # --- autentifikatsiya ---
 
+LOGIN_FAIL_THRESHOLD = 5
+LOGIN_LOCKOUT_SECONDS = 5 * 60
+
+
+def _login_fail_key(username: str) -> str:
+    return f"login_fail:{username.strip().lower()}"
 
 def authenticate_user(*, username: str, password: str) -> User:
+    key = _login_fail_key(username)
+    now = time.time()
+    raw = cache.get(key)
+    if isinstance(raw, dict):
+        data = raw
+    elif isinstance(raw, int):
+        data = {"attempts": raw, "locked_until": None}
+    else:
+        data = {"attempts": 0, "locked_until": None}
+    locked_until = data.get("locked_until")
+    if locked_until and now < locked_until:
+        raise AuthenticationFailed(
+            {"detail": "Hisob vaqtincha qulflangan", "code": "account_locked", "retry_after": int(locked_until - now)},
+            code="account_locked",
+        )
+
+    attempts = data.get("attempts", 0)
+    if attempts >= LOGIN_FAIL_THRESHOLD and locked_until:
+        # qulf muddati tugagan bo'lsa, hisoblagichni tozalash
+        cache.delete(key)
+        attempts = 0
+        locked_until = None
+
     user = authenticate(username=username, password=password)
     if user is None:
         with transaction.atomic():
@@ -26,7 +59,22 @@ def authenticate_user(*, username: str, password: str) -> User:
                 else "bad_credentials"
             )
             events.LoginFailed.publish_from(username=username[:150], reason=reason)
+        attempts += 1
+        new_locked_until = None
+        if attempts >= LOGIN_FAIL_THRESHOLD:
+            new_locked_until = now + LOGIN_LOCKOUT_SECONDS
+        cache.set(
+            key,
+            {"attempts": attempts, "locked_until": new_locked_until},
+            timeout=LOGIN_LOCKOUT_SECONDS,
+        )
+        if new_locked_until:
+            raise AuthenticationFailed(
+                {"detail": "Hisob vaqtincha qulflangan", "code": "account_locked", "retry_after": LOGIN_LOCKOUT_SECONDS},
+                code="account_locked",
+            )
         raise AuthenticationFailed(code="authentication_failed")
+    cache.delete(key)
     with transaction.atomic():
         User.objects.filter(pk=user.pk).update(last_login=timezone.now())
         events.UserLoggedIn.publish_from(actor=user, user_id=user.pk, username=user.username)

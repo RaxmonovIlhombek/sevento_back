@@ -4,6 +4,758 @@ info:
   version: 1.0.0
   description: Savdo, ombor, nasiya va kassa hisobi tizimi. Endpointlar /api/v1/ ostida.
 paths:
+  /api/v1/accounting/accounts/:
+    get:
+      operationId: accounting_accounts_list
+      parameters:
+      - in: query
+        name: account_type
+        schema:
+          type: string
+          enum:
+          - asset
+          - equity
+          - expense
+          - income
+          - liability
+        description: |-
+          * `asset` - Aktiv
+          * `liability` - Passiv
+          * `equity` - Kapital
+          * `income` - Daromad
+          * `expense` - Xarajat
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: is_postable
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: parent
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAccountList'
+          description: ''
+    post:
+      operationId: accounting_accounts_create
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AccountRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+  /api/v1/accounting/accounts/{id}/:
+    get:
+      operationId: accounting_accounts_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this account.
+        required: true
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+    put:
+      operationId: accounting_accounts_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this account.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AccountRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+    patch:
+      operationId: accounting_accounts_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this account.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAccountRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAccountRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+    delete:
+      operationId: accounting_accounts_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this account.
+        required: true
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/accounting/fiscal-periods/:
+    get:
+      operationId: accounting_fiscal_periods_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFiscalPeriodList'
+          description: ''
+    post:
+      operationId: accounting_fiscal_periods_create
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiscalPeriodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FiscalPeriodRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalPeriod'
+          description: ''
+  /api/v1/accounting/fiscal-periods/{id}/:
+    get:
+      operationId: accounting_fiscal_periods_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fiscal period.
+        required: true
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalPeriod'
+          description: ''
+    put:
+      operationId: accounting_fiscal_periods_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fiscal period.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiscalPeriodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FiscalPeriodRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalPeriod'
+          description: ''
+    patch:
+      operationId: accounting_fiscal_periods_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fiscal period.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFiscalPeriodRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedFiscalPeriodRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalPeriod'
+          description: ''
+    delete:
+      operationId: accounting_fiscal_periods_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fiscal period.
+        required: true
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/accounting/fiscal-years/:
+    get:
+      operationId: accounting_fiscal_years_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFiscalYearList'
+          description: ''
+    post:
+      operationId: accounting_fiscal_years_create
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiscalYearRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FiscalYearRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalYear'
+          description: ''
+  /api/v1/accounting/fiscal-years/{id}/:
+    get:
+      operationId: accounting_fiscal_years_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fiscal year.
+        required: true
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalYear'
+          description: ''
+    put:
+      operationId: accounting_fiscal_years_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fiscal year.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiscalYearRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FiscalYearRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalYear'
+          description: ''
+    patch:
+      operationId: accounting_fiscal_years_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fiscal year.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFiscalYearRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedFiscalYearRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalYear'
+          description: ''
+    delete:
+      operationId: accounting_fiscal_years_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fiscal year.
+        required: true
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/accounting/journal-entries/:
+    get:
+      operationId: accounting_journal_entries_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: fiscal_period
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - draft
+          - posted
+          - reversed
+        description: |-
+          * `draft` - Qoralama
+          * `posted` - O'tkazildi
+          * `reversed` - Bekor qilindi
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedJournalEntryList'
+          description: ''
+    post:
+      operationId: accounting_journal_entries_create
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalEntryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/JournalEntryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+          description: ''
+  /api/v1/accounting/journal-entries/{id}/:
+    get:
+      operationId: accounting_journal_entries_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this journal entry.
+        required: true
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+          description: ''
+    put:
+      operationId: accounting_journal_entries_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this journal entry.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalEntryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/JournalEntryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+          description: ''
+    patch:
+      operationId: accounting_journal_entries_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this journal entry.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedJournalEntryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedJournalEntryRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+          description: ''
+    delete:
+      operationId: accounting_journal_entries_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this journal entry.
+        required: true
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/accounting/journal-entries/{id}/post/:
+    post:
+      operationId: accounting_journal_entries_post_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this journal entry.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalEntryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/JournalEntryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+          description: ''
+  /api/v1/accounting/journal-entries/{id}/reverse/:
+    post:
+      operationId: accounting_journal_entries_reverse_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this journal entry.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalEntryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/JournalEntryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+          description: ''
+  /api/v1/accounting/journal-entries/trial_balance/:
+    get:
+      operationId: accounting_journal_entries_trial_balance_retrieve
+      tags:
+      - accounting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+          description: ''
   /api/v1/audit/:
     get:
       operationId: audit_list
@@ -1109,6 +1861,553 @@ paths:
               schema:
                 $ref: '#/components/schemas/Unit'
           description: ''
+  /api/v1/crm/activities/:
+    get:
+      operationId: crm_activities_list
+      parameters:
+      - in: query
+        name: activity_type
+        schema:
+          type: string
+          enum:
+          - call
+          - email
+          - meeting
+          - note
+          - task
+        description: |-
+          * `call` - Qo'ng'iroq
+          * `email` - Email
+          * `meeting` - Uchrashuv
+          * `note` - Eslatma
+          * `task` - Vazifa
+      - in: query
+        name: completed
+        schema:
+          type: boolean
+      - in: query
+        name: deal
+        schema:
+          type: integer
+      - in: query
+        name: lead
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - crm
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedActivityList'
+          description: ''
+    post:
+      operationId: crm_activities_create
+      tags:
+      - crm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ActivityRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+          description: ''
+  /api/v1/crm/activities/{id}/:
+    get:
+      operationId: crm_activities_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this activity.
+        required: true
+      tags:
+      - crm
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+          description: ''
+    put:
+      operationId: crm_activities_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this activity.
+        required: true
+      tags:
+      - crm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ActivityRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+          description: ''
+    patch:
+      operationId: crm_activities_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this activity.
+        required: true
+      tags:
+      - crm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedActivityRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedActivityRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+          description: ''
+    delete:
+      operationId: crm_activities_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this activity.
+        required: true
+      tags:
+      - crm
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/crm/deals/:
+    get:
+      operationId: crm_deals_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: lead
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: owner
+        schema:
+          type: number
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: stage
+        schema:
+          type: string
+          enum:
+          - lost
+          - negotiation
+          - proposal
+          - prospecting
+          - qualification
+          - won
+        description: |-
+          * `prospecting` - Izlash
+          * `qualification` - Malakalash
+          * `proposal` - Taklif
+          * `negotiation` - Muzokara
+          * `won` - Yutildi
+          * `lost` - Yo'qotildi
+      tags:
+      - crm
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDealList'
+          description: ''
+    post:
+      operationId: crm_deals_create
+      tags:
+      - crm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DealRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DealRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deal'
+          description: ''
+  /api/v1/crm/deals/{id}/:
+    get:
+      operationId: crm_deals_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this deal.
+        required: true
+      tags:
+      - crm
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deal'
+          description: ''
+    put:
+      operationId: crm_deals_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this deal.
+        required: true
+      tags:
+      - crm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DealRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DealRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deal'
+          description: ''
+    patch:
+      operationId: crm_deals_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this deal.
+        required: true
+      tags:
+      - crm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDealRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDealRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deal'
+          description: ''
+    delete:
+      operationId: crm_deals_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this deal.
+        required: true
+      tags:
+      - crm
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/crm/leads/:
+    get:
+      operationId: crm_leads_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: owner
+        schema:
+          type: number
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - contacted
+          - converted
+          - lost
+          - new
+          - qualified
+        description: |-
+          * `new` - Yangi
+          * `contacted` - Aloqa qilindi
+          * `qualified` - Malakali
+          * `lost` - Yo'qotildi
+          * `converted` - Mijozga aylantirildi
+      tags:
+      - crm
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLeadList'
+          description: ''
+    post:
+      operationId: crm_leads_create
+      tags:
+      - crm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lead'
+          description: ''
+  /api/v1/crm/leads/{id}/:
+    get:
+      operationId: crm_leads_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this lead.
+        required: true
+      tags:
+      - crm
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lead'
+          description: ''
+    put:
+      operationId: crm_leads_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this lead.
+        required: true
+      tags:
+      - crm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lead'
+          description: ''
+    patch:
+      operationId: crm_leads_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this lead.
+        required: true
+      tags:
+      - crm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeadRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lead'
+          description: ''
+    delete:
+      operationId: crm_leads_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this lead.
+        required: true
+      tags:
+      - crm
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/currencies/:
     get:
       operationId: currencies_list
@@ -1425,6 +2724,515 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
           description: ''
+  /api/v1/hr/departments/:
+    get:
+      operationId: hr_departments_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: parent
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - hr
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDepartmentList'
+          description: ''
+    post:
+      operationId: hr_departments_create
+      tags:
+      - hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DepartmentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+  /api/v1/hr/departments/{id}/:
+    get:
+      operationId: hr_departments_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this department.
+        required: true
+      tags:
+      - hr
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    put:
+      operationId: hr_departments_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this department.
+        required: true
+      tags:
+      - hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DepartmentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    patch:
+      operationId: hr_departments_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this department.
+        required: true
+      tags:
+      - hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartmentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartmentRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    delete:
+      operationId: hr_departments_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this department.
+        required: true
+      tags:
+      - hr
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/hr/employees/:
+    get:
+      operationId: hr_employees_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: department
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: position
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - active
+          - on_leave
+          - terminated
+        description: |-
+          * `active` - Faol
+          * `on_leave` - Ta'tilda
+          * `terminated` - Ishdan bo'shatilgan
+      tags:
+      - hr
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEmployeeList'
+          description: ''
+    post:
+      operationId: hr_employees_create
+      tags:
+      - hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmployeeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+  /api/v1/hr/employees/{id}/:
+    get:
+      operationId: hr_employees_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this employee.
+        required: true
+      tags:
+      - hr
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+    put:
+      operationId: hr_employees_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this employee.
+        required: true
+      tags:
+      - hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmployeeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+    patch:
+      operationId: hr_employees_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this employee.
+        required: true
+      tags:
+      - hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployeeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployeeRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+    delete:
+      operationId: hr_employees_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this employee.
+        required: true
+      tags:
+      - hr
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/hr/positions/:
+    get:
+      operationId: hr_positions_list
+      parameters:
+      - in: query
+        name: department
+        schema:
+          type: integer
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - hr
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPositionList'
+          description: ''
+    post:
+      operationId: hr_positions_create
+      tags:
+      - hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PositionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+          description: ''
+  /api/v1/hr/positions/{id}/:
+    get:
+      operationId: hr_positions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this position.
+        required: true
+      tags:
+      - hr
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+          description: ''
+    put:
+      operationId: hr_positions_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this position.
+        required: true
+      tags:
+      - hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PositionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+          description: ''
+    patch:
+      operationId: hr_positions_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this position.
+        required: true
+      tags:
+      - hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPositionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPositionRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+          description: ''
+    delete:
+      operationId: hr_positions_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this position.
+        required: true
+      tags:
+      - hr
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/inventory/batches/:
     get:
       operationId: inventory_batches_list
@@ -2722,6 +4530,521 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Xato
+  /api/v1/manufacturing/boms/:
+    get:
+      operationId: manufacturing_boms_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: product
+        schema:
+          type: number
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - active
+          - archived
+          - draft
+        description: |-
+          * `draft` - Qoralama
+          * `active` - Faol
+          * `archived` - Arxivlangan
+      tags:
+      - manufacturing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBillOfMaterialsList'
+          description: ''
+    post:
+      operationId: manufacturing_boms_create
+      tags:
+      - manufacturing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillOfMaterialsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BillOfMaterialsRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillOfMaterials'
+          description: ''
+  /api/v1/manufacturing/boms/{id}/:
+    get:
+      operationId: manufacturing_boms_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this bill of materials.
+        required: true
+      tags:
+      - manufacturing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillOfMaterials'
+          description: ''
+    put:
+      operationId: manufacturing_boms_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this bill of materials.
+        required: true
+      tags:
+      - manufacturing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillOfMaterialsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BillOfMaterialsRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillOfMaterials'
+          description: ''
+    patch:
+      operationId: manufacturing_boms_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this bill of materials.
+        required: true
+      tags:
+      - manufacturing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBillOfMaterialsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBillOfMaterialsRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillOfMaterials'
+          description: ''
+    delete:
+      operationId: manufacturing_boms_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this bill of materials.
+        required: true
+      tags:
+      - manufacturing
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/manufacturing/orders/:
+    get:
+      operationId: manufacturing_orders_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: product
+        schema:
+          type: number
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - cancelled
+          - completed
+          - draft
+          - in_progress
+          - released
+        description: |-
+          * `draft` - Qoralama
+          * `released` - Ishga tushirildi
+          * `in_progress` - Jarayonda
+          * `completed` - Yakunlandi
+          * `cancelled` - Bekor qilindi
+      tags:
+      - manufacturing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductionOrderList'
+          description: ''
+    post:
+      operationId: manufacturing_orders_create
+      tags:
+      - manufacturing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductionOrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductionOrderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrder'
+          description: ''
+  /api/v1/manufacturing/orders/{id}/:
+    get:
+      operationId: manufacturing_orders_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this production order.
+        required: true
+      tags:
+      - manufacturing
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrder'
+          description: ''
+    put:
+      operationId: manufacturing_orders_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this production order.
+        required: true
+      tags:
+      - manufacturing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductionOrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductionOrderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrder'
+          description: ''
+    patch:
+      operationId: manufacturing_orders_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this production order.
+        required: true
+      tags:
+      - manufacturing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductionOrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductionOrderRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrder'
+          description: ''
+    delete:
+      operationId: manufacturing_orders_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this production order.
+        required: true
+      tags:
+      - manufacturing
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/manufacturing/orders/{id}/complete/:
+    post:
+      operationId: manufacturing_orders_complete_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this production order.
+        required: true
+      tags:
+      - manufacturing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductionOrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductionOrderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrder'
+          description: ''
+  /api/v1/manufacturing/orders/{id}/release/:
+    post:
+      operationId: manufacturing_orders_release_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this production order.
+        required: true
+      tags:
+      - manufacturing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductionOrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductionOrderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrder'
+          description: ''
+  /api/v1/notifications/:
+    get:
+      operationId: notifications_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /api/v1/notifications/{id}/:
+    get:
+      operationId: notifications_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/v1/notifications/{id}/read/:
+    post:
+      operationId: notifications_read_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/v1/notifications/read_all/:
+    post:
+      operationId: notifications_read_all_create
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
   /api/v1/payments/cash-categories/:
     get:
       operationId: payments_cash_categories_list
@@ -3773,6 +6096,233 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Xato
+  /api/v1/payroll/runs/:
+    get:
+      operationId: payroll_runs_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - calculated
+          - cancelled
+          - draft
+          - paid
+        description: |-
+          * `draft` - Qoralama
+          * `calculated` - Hisoblandi
+          * `paid` - To'landi
+          * `cancelled` - Bekor qilindi
+      tags:
+      - payroll
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPayrollRunList'
+          description: ''
+    post:
+      operationId: payroll_runs_create
+      tags:
+      - payroll
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayrollRunRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PayrollRunRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollRun'
+          description: ''
+  /api/v1/payroll/runs/{id}/:
+    get:
+      operationId: payroll_runs_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payroll run.
+        required: true
+      tags:
+      - payroll
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollRun'
+          description: ''
+    put:
+      operationId: payroll_runs_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payroll run.
+        required: true
+      tags:
+      - payroll
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayrollRunRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PayrollRunRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollRun'
+          description: ''
+    patch:
+      operationId: payroll_runs_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payroll run.
+        required: true
+      tags:
+      - payroll
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPayrollRunRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPayrollRunRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollRun'
+          description: ''
+    delete:
+      operationId: payroll_runs_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payroll run.
+        required: true
+      tags:
+      - payroll
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/payroll/runs/{id}/calculate/:
+    post:
+      operationId: payroll_runs_calculate_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payroll run.
+        required: true
+      tags:
+      - payroll
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayrollRunRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PayrollRunRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollRun'
+          description: ''
+  /api/v1/payroll/runs/{id}/pay/:
+    post:
+      operationId: payroll_runs_pay_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payroll run.
+        required: true
+      tags:
+      - payroll
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayrollRunRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PayrollRunRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollRun'
+          description: ''
   /api/v1/purchasing/expense-types/:
     get:
       operationId: purchasing_expense_types_list
@@ -5211,6 +7761,90 @@ paths:
               schema:
                 $ref: '#/components/schemas/DailySummary'
           description: ''
+  /api/v1/security/2fa/disable/:
+    post:
+      operationId: security_2fa_disable_create
+      tags:
+      - security
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorCodeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TwoFactorCodeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorStatus'
+          description: ''
+  /api/v1/security/2fa/setup/:
+    post:
+      operationId: security_2fa_setup_create
+      description: Initialize attributes shared by all view methods.
+      tags:
+      - security
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorStatusRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TwoFactorStatusRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorSetup'
+          description: ''
+  /api/v1/security/2fa/status/:
+    get:
+      operationId: security_2fa_status_retrieve
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorStatus'
+          description: ''
+  /api/v1/security/2fa/verify/:
+    post:
+      operationId: security_2fa_verify_create
+      tags:
+      - security
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorCodeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TwoFactorCodeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorStatus'
+          description: ''
   /api/v1/settings/:
     get:
       operationId: settings_list
@@ -5476,8 +8110,567 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/workflow/instances/:
+    get:
+      operationId: workflow_instances_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: entity_type
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - approved
+          - cancelled
+          - pending
+          - rejected
+        description: |-
+          * `pending` - Kutilmoqda
+          * `approved` - Tasdiqlandi
+          * `rejected` - Rad etildi
+          * `cancelled` - Bekor qilindi
+      tags:
+      - workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedApprovalInstanceList'
+          description: ''
+    post:
+      operationId: workflow_instances_create
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalInstanceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApprovalInstanceRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalInstance'
+          description: ''
+  /api/v1/workflow/instances/{id}/:
+    get:
+      operationId: workflow_instances_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approval instance.
+        required: true
+      tags:
+      - workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalInstance'
+          description: ''
+    put:
+      operationId: workflow_instances_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approval instance.
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalInstanceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApprovalInstanceRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalInstance'
+          description: ''
+    patch:
+      operationId: workflow_instances_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approval instance.
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedApprovalInstanceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedApprovalInstanceRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalInstance'
+          description: ''
+    delete:
+      operationId: workflow_instances_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approval instance.
+        required: true
+      tags:
+      - workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/workflow/instances/{id}/approve/:
+    post:
+      operationId: workflow_instances_approve_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approval instance.
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalInstanceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApprovalInstanceRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalInstance'
+          description: ''
+  /api/v1/workflow/instances/{id}/reject/:
+    post:
+      operationId: workflow_instances_reject_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approval instance.
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalInstanceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApprovalInstanceRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalInstance'
+          description: ''
+  /api/v1/workflow/rules/:
+    get:
+      operationId: workflow_rules_list
+      parameters:
+      - in: query
+        name: entity_type
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedApprovalRuleList'
+          description: ''
+    post:
+      operationId: workflow_rules_create
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRuleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApprovalRuleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRule'
+          description: ''
+  /api/v1/workflow/rules/{id}/:
+    get:
+      operationId: workflow_rules_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approval rule.
+        required: true
+      tags:
+      - workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRule'
+          description: ''
+    put:
+      operationId: workflow_rules_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approval rule.
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRuleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApprovalRuleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRule'
+          description: ''
+    patch:
+      operationId: workflow_rules_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approval rule.
+        required: true
+      tags:
+      - workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedApprovalRuleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedApprovalRuleRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRule'
+          description: ''
+    delete:
+      operationId: workflow_rules_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approval rule.
+        required: true
+      tags:
+      - workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
 components:
   schemas:
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 20
+        name:
+          type: string
+          maxLength: 200
+        account_type:
+          $ref: '#/components/schemas/AccountTypeEnum'
+        normal_balance:
+          $ref: '#/components/schemas/NormalBalanceEnum'
+        parent:
+          type: integer
+          nullable: true
+        parent_code:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+        is_postable:
+          type: boolean
+          description: Faqat barg (leaf) hisoblar ga yozuv mumkin
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - account_type
+      - code
+      - created_at
+      - id
+      - name
+      - parent_code
+      - updated_at
+    AccountRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        account_type:
+          $ref: '#/components/schemas/AccountTypeEnum'
+        normal_balance:
+          $ref: '#/components/schemas/NormalBalanceEnum'
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+        is_postable:
+          type: boolean
+          description: Faqat barg (leaf) hisoblar ga yozuv mumkin
+        description:
+          type: string
+      required:
+      - account_type
+      - code
+      - name
+    AccountTypeEnum:
+      enum:
+      - asset
+      - liability
+      - equity
+      - income
+      - expense
+      type: string
+      description: |-
+        * `asset` - Aktiv
+        * `liability` - Passiv
+        * `equity` - Kapital
+        * `income` - Daromad
+        * `expense` - Xarajat
+    Activity:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        activity_type:
+          $ref: '#/components/schemas/ActivityTypeEnum'
+        subject:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        completed:
+          type: boolean
+        lead:
+          type: integer
+          nullable: true
+        deal:
+          type: integer
+          nullable: true
+        owner:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - subject
+      - updated_at
+    ActivityRequest:
+      type: object
+      properties:
+        activity_type:
+          $ref: '#/components/schemas/ActivityTypeEnum'
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        completed:
+          type: boolean
+        lead:
+          type: integer
+          nullable: true
+        deal:
+          type: integer
+          nullable: true
+        owner:
+          type: integer
+          nullable: true
+      required:
+      - subject
+    ActivityTypeEnum:
+      enum:
+      - call
+      - email
+      - meeting
+      - note
+      - task
+      type: string
+      description: |-
+        * `call` - Qo'ng'iroq
+        * `email` - Email
+        * `meeting` - Uchrashuv
+        * `note` - Eslatma
+        * `task` - Vazifa
     Allocation:
       type: object
       properties:
@@ -5520,6 +8713,234 @@ components:
       description: |-
         * `by_value` - Qiymat bo'yicha
         * `by_quantity` - Miqdor bo'yicha
+    ApprovalInstance:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        entity_type:
+          type: string
+          maxLength: 50
+        entity_id:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ApprovalInstanceStatusEnum'
+          readOnly: true
+        requested_by:
+          type: integer
+        requested_by_name:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          nullable: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        decided_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        notes:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalStep'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - decided_at
+      - entity_id
+      - entity_type
+      - id
+      - requested_by
+      - requested_by_name
+      - status
+      - steps
+      - updated_at
+    ApprovalInstanceRequest:
+      type: object
+      properties:
+        entity_type:
+          type: string
+          minLength: 1
+          maxLength: 50
+        entity_id:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        requested_by:
+          type: integer
+        branch:
+          type: integer
+          nullable: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        notes:
+          type: string
+      required:
+      - entity_id
+      - entity_type
+      - requested_by
+    ApprovalInstanceStatusEnum:
+      enum:
+      - pending
+      - approved
+      - rejected
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Kutilmoqda
+        * `approved` - Tasdiqlandi
+        * `rejected` - Rad etildi
+        * `cancelled` - Bekor qilindi
+    ApprovalRule:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        entity_type:
+          type: string
+          maxLength: 50
+        min_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        max_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        approver:
+          type: integer
+        approver_name:
+          type: string
+          readOnly: true
+        sequence:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - approver
+      - approver_name
+      - created_at
+      - entity_type
+      - id
+      - updated_at
+    ApprovalRuleRequest:
+      type: object
+      properties:
+        entity_type:
+          type: string
+          minLength: 1
+          maxLength: 50
+        min_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        max_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        approver:
+          type: integer
+        sequence:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+      required:
+      - approver
+      - entity_type
+    ApprovalStep:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        approver:
+          type: integer
+        approver_name:
+          type: string
+          readOnly: true
+        sequence:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        decision:
+          $ref: '#/components/schemas/DecisionEnum'
+        decided_at:
+          type: string
+          format: date-time
+          nullable: true
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - approver
+      - approver_name
+      - created_at
+      - id
+    ApprovalStepRequest:
+      type: object
+      properties:
+        approver:
+          type: integer
+        sequence:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        decision:
+          $ref: '#/components/schemas/DecisionEnum'
+        decided_at:
+          type: string
+          format: date-time
+          nullable: true
+        comment:
+          type: string
+      required:
+      - approver
     AuditLog:
       type: object
       properties:
@@ -5579,6 +9000,54 @@ components:
       - ip
       - payload
       - request_id
+    BOMItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        component:
+          type: integer
+        component_name:
+          type: string
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        unit:
+          type: integer
+        scrap_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,4})?$
+          description: Brak foizi
+      required:
+      - component
+      - component_name
+      - id
+      - quantity
+      - unit
+    BOMItemRequest:
+      type: object
+      properties:
+        component:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        unit:
+          type: integer
+        scrap_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,4})?$
+          description: Brak foizi
+      required:
+      - component
+      - quantity
+      - unit
     Batch:
       type: object
       properties:
@@ -5642,6 +9111,92 @@ components:
       - source_type
       - unit_code
       - unit_cost_base
+    BillOfMaterials:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        product:
+          type: integer
+        product_name:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        version:
+          type: string
+          default: '1.0'
+          maxLength: 20
+        status:
+          $ref: '#/components/schemas/BillOfMaterialsStatusEnum'
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          description: Tayyor mahsulot miqdori
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BOMItem'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - product
+      - product_name
+      - updated_at
+    BillOfMaterialsRequest:
+      type: object
+      properties:
+        product:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        version:
+          type: string
+          minLength: 1
+          default: '1.0'
+          maxLength: 20
+        status:
+          $ref: '#/components/schemas/BillOfMaterialsStatusEnum'
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          description: Tayyor mahsulot miqdori
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BOMItemRequest'
+      required:
+      - name
+      - product
+    BillOfMaterialsStatusEnum:
+      enum:
+      - draft
+      - active
+      - archived
+      type: string
+      description: |-
+        * `draft` - Qoralama
+        * `active` - Faol
+        * `archived` - Arxivlangan
     Branch:
       type: object
       properties:
@@ -6693,6 +10248,91 @@ components:
       - returns
       - revenue
       - sales_count
+    Deal:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        lead:
+          type: integer
+          nullable: true
+        customer:
+          type: integer
+          nullable: true
+        owner:
+          type: integer
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        stage:
+          $ref: '#/components/schemas/StageEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        currency:
+          type: integer
+          nullable: true
+        expected_close_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    DealRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        lead:
+          type: integer
+          nullable: true
+        customer:
+          type: integer
+          nullable: true
+        owner:
+          type: integer
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        stage:
+          $ref: '#/components/schemas/StageEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        currency:
+          type: integer
+          nullable: true
+        expected_close_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+      required:
+      - name
     Debt:
       type: object
       properties:
@@ -6852,6 +10492,63 @@ components:
       - open
       - overdue
       - overdue_count
+    DecisionEnum:
+      enum:
+      - pending
+      - approved
+      - rejected
+      type: string
+      description: |-
+        * `pending` - Kutilmoqda
+        * `approved` - Tasdiqlandi
+        * `rejected` - Rad etildi
+    Department:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        parent:
+          type: integer
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    DepartmentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        parent:
+          type: integer
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - name
     DocumentRef:
       type: object
       properties:
@@ -6862,6 +10559,133 @@ components:
       required:
       - id
       - number
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+        user_username:
+          type: string
+          readOnly: true
+        user_full_name:
+          type: string
+          readOnly: true
+        employee_number:
+          type: string
+          maxLength: 40
+        department:
+          type: integer
+        department_name:
+          type: string
+          readOnly: true
+        position:
+          type: integer
+        position_name:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+        branch_name:
+          type: string
+          readOnly: true
+        hire_date:
+          type: string
+          format: date
+        termination_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/EmployeeStatusEnum'
+        base_salary:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        phone:
+          type: string
+          maxLength: 30
+        address:
+          type: string
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch
+      - branch_name
+      - created_at
+      - department
+      - department_name
+      - employee_number
+      - hire_date
+      - id
+      - position
+      - position_name
+      - updated_at
+      - user
+      - user_full_name
+      - user_username
+    EmployeeRequest:
+      type: object
+      properties:
+        user:
+          type: integer
+        employee_number:
+          type: string
+          minLength: 1
+          maxLength: 40
+        department:
+          type: integer
+        position:
+          type: integer
+        branch:
+          type: integer
+        hire_date:
+          type: string
+          format: date
+        termination_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/EmployeeStatusEnum'
+        base_salary:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        phone:
+          type: string
+          maxLength: 30
+        address:
+          type: string
+        notes:
+          type: string
+      required:
+      - branch
+      - department
+      - employee_number
+      - hire_date
+      - position
+      - user
+    EmployeeStatusEnum:
+      enum:
+      - active
+      - on_leave
+      - terminated
+      type: string
+      description: |-
+        * `active` - Faol
+        * `on_leave` - Ta'tilda
+        * `terminated` - Ishdan bo'shatilgan
     ErrorBody:
       type: object
       properties:
@@ -7050,6 +10874,120 @@ components:
       - name
       - required
       - type
+    FiscalPeriod:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        fiscal_year:
+          type: integer
+        fiscal_year_value:
+          type: integer
+          readOnly: true
+        number:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        is_closed:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - end_date
+      - fiscal_year
+      - fiscal_year_value
+      - id
+      - number
+      - start_date
+      - updated_at
+    FiscalPeriodRequest:
+      type: object
+      properties:
+        fiscal_year:
+          type: integer
+        number:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        is_closed:
+          type: boolean
+      required:
+      - end_date
+      - fiscal_year
+      - number
+      - start_date
+    FiscalYear:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        year:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        is_closed:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - end_date
+      - id
+      - start_date
+      - updated_at
+      - year
+    FiscalYearRequest:
+      type: object
+      properties:
+        year:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        is_closed:
+          type: boolean
+      required:
+      - end_date
+      - start_date
+      - year
     FormatEnum:
       enum:
       - pdf
@@ -7103,6 +11041,155 @@ components:
       - incoming_transfers
       - low_stock
       - stock_value
+    JournalEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        date:
+          type: string
+          format: date
+        fiscal_period:
+          type: integer
+        branch:
+          type: integer
+          nullable: true
+        branch_name:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          maxLength: 255
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JournalEntryStatusEnum'
+          readOnly: true
+        posted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        posted_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        reversed_by_entry:
+          type: integer
+          readOnly: true
+          nullable: true
+        created_by:
+          type: integer
+          readOnly: true
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalLine'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch_name
+      - created_at
+      - created_by
+      - date
+      - fiscal_period
+      - id
+      - lines
+      - number
+      - posted_at
+      - posted_by
+      - reversed_by_entry
+      - status
+      - updated_at
+    JournalEntryRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        fiscal_period:
+          type: integer
+        branch:
+          type: integer
+          nullable: true
+        description:
+          type: string
+          maxLength: 255
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalLineRequest'
+      required:
+      - date
+      - fiscal_period
+      - lines
+    JournalEntryStatusEnum:
+      enum:
+      - draft
+      - posted
+      - reversed
+      type: string
+      description: |-
+        * `draft` - Qoralama
+        * `posted` - O'tkazildi
+        * `reversed` - Bekor qilindi
+    JournalLine:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        account:
+          type: integer
+        account_code:
+          type: string
+          readOnly: true
+        account_name:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          maxLength: 255
+        debit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        credit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+      required:
+      - account
+      - account_code
+      - account_name
+      - id
+    JournalLineRequest:
+      type: object
+      properties:
+        account:
+          type: integer
+        description:
+          type: string
+          maxLength: 255
+        debit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        credit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+      required:
+      - account
     Kpi:
       type: object
       properties:
@@ -7158,6 +11245,97 @@ components:
       - rate
       - source
       - symbol
+    Lead:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        company:
+          type: string
+          maxLength: 200
+        phone:
+          type: string
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        source:
+          type: string
+          maxLength: 100
+        status:
+          $ref: '#/components/schemas/LeadStatusEnum'
+        owner:
+          type: integer
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    LeadRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        company:
+          type: string
+          maxLength: 200
+        phone:
+          type: string
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        source:
+          type: string
+          maxLength: 100
+        status:
+          $ref: '#/components/schemas/LeadStatusEnum'
+        owner:
+          type: integer
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+      required:
+      - name
+    LeadStatusEnum:
+      enum:
+      - new
+      - contacted
+      - qualified
+      - lost
+      - converted
+      type: string
+      description: |-
+        * `new` - Yangi
+        * `contacted` - Aloqa qilindi
+        * `qualified` - Malakali
+        * `lost` - Yo'qotildi
+        * `converted` - Mijozga aylantirildi
     LedgerEntry:
       type: object
       properties:
@@ -7372,6 +11550,14 @@ components:
         * `count_shortage` - Inventarizatsiya: kamomad
         * `write_off` - Hisobdan chiqarish
         * `write_off_cancel` - Hisobdan chiqarish bekor qilindi
+    NormalBalanceEnum:
+      enum:
+      - debit
+      - credit
+      type: string
+      description: |-
+        * `debit` - Debet
+        * `credit` - Kredit
     NoticeRequest:
       type: object
       properties:
@@ -7385,6 +11571,170 @@ components:
           maxLength: 500
       required:
       - message
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        notification_type:
+          allOf:
+          - $ref: '#/components/schemas/NotificationTypeEnum'
+          readOnly: true
+        is_read:
+          type: boolean
+        read_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        link:
+          type: string
+          readOnly: true
+        source:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - link
+      - message
+      - notification_type
+      - read_at
+      - source
+      - title
+      - updated_at
+    NotificationRequest:
+      type: object
+      properties:
+        is_read:
+          type: boolean
+    NotificationTypeEnum:
+      enum:
+      - info
+      - warning
+      - error
+      - success
+      type: string
+      description: |-
+        * `info` - Ma'lumot
+        * `warning` - Ogohlantirish
+        * `error` - Xato
+        * `success` - Muvaffaqiyat
+    PaginatedAccountList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Account'
+    PaginatedActivityList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Activity'
+    PaginatedApprovalInstanceList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalInstance'
+    PaginatedApprovalRuleList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalRule'
     PaginatedAuditLogList:
       type: object
       required:
@@ -7435,6 +11785,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Batch'
+    PaginatedBillOfMaterialsList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BillOfMaterials'
     PaginatedBranchList:
       type: object
       required:
@@ -7535,6 +11910,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Customer'
+    PaginatedDealList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Deal'
     PaginatedDebtList:
       type: object
       required:
@@ -7560,6 +11960,56 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Debt'
+    PaginatedDepartmentList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Department'
+    PaginatedEmployeeList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Employee'
     PaginatedExchangeRateList:
       type: object
       required:
@@ -7585,6 +12035,106 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExchangeRate'
+    PaginatedFiscalPeriodList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FiscalPeriod'
+    PaginatedFiscalYearList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FiscalYear'
+    PaginatedJournalEntryList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalEntry'
+    PaginatedLeadList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lead'
     PaginatedLedgerEntryList:
       type: object
       required:
@@ -7610,6 +12160,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LedgerEntry'
+    PaginatedNotificationList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
     PaginatedPaymentListList:
       type: object
       required:
@@ -7635,6 +12210,56 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentList'
+    PaginatedPayrollRunList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PayrollRun'
+    PaginatedPositionList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position'
     PaginatedProductList:
       type: object
       required:
@@ -7660,6 +12285,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Product'
+    PaginatedProductionOrderList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionOrder'
     PaginatedPurchaseListList:
       type: object
       required:
@@ -7960,6 +12610,134 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WriteOffList'
+    PatchedAccountRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        account_type:
+          $ref: '#/components/schemas/AccountTypeEnum'
+        normal_balance:
+          $ref: '#/components/schemas/NormalBalanceEnum'
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+        is_postable:
+          type: boolean
+          description: Faqat barg (leaf) hisoblar ga yozuv mumkin
+        description:
+          type: string
+    PatchedActivityRequest:
+      type: object
+      properties:
+        activity_type:
+          $ref: '#/components/schemas/ActivityTypeEnum'
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        completed:
+          type: boolean
+        lead:
+          type: integer
+          nullable: true
+        deal:
+          type: integer
+          nullable: true
+        owner:
+          type: integer
+          nullable: true
+    PatchedApprovalInstanceRequest:
+      type: object
+      properties:
+        entity_type:
+          type: string
+          minLength: 1
+          maxLength: 50
+        entity_id:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        requested_by:
+          type: integer
+        branch:
+          type: integer
+          nullable: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        notes:
+          type: string
+    PatchedApprovalRuleRequest:
+      type: object
+      properties:
+        entity_type:
+          type: string
+          minLength: 1
+          maxLength: 50
+        min_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        max_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        approver:
+          type: integer
+        sequence:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+    PatchedBillOfMaterialsRequest:
+      type: object
+      properties:
+        product:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        version:
+          type: string
+          minLength: 1
+          default: '1.0'
+          maxLength: 20
+        status:
+          $ref: '#/components/schemas/BillOfMaterialsStatusEnum'
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          description: Tayyor mahsulot miqdori
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BOMItemRequest'
     PatchedBranchRequest:
       type: object
       properties:
@@ -8023,6 +12801,90 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+    PatchedDealRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        lead:
+          type: integer
+          nullable: true
+        customer:
+          type: integer
+          nullable: true
+        owner:
+          type: integer
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        stage:
+          $ref: '#/components/schemas/StageEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        currency:
+          type: integer
+          nullable: true
+        expected_close_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+    PatchedDepartmentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        parent:
+          type: integer
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+    PatchedEmployeeRequest:
+      type: object
+      properties:
+        user:
+          type: integer
+        employee_number:
+          type: string
+          minLength: 1
+          maxLength: 40
+        department:
+          type: integer
+        position:
+          type: integer
+        branch:
+          type: integer
+        hire_date:
+          type: string
+          format: date
+        termination_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/EmployeeStatusEnum'
+        base_salary:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        phone:
+          type: string
+          maxLength: 30
+        address:
+          type: string
+        notes:
+          type: string
     PatchedExpenseTypeRequest:
       type: object
       properties:
@@ -8038,6 +12900,86 @@ components:
           $ref: '#/components/schemas/AllocationMethodEnum'
         is_active:
           type: boolean
+    PatchedFiscalPeriodRequest:
+      type: object
+      properties:
+        fiscal_year:
+          type: integer
+        number:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        is_closed:
+          type: boolean
+    PatchedFiscalYearRequest:
+      type: object
+      properties:
+        year:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        is_closed:
+          type: boolean
+    PatchedJournalEntryRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        fiscal_period:
+          type: integer
+        branch:
+          type: integer
+          nullable: true
+        description:
+          type: string
+          maxLength: 255
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalLineRequest'
+    PatchedLeadRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        company:
+          type: string
+          maxLength: 200
+        phone:
+          type: string
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        source:
+          type: string
+          maxLength: 100
+        status:
+          $ref: '#/components/schemas/LeadStatusEnum'
+        owner:
+          type: integer
+          nullable: true
+        branch:
+          type: integer
+          nullable: true
+        notes:
+          type: string
     PatchedMinQuantityRequest:
       type: object
       properties:
@@ -8071,6 +13013,28 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+    PatchedPayrollRunRequest:
+      type: object
+      properties:
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        branch:
+          type: integer
+    PatchedPositionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        department:
+          type: integer
+        is_active:
+          type: boolean
     PatchedPriceTypeRequest:
       type: object
       properties:
@@ -8117,6 +13081,27 @@ components:
           type: string
         is_active:
           type: boolean
+    PatchedProductionOrderRequest:
+      type: object
+      properties:
+        product:
+          type: integer
+        bom:
+          type: integer
+        branch:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        planned_start:
+          type: string
+          format: date
+          nullable: true
+        planned_end:
+          type: string
+          format: date
+          nullable: true
     PatchedRoleRequest:
       type: object
       properties:
@@ -8572,6 +13557,201 @@ components:
       required:
       - amount
       - currency
+    PayrollRun:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        branch:
+          type: integer
+        branch_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PayrollRunStatusEnum'
+          readOnly: true
+        total_gross:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        total_net:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+        paid_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        payslips:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payslip'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch
+      - branch_name
+      - created_at
+      - created_by
+      - id
+      - paid_at
+      - payslips
+      - period_end
+      - period_start
+      - status
+      - total_gross
+      - total_net
+      - updated_at
+    PayrollRunRequest:
+      type: object
+      properties:
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        branch:
+          type: integer
+      required:
+      - branch
+      - period_end
+      - period_start
+    PayrollRunStatusEnum:
+      enum:
+      - draft
+      - calculated
+      - paid
+      - cancelled
+      type: string
+      description: |-
+        * `draft` - Qoralama
+        * `calculated` - Hisoblandi
+        * `paid` - To'landi
+        * `cancelled` - Bekor qilindi
+    Payslip:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        run:
+          type: integer
+        employee:
+          type: integer
+        employee_number:
+          type: string
+          readOnly: true
+        employee_name:
+          type: string
+          readOnly: true
+        base_salary:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        bonus:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        allowance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        deduction:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        tax:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        gross:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        net:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - employee
+      - employee_name
+      - employee_number
+      - id
+      - run
+      - updated_at
+    PayslipRequest:
+      type: object
+      properties:
+        run:
+          type: integer
+        employee:
+          type: integer
+        base_salary:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        bonus:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        allowance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        deduction:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        tax:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        gross:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        net:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        notes:
+          type: string
+      required:
+      - employee
+      - run
     Period:
       type: object
       properties:
@@ -8634,6 +13814,51 @@ components:
       - stock
       - unit_code
       - unit_decimal_places
+    Position:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        department:
+          type: integer
+        department_name:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - department
+      - department_name
+      - id
+      - name
+      - updated_at
+    PositionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        department:
+          type: integer
+        is_active:
+          type: boolean
+      required:
+      - department
+      - name
     PriceType:
       type: object
       properties:
@@ -8892,6 +14117,123 @@ components:
       - name
       - sku
       - unit
+    ProductionOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        product:
+          type: integer
+        product_name:
+          type: string
+          readOnly: true
+        bom:
+          type: integer
+        bom_name:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+        branch_name:
+          type: string
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ProductionOrderStatusEnum'
+          readOnly: true
+        planned_start:
+          type: string
+          format: date
+          nullable: true
+        planned_end:
+          type: string
+          format: date
+          nullable: true
+        actual_start:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        actual_end:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_by:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actual_end
+      - actual_start
+      - bom
+      - bom_name
+      - branch
+      - branch_name
+      - created_at
+      - created_by
+      - id
+      - number
+      - product
+      - product_name
+      - quantity
+      - status
+      - updated_at
+    ProductionOrderRequest:
+      type: object
+      properties:
+        product:
+          type: integer
+        bom:
+          type: integer
+        branch:
+          type: integer
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        planned_start:
+          type: string
+          format: date
+          nullable: true
+        planned_end:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - bom
+      - branch
+      - product
+      - quantity
+    ProductionOrderStatusEnum:
+      enum:
+      - draft
+      - released
+      - in_progress
+      - completed
+      - cancelled
+      type: string
+      description: |-
+        * `draft` - Qoralama
+        * `released` - Ishga tushirildi
+        * `in_progress` - Jarayonda
+        * `completed` - Yakunlandi
+        * `cancelled` - Bekor qilindi
     ProviderEnum:
       enum:
       - manual
@@ -10705,6 +16047,22 @@ components:
       description: |-
         * `cbu` - Markaziy bank
         * `manual` - Qo'lda
+    StageEnum:
+      enum:
+      - prospecting
+      - qualification
+      - proposal
+      - negotiation
+      - won
+      - lost
+      type: string
+      description: |-
+        * `prospecting` - Izlash
+        * `qualification` - Malakalash
+        * `proposal` - Taklif
+        * `negotiation` - Muzokara
+        * `won` - Yutildi
+        * `lost` - Yo'qotildi
     StockCountCreateRequest:
       type: object
       properties:
@@ -11594,6 +16952,44 @@ components:
       - from_branch
       - items
       - to_branch
+    TwoFactorCodeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+      required:
+      - code
+    TwoFactorSetup:
+      type: object
+      properties:
+        id:
+          type: integer
+        is_verified:
+          type: boolean
+        secret:
+          type: string
+        provisioning_uri:
+          type: string
+      required:
+      - id
+      - is_verified
+      - provisioning_uri
+      - secret
+    TwoFactorStatus:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+      required:
+      - enabled
+    TwoFactorStatusRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+      required:
+      - enabled
     Unit:
       type: object
       properties:

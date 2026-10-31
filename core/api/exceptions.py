@@ -22,6 +22,7 @@ log = logging.getLogger("core.api")
 MESSAGES_UZ = {
     "not_authenticated": "Avtorizatsiya talab qilinadi",
     "authentication_failed": "Login yoki parol noto'g'ri",
+    "account_locked": "Hisob vaqtincha qulflangan. Keyinroq urinib ko'ring",
     "token_not_valid": "Token yaroqsiz yoki muddati tugagan",
     "user_inactive": "Foydalanuvchi faol emas",
     "user_not_found": "Foydalanuvchi topilmadi",
@@ -97,9 +98,13 @@ def exception_handler(exc, context):
         )
 
     code, message = _code_and_message(exc)
-    return error_response(
+    resp = error_response(
         status_code=response.status_code, code=code, message=message, headers=headers
     )
+    detail = getattr(exc, "detail", None)
+    if isinstance(detail, dict) and "retry_after" in detail:
+        resp.data["error"]["retry_after"] = detail["retry_after"]
+    return resp
 
 
 def _code_and_message(exc: exceptions.APIException) -> tuple[str, str]:
