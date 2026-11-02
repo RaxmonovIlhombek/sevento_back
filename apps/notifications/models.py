@@ -11,7 +11,9 @@ class Notification(TimeStampedModel):
         ERROR = "error", "Xato"
         SUCCESS = "success", "Muvaffaqiyat"
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
+    )
     title = models.CharField(max_length=200)
     message = models.TextField(blank=True)
     notification_type = models.CharField(max_length=10, choices=Type.choices, default=Type.INFO)

@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from .filters import ApprovalInstanceFilter, ApprovalRuleFilter
 from .models import ApprovalInstance, ApprovalRule, ApprovalStep
-from .serializers import ApprovalInstanceSerializer, ApprovalRuleSerializer, ApprovalStepSerializer
+from .serializers import ApprovalInstanceSerializer, ApprovalRuleSerializer
 
 
 class ApprovalRuleViewSet(viewsets.ModelViewSet):
@@ -20,7 +20,11 @@ class ApprovalRuleViewSet(viewsets.ModelViewSet):
 
 
 class ApprovalInstanceViewSet(viewsets.ModelViewSet):
-    queryset = ApprovalInstance.objects.select_related("requested_by", "branch").prefetch_related("steps__approver").all()
+    queryset = (
+        ApprovalInstance.objects.select_related("requested_by", "branch")
+        .prefetch_related("steps__approver")
+        .all()
+    )
     serializer_class = ApprovalInstanceSerializer
     permission_classes = [IsAuthenticated]
     filterset_class = ApprovalInstanceFilter
@@ -32,7 +36,9 @@ class ApprovalInstanceViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         if instance.status != ApprovalInstance.Status.PENDING:
             return Response({"detail": "Kutilmayotgan so'rov"}, status=400)
-        step = instance.steps.filter(approver=request.user, decision=ApprovalStep.Decision.PENDING).first()
+        step = instance.steps.filter(
+            approver=request.user, decision=ApprovalStep.Decision.PENDING
+        ).first()
         if not step:
             return Response({"detail": "Siz tasdiqlay olmaysiz"}, status=403)
         step.decision = ApprovalStep.Decision.APPROVED
@@ -50,7 +56,9 @@ class ApprovalInstanceViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         if instance.status != ApprovalInstance.Status.PENDING:
             return Response({"detail": "Kutilmayotgan so'rov"}, status=400)
-        step = instance.steps.filter(approver=request.user, decision=ApprovalStep.Decision.PENDING).first()
+        step = instance.steps.filter(
+            approver=request.user, decision=ApprovalStep.Decision.PENDING
+        ).first()
         if not step:
             return Response({"detail": "Siz rad eta olmaysiz"}, status=403)
         step.decision = ApprovalStep.Decision.REJECTED

@@ -344,25 +344,28 @@ class WriteOffItem(models.Model):
             ),
         ]
 
-
+    def __str__(self):
+        return f"{self.write_off_id}: {self.product_id} × {self.quantity}"
 
 
 class StockLocation(TimeStampedModel):
     """Ombor ichidagi joy (zona/bin). Ko'p joyli ombor (WMS) uchun."""
+
     branch = models.ForeignKey("branches.Branch", on_delete=models.PROTECT, related_name="+")
     code = models.CharField(max_length=40)
     name = models.CharField(max_length=200)
-    parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.PROTECT, related_name="children")
+    parent = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.PROTECT, related_name="children"
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["branch", "code"]
         constraints = [
-            models.UniqueConstraint(fields=["branch", "code"], name="uniq_stock_location_branch_code")
+            models.UniqueConstraint(
+                fields=["branch", "code"], name="uniq_stock_location_branch_code"
+            )
         ]
 
     def __str__(self):
         return f"{self.branch_id}/{self.code}"
-
-    def __str__(self):
-        return f"{self.write_off_id}: {self.product_id} × {self.quantity}"

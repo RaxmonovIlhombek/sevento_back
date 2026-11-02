@@ -339,3 +339,32 @@ def test_service_set_price_and_current_price(owner, product, retail, uzs, branch
     assert selectors.current_price(product, retail, "UZS").amount == Decimal("10")
     assert selectors.current_price(product, retail, "UZS", branch.id).amount == Decimal("12")
     assert selectors.current_price(product, retail, "USD") is None
+
+
+def test_xostavar_packaging_and_volume(owner_client, unit, tree):
+    """Xostavar: qadoq (karobka/dona), o'lchamlar va kubatura (m³) hisobi."""
+    payload = {
+        "sku": "KAST-5L",
+        "barcode": "4780001001",
+        "box_barcode": "4780001001-BOX",
+        "name": "Kastryulya 5L Emal",
+        "category": tree["root"].id,
+        "unit": unit.id,
+        "units_per_box": 12,
+        "box_name": "Karobka",
+        "allow_split_box": True,
+        "length_cm": "40.00",
+        "width_cm": "30.00",
+        "height_cm": "25.00",
+        "weight_kg": "3.500",
+        "is_fragile": True,
+        "is_active": True,
+    }
+    response = owner_client.post(PRODUCTS, payload)
+    assert response.status_code == 201, response.json()
+    data = response.json()
+    assert data["units_per_box"] == 12
+    assert data["box_barcode"] == "4780001001-BOX"
+    assert data["is_fragile"] is True
+    # (40 * 30 * 25) / 1,000,000 = 30,000 / 1,000,000 = 0.030000 m³
+    assert Decimal(data["volume_m3"]) == Decimal("0.030000")

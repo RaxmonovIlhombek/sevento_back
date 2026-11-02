@@ -5,7 +5,15 @@ from .models import Account, FiscalPeriod, FiscalYear, JournalEntry, JournalLine
 
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ("code", "name", "account_type", "normal_balance", "parent", "is_active", "is_postable")
+    list_display = (
+        "code",
+        "name",
+        "account_type",
+        "normal_balance",
+        "parent",
+        "is_active",
+        "is_postable",
+    )
     list_filter = ("account_type", "is_active", "is_postable")
     search_fields = ("code", "name")
     ordering = ("code",)

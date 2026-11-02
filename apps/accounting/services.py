@@ -2,6 +2,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from core.models import DocumentSequence
+
 from .models import JournalEntry, JournalLine
 
 
@@ -53,8 +54,8 @@ def post_entry(*, entry, user):
         raise ValueError("Faqat qoralama yozuvni o'tkazish mumkin")
     if entry.fiscal_period.is_closed:
         raise ValueError("Moliyaviy davr yopilgan")
-    total_debit = sum((l.debit for l in entry.lines.all()), 0)
-    total_credit = sum((l.credit for l in entry.lines.all()), 0)
+    total_debit = sum((ln.debit for ln in entry.lines.all()), 0)
+    total_credit = sum((ln.credit for ln in entry.lines.all()), 0)
     if total_debit != total_credit:
         raise ValueError(f"Debet ({total_debit}) va kredit ({total_credit}) teng emas")
     if total_debit == 0:

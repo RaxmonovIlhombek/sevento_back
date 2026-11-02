@@ -124,6 +124,26 @@ class ProductSerializer(serializers.ModelSerializer):
             "min_quantity",
             "description",
             "is_active",
+            "box_barcode",
+            "units_per_box",
+            "box_name",
+            "allow_split_box",
+            "length_cm",
+            "width_cm",
+            "height_cm",
+            "volume_m3",
+            "weight_kg",
+            "is_fragile",
+            "box_barcode",
+            "units_per_box",
+            "box_name",
+            "allow_split_box",
+            "length_cm",
+            "width_cm",
+            "height_cm",
+            "volume_m3",
+            "weight_kg",
+            "is_fragile",
             "prices",
             "created_at",
             "updated_at",
@@ -148,10 +168,30 @@ class ProductWriteSerializer(serializers.ModelSerializer):
             "min_quantity",
             "description",
             "is_active",
+            "box_barcode",
+            "units_per_box",
+            "box_name",
+            "allow_split_box",
+            "length_cm",
+            "width_cm",
+            "height_cm",
+            "volume_m3",
+            "weight_kg",
+            "is_fragile",
         ]
         extra_kwargs = {
             "sku": {"validators": []},
             "barcode": {"required": False, "allow_blank": True},
+            "box_barcode": {"required": False, "allow_blank": True},
+            "units_per_box": {"required": False},
+            "box_name": {"required": False, "allow_blank": True},
+            "allow_split_box": {"required": False},
+            "length_cm": {"required": False, "allow_null": True},
+            "width_cm": {"required": False, "allow_null": True},
+            "height_cm": {"required": False, "allow_null": True},
+            "volume_m3": {"required": False, "allow_null": True},
+            "weight_kg": {"required": False, "allow_null": True},
+            "is_fragile": {"required": False},
         }
 
     def validate_sku(self, value):
@@ -177,6 +217,19 @@ class ProductWriteSerializer(serializers.ModelSerializer):
     def validate_min_quantity(self, value):
         if value is not None and value < 0:
             raise serializers.ValidationError("Manfiy bo'lmasin", code="min_value")
+        return value
+
+    def validate_units_per_box(self, value):
+        if value is not None and value < 1:
+            raise serializers.ValidationError("Kamida 1 bo'lishi kerak", code="min_value")
+        return value
+
+    def validate_box_barcode(self, value):
+        value = (value or "").strip()
+        if not value:
+            return ""
+        if hasattr(self, 'initial_data') and value == self.initial_data.get('barcode'):
+            raise serializers.ValidationError("Karobka shtrix-kodi dona shtrix-kodi bilan bir xil bo'lmasin")
         return value
 
 

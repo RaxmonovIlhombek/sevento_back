@@ -2,9 +2,8 @@
 
 import time
 
-from django.core.cache import cache
-
 from django.contrib.auth import authenticate
+from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import AuthenticationFailed
@@ -26,6 +25,7 @@ LOGIN_LOCKOUT_SECONDS = 5 * 60
 def _login_fail_key(username: str) -> str:
     return f"login_fail:{username.strip().lower()}"
 
+
 def authenticate_user(*, username: str, password: str) -> User:
     key = _login_fail_key(username)
     now = time.time()
@@ -39,7 +39,11 @@ def authenticate_user(*, username: str, password: str) -> User:
     locked_until = data.get("locked_until")
     if locked_until and now < locked_until:
         raise AuthenticationFailed(
-            {"detail": "Hisob vaqtincha qulflangan", "code": "account_locked", "retry_after": int(locked_until - now)},
+            {
+                "detail": "Hisob vaqtincha qulflangan",
+                "code": "account_locked",
+                "retry_after": int(locked_until - now),
+            },
             code="account_locked",
         )
 
@@ -70,7 +74,11 @@ def authenticate_user(*, username: str, password: str) -> User:
         )
         if new_locked_until:
             raise AuthenticationFailed(
-                {"detail": "Hisob vaqtincha qulflangan", "code": "account_locked", "retry_after": LOGIN_LOCKOUT_SECONDS},
+                {
+                    "detail": "Hisob vaqtincha qulflangan",
+                    "code": "account_locked",
+                    "retry_after": LOGIN_LOCKOUT_SECONDS,
+                },
                 code="account_locked",
             )
         raise AuthenticationFailed(code="authentication_failed")

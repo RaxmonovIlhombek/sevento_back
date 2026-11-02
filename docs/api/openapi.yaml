@@ -8841,8 +8841,9 @@ components:
           readOnly: true
         sequence:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
         created_at:
@@ -8883,8 +8884,9 @@ components:
           type: integer
         sequence:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
       required:
@@ -8903,8 +8905,9 @@ components:
           readOnly: true
         sequence:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         decision:
           $ref: '#/components/schemas/DecisionEnum'
         decided_at:
@@ -8929,8 +8932,9 @@ components:
           type: integer
         sequence:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         decision:
           $ref: '#/components/schemas/DecisionEnum'
         decided_at:
@@ -9594,8 +9598,9 @@ components:
           nullable: true
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
         created_at:
@@ -9624,8 +9629,9 @@ components:
           nullable: true
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
       required:
@@ -9829,14 +9835,16 @@ components:
           maxLength: 10
         decimal_places:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_base:
           type: boolean
           description: Tannarx, foyda va kredit limiti shu valyutada (sozlama currency.base_code).
@@ -9884,14 +9892,16 @@ components:
           maxLength: 10
         decimal_places:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
       required:
       - code
       - name
@@ -9971,6 +9981,36 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
           readOnly: true
+        primary_branch:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Asosiy biriktirilgan baza/filial
+        primary_branch_name:
+          type: string
+          readOnly: true
+          nullable: true
+        channel:
+          type: string
+          readOnly: true
+          description: Mijoz kanali (do'kon, bozor, ulgurji, horeca)
+        contact_person:
+          type: string
+          readOnly: true
+          description: Mas'ul shaxs / do'kondor ismi
+        promise_pay_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+          description: Mijoz to'lov va'dasi sanasi
+        promise_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+          description: Va'da qilingan to'lov summasi
         is_active:
           type: boolean
           readOnly: true
@@ -9994,6 +10034,8 @@ components:
       required:
       - address
       - balances
+      - channel
+      - contact_person
       - created_at
       - credit_limit_base
       - debt_base
@@ -10005,6 +10047,10 @@ components:
       - name
       - note
       - phone
+      - primary_branch
+      - primary_branch_name
+      - promise_amount
+      - promise_pay_date
       - tin
     CustomerDetail:
       type: object
@@ -10047,6 +10093,36 @@ components:
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
           readOnly: true
+        primary_branch:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Asosiy biriktirilgan baza/filial
+        primary_branch_name:
+          type: string
+          readOnly: true
+          nullable: true
+        channel:
+          type: string
+          readOnly: true
+          description: Mijoz kanali (do'kon, bozor, ulgurji, horeca)
+        contact_person:
+          type: string
+          readOnly: true
+          description: Mas'ul shaxs / do'kondor ismi
+        promise_pay_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+          description: Mijoz to'lov va'dasi sanasi
+        promise_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+          description: Va'da qilingan to'lov summasi
         is_active:
           type: boolean
           readOnly: true
@@ -10079,6 +10155,8 @@ components:
       required:
       - address
       - balances
+      - channel
+      - contact_person
       - created_at
       - credit
       - credit_limit_base
@@ -10092,6 +10170,10 @@ components:
       - note
       - open_debts
       - phone
+      - primary_branch
+      - primary_branch_name
+      - promise_amount
+      - promise_pay_date
       - tin
     CustomerWriteRequest:
       type: object
@@ -10124,6 +10206,26 @@ components:
           type: integer
           maximum: 3650
           minimum: 0
+          nullable: true
+        primary_branch:
+          type: integer
+          nullable: true
+        channel:
+          type: string
+          default: retail
+          maxLength: 30
+        contact_person:
+          type: string
+          default: ''
+          maxLength: 150
+        promise_pay_date:
+          type: string
+          format: date
+          nullable: true
+        promise_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
           nullable: true
         is_active:
           type: boolean
@@ -10887,8 +10989,9 @@ components:
           readOnly: true
         number:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         start_date:
           type: string
           format: date
@@ -10921,8 +11024,9 @@ components:
           type: integer
         number:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         start_date:
           type: string
           format: date
@@ -10944,8 +11048,9 @@ components:
           readOnly: true
         year:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         start_date:
           type: string
           format: date
@@ -10974,8 +11079,9 @@ components:
       properties:
         year:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         start_date:
           type: string
           format: date
@@ -12707,8 +12813,9 @@ components:
           type: integer
         sequence:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
     PatchedBillOfMaterialsRequest:
@@ -12773,8 +12880,9 @@ components:
           nullable: true
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
     PatchedCurrencyRequest:
@@ -12793,14 +12901,16 @@ components:
           maxLength: 10
         decimal_places:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
     PatchedDealRequest:
       type: object
       properties:
@@ -12907,8 +13017,9 @@ components:
           type: integer
         number:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         start_date:
           type: string
           format: date
@@ -12922,8 +13033,9 @@ components:
       properties:
         year:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         start_date:
           type: string
           format: date
@@ -13011,8 +13123,9 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
     PatchedPayrollRunRequest:
       type: object
       properties:
@@ -13050,8 +13163,9 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
     PatchedProductWriteRequest:
       type: object
       properties:
@@ -13081,6 +13195,56 @@ components:
           type: string
         is_active:
           type: boolean
+        box_barcode:
+          type: string
+          description: Karobka/blok shtrix-kodi
+          maxLength: 64
+        units_per_box:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: 1 karobkada necha dona (qadoq soni)
+        box_name:
+          type: string
+          description: Qadoq turi (Karobka, Blok, Qop, Palet)
+          maxLength: 50
+        allow_split_box:
+          type: boolean
+          description: Karobkani ochib donalab sotish mumkin
+        length_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+          description: Uzunligi (sm)
+        width_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+          description: Kengligi (sm)
+        height_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+          description: Balandligi (sm)
+        volume_m3:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          nullable: true
+          description: Kubaturasi (m³)
+        weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          nullable: true
+          description: Og'irligi (kg)
+        is_fragile:
+          type: boolean
+          description: Sinuvchan / Nozik tovar (chinni, shisha, posuda)
     PatchedProductionOrderRequest:
       type: object
       properties:
@@ -13156,8 +13320,9 @@ components:
           maxLength: 50
         decimal_places:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
     PatchedUserWriteRequest:
@@ -13503,8 +13668,9 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
       required:
       - code
       - id
@@ -13532,8 +13698,9 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
       required:
       - code
       - name
@@ -13875,8 +14042,9 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         created_at:
           type: string
           format: date-time
@@ -13906,8 +14074,9 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
       required:
       - code
       - name
@@ -13959,6 +14128,61 @@ components:
         is_active:
           type: boolean
           readOnly: true
+        box_barcode:
+          type: string
+          readOnly: true
+          description: Karobka/blok shtrix-kodi
+        units_per_box:
+          type: integer
+          readOnly: true
+          description: 1 karobkada necha dona (qadoq soni)
+        box_name:
+          type: string
+          readOnly: true
+          description: Qadoq turi (Karobka, Blok, Qop, Palet)
+        allow_split_box:
+          type: boolean
+          readOnly: true
+          description: Karobkani ochib donalab sotish mumkin
+        length_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+          description: Uzunligi (sm)
+        width_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+          description: Kengligi (sm)
+        height_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+          description: Balandligi (sm)
+        volume_m3:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          readOnly: true
+          nullable: true
+          description: Kubaturasi (m³)
+        weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          readOnly: true
+          nullable: true
+          description: Og'irligi (kg)
+        is_fragile:
+          type: boolean
+          readOnly: true
+          description: Sinuvchan / Nozik tovar (chinni, shisha, posuda)
         prices:
           type: array
           items:
@@ -13973,13 +14197,19 @@ components:
           format: date-time
           readOnly: true
       required:
+      - allow_split_box
       - barcode
+      - box_barcode
+      - box_name
       - category
       - category_name
       - created_at
       - description
+      - height_cm
       - id
       - is_active
+      - is_fragile
+      - length_cm
       - min_quantity
       - name
       - prices
@@ -13988,7 +14218,11 @@ components:
       - unit_code
       - unit_decimal_places
       - unit_name
+      - units_per_box
       - updated_at
+      - volume_m3
+      - weight_kg
+      - width_cm
     ProductPrice:
       type: object
       properties:
@@ -14080,6 +14314,56 @@ components:
           type: string
         is_active:
           type: boolean
+        box_barcode:
+          type: string
+          description: Karobka/blok shtrix-kodi
+          maxLength: 64
+        units_per_box:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: 1 karobkada necha dona (qadoq soni)
+        box_name:
+          type: string
+          description: Qadoq turi (Karobka, Blok, Qop, Palet)
+          maxLength: 50
+        allow_split_box:
+          type: boolean
+          description: Karobkani ochib donalab sotish mumkin
+        length_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+          description: Uzunligi (sm)
+        width_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+          description: Kengligi (sm)
+        height_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+          description: Balandligi (sm)
+        volume_m3:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          nullable: true
+          description: Kubaturasi (m³)
+        weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          nullable: true
+          description: Og'irligi (kg)
+        is_fragile:
+          type: boolean
+          description: Sinuvchan / Nozik tovar (chinni, shisha, posuda)
       required:
       - name
       - sku
@@ -14113,6 +14397,56 @@ components:
           type: string
         is_active:
           type: boolean
+        box_barcode:
+          type: string
+          description: Karobka/blok shtrix-kodi
+          maxLength: 64
+        units_per_box:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: 1 karobkada necha dona (qadoq soni)
+        box_name:
+          type: string
+          description: Qadoq turi (Karobka, Blok, Qop, Palet)
+          maxLength: 50
+        allow_split_box:
+          type: boolean
+          description: Karobkani ochib donalab sotish mumkin
+        length_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+          description: Uzunligi (sm)
+        width_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+          description: Kengligi (sm)
+        height_cm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+          description: Balandligi (sm)
+        volume_m3:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          nullable: true
+          description: Kubaturasi (m³)
+        weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          nullable: true
+          description: Og'irligi (kg)
+        is_fragile:
+          type: boolean
+          description: Sinuvchan / Nozik tovar (chinni, shisha, posuda)
       required:
       - name
       - sku
@@ -17004,8 +17338,9 @@ components:
           maxLength: 50
         decimal_places:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
         created_at:
@@ -17035,8 +17370,9 @@ components:
           maxLength: 50
         decimal_places:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
         is_active:
           type: boolean
       required:

@@ -45,9 +45,7 @@ class Employee(TimeStampedModel):
     employee_number = models.CharField(max_length=40, unique=True)
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="employees")
     position = models.ForeignKey(Position, on_delete=models.PROTECT, related_name="employees")
-    branch = models.ForeignKey(
-        "branches.Branch", on_delete=models.PROTECT, related_name="+"
-    )
+    branch = models.ForeignKey("branches.Branch", on_delete=models.PROTECT, related_name="+")
     hire_date = models.DateField()
     termination_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.ACTIVE)

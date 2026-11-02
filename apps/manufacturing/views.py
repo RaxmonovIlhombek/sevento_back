@@ -1,15 +1,13 @@
 from django.db import transaction
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from django.db import transaction
-
 from core.models import DocumentSequence
-from django_filters.rest_framework import DjangoFilterBackend
 
 from .filters import BillOfMaterialsFilter, ProductionOrderFilter
 from .models import BillOfMaterials, ProductionOrder
@@ -17,7 +15,9 @@ from .serializers import BillOfMaterialsSerializer, ProductionOrderSerializer
 
 
 class BillOfMaterialsViewSet(viewsets.ModelViewSet):
-    queryset = BillOfMaterials.objects.select_related("product").prefetch_related("items__component")
+    queryset = BillOfMaterials.objects.select_related("product").prefetch_related(
+        "items__component"
+    )
     serializer_class = BillOfMaterialsSerializer
     permission_classes = [IsAuthenticated]
     filterset_class = BillOfMaterialsFilter
@@ -27,7 +27,9 @@ class BillOfMaterialsViewSet(viewsets.ModelViewSet):
 
 
 class ProductionOrderViewSet(viewsets.ModelViewSet):
-    queryset = ProductionOrder.objects.select_related("product", "bom", "branch", "created_by").all()
+    queryset = ProductionOrder.objects.select_related(
+        "product", "bom", "branch", "created_by"
+    ).all()
     serializer_class = ProductionOrderSerializer
     permission_classes = [IsAuthenticated]
     filterset_class = ProductionOrderFilter
@@ -59,7 +61,10 @@ class ProductionOrderViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def complete(self, request, pk=None):
         order = self.get_object()
-        if order.status not in (ProductionOrder.Status.RELEASED, ProductionOrder.Status.IN_PROGRESS):
+        if order.status not in (
+            ProductionOrder.Status.RELEASED,
+            ProductionOrder.Status.IN_PROGRESS,
+        ):
             return Response({"detail": "Yakunlab bo'lmaydi"}, status=400)
         order.status = ProductionOrder.Status.COMPLETED
         order.actual_end = timezone.now()

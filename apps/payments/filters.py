@@ -40,7 +40,8 @@ class CustomerFilter(django_filters.FilterSet):
 
     def filter_search(self, queryset, name, value):
         value = value.strip()
-        # Agar telefon raqam qidirilayotgan bo'lsa (bo'shliq, qavs, chiziqchalarni tozalab solishtirish uchun)
+        # Agar telefon raqam qidirilayotgan bo'lsa
+        # (bo'shliq, qavs, chiziqchalarni tozalab solishtirish uchun)
         digits = "".join(filter(str.isdigit, value))
         q = Q(name__icontains=value) | Q(phone__icontains=value) | Q(tin__icontains=value)
         if digits and len(digits) >= 3:

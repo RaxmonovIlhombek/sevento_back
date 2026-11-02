@@ -43,7 +43,9 @@ class Deal(TimeStampedModel):
         LOST = "lost", "Yo'qotildi"
 
     name = models.CharField(max_length=200)
-    lead = models.ForeignKey(Lead, null=True, blank=True, on_delete=models.SET_NULL, related_name="deals")
+    lead = models.ForeignKey(
+        Lead, null=True, blank=True, on_delete=models.SET_NULL, related_name="deals"
+    )
     customer = models.ForeignKey(
         "payments.Customer", null=True, blank=True, on_delete=models.SET_NULL, related_name="deals"
     )
@@ -81,8 +83,12 @@ class Activity(TimeStampedModel):
     description = models.TextField(blank=True)
     due_date = models.DateTimeField(null=True, blank=True)
     completed = models.BooleanField(default=False)
-    lead = models.ForeignKey(Lead, null=True, blank=True, on_delete=models.CASCADE, related_name="activities")
-    deal = models.ForeignKey(Deal, null=True, blank=True, on_delete=models.CASCADE, related_name="activities")
+    lead = models.ForeignKey(
+        Lead, null=True, blank=True, on_delete=models.CASCADE, related_name="activities"
+    )
+    deal = models.ForeignKey(
+        Deal, null=True, blank=True, on_delete=models.CASCADE, related_name="activities"
+    )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )

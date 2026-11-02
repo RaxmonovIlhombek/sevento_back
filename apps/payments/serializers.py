@@ -159,6 +159,9 @@ def _money(value) -> str:
 class CustomerSerializer(serializers.ModelSerializer):
     """Ro'yxat: qarz qoldig'i valyuta kesimida va asosiy valyutada (joriy kurs bilan)."""
 
+    primary_branch_name = serializers.CharField(
+        source="primary_branch.name", read_only=True, default=None, allow_null=True
+    )
     balances = serializers.SerializerMethodField()
     debt_base = serializers.SerializerMethodField()
     has_overdue = serializers.SerializerMethodField()
@@ -176,6 +179,12 @@ class CustomerSerializer(serializers.ModelSerializer):
             "credit_limit_base",
             "default_due_days",
             "effective_credit_limit",
+            "primary_branch",
+            "primary_branch_name",
+            "channel",
+            "contact_person",
+            "promise_pay_date",
+            "promise_amount",
             "is_active",
             "balances",
             "debt_base",
@@ -217,6 +226,15 @@ class CustomerWriteSerializer(serializers.Serializer):
     )
     default_due_days = serializers.IntegerField(
         min_value=0, max_value=3650, required=False, allow_null=True
+    )
+    primary_branch = serializers.PrimaryKeyRelatedField(
+        queryset=branch_selectors.active_branches(), required=False, allow_null=True
+    )
+    channel = serializers.CharField(max_length=30, required=False, allow_blank=True, default="retail")
+    contact_person = serializers.CharField(max_length=150, required=False, allow_blank=True, default="")
+    promise_pay_date = serializers.DateField(required=False, allow_null=True)
+    promise_amount = serializers.DecimalField(
+        max_digits=20, decimal_places=4, required=False, allow_null=True
     )
     is_active = serializers.BooleanField(required=False, default=True)
 

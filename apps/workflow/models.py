@@ -63,7 +63,9 @@ class ApprovalStep(TimeStampedModel):
         REJECTED = "rejected", "Rad etildi"
 
     instance = models.ForeignKey(ApprovalInstance, on_delete=models.CASCADE, related_name="steps")
-    approver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    approver = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
     sequence = models.PositiveSmallIntegerField(default=1)
     decision = models.CharField(max_length=10, choices=Decision.choices, default=Decision.PENDING)
     decided_at = models.DateTimeField(null=True, blank=True)

@@ -80,11 +80,17 @@ class JournalEntrySerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["number", "status", "posted_at", "posted_by", "reversed_by_entry", "created_by"]
+        read_only_fields = [
+            "number",
+            "status",
+            "posted_at",
+            "posted_by",
+            "reversed_by_entry",
+            "created_by",
+        ]
 
     def create(self, validated_data):
         lines_data = validated_data.pop("lines", [])
-        from django.contrib.auth import get_user_model
 
         user = self.context["request"].user
         from .services import create_entry

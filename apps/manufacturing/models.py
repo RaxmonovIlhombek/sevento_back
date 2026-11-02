@@ -14,7 +14,9 @@ class BillOfMaterials(TimeStampedModel):
     name = models.CharField(max_length=200)
     version = models.CharField(max_length=20, default="1.0")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.DRAFT)
-    quantity = models.DecimalField(max_digits=14, decimal_places=3, default=1, help_text="Tayyor mahsulot miqdori")
+    quantity = models.DecimalField(
+        max_digits=14, decimal_places=3, default=1, help_text="Tayyor mahsulot miqdori"
+    )
     notes = models.TextField(blank=True)
 
     class Meta:
@@ -29,10 +31,14 @@ class BillOfMaterials(TimeStampedModel):
 
 class BOMItem(TimeStampedModel):
     bom = models.ForeignKey(BillOfMaterials, on_delete=models.CASCADE, related_name="items")
-    component = models.ForeignKey("catalog.Product", on_delete=models.PROTECT, related_name="bom_usages")
+    component = models.ForeignKey(
+        "catalog.Product", on_delete=models.PROTECT, related_name="bom_usages"
+    )
     quantity = models.DecimalField(max_digits=14, decimal_places=3)
     unit = models.ForeignKey("catalog.Unit", on_delete=models.PROTECT, related_name="+")
-    scrap_rate = models.DecimalField(max_digits=6, decimal_places=4, default=0, help_text="Brak foizi")
+    scrap_rate = models.DecimalField(
+        max_digits=6, decimal_places=4, default=0, help_text="Brak foizi"
+    )
 
     class Meta:
         ordering = ["id"]
@@ -50,8 +56,12 @@ class ProductionOrder(TimeStampedModel):
         CANCELLED = "cancelled", "Bekor qilindi"
 
     number = models.CharField(max_length=40, unique=True)
-    product = models.ForeignKey("catalog.Product", on_delete=models.PROTECT, related_name="production_orders")
-    bom = models.ForeignKey(BillOfMaterials, on_delete=models.PROTECT, related_name="production_orders")
+    product = models.ForeignKey(
+        "catalog.Product", on_delete=models.PROTECT, related_name="production_orders"
+    )
+    bom = models.ForeignKey(
+        BillOfMaterials, on_delete=models.PROTECT, related_name="production_orders"
+    )
     branch = models.ForeignKey("branches.Branch", on_delete=models.PROTECT, related_name="+")
     quantity = models.DecimalField(max_digits=14, decimal_places=3)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.DRAFT)
@@ -59,7 +69,9 @@ class ProductionOrder(TimeStampedModel):
     planned_end = models.DateField(null=True, blank=True)
     actual_start = models.DateTimeField(null=True, blank=True)
     actual_end = models.DateTimeField(null=True, blank=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
 
     class Meta:
         ordering = ["-created_at"]

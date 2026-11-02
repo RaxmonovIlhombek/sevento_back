@@ -64,7 +64,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "corsheaders.middleware.CorsMiddleware",  # CORS — SecurityMiddleware dan keyin, boshqa middlewaredan oldin
+    "corsheaders.middleware.CorsMiddleware",  # CORS
+    # — SecurityMiddleware dan keyin, boshqa middlewaredan oldin
     "core.middleware.RequestContextMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",

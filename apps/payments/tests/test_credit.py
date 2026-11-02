@@ -447,3 +447,28 @@ def test_cash_updated_route(branch):
     assert out.group == f"branch_{branch.id}"
     assert out.message["type"] == "cash.updated"
     assert out.message["payload"] == {"branch_id": branch.id, "reason": "manual_entry"}
+
+
+def test_customer_branch_channel_promise(owner_client, branch):
+    """Baza mijozlari: biriktirilgan baza, kanal va to'lov va'dasi."""
+    payload = {
+        "name": "Oshxona Buyumlari Do'koni (Chorsu)",
+        "phone": "+998901234567",
+        "primary_branch": branch.id,
+        "channel": "market",
+        "contact_person": "Akmal aka",
+        "credit_limit_base": "15000000.0000",
+        "default_due_days": 14,
+        "promise_pay_date": "2026-11-10",
+        "promise_amount": "5000000.0000",
+        "is_active": True,
+    }
+    response = owner_client.post(CUSTOMERS, payload, format="json")
+    assert response.status_code == 201, response.json()
+    data = response.json()
+    assert data["primary_branch"] == branch.id
+    assert data["primary_branch_name"] == branch.name
+    assert data["channel"] == "market"
+    assert data["contact_person"] == "Akmal aka"
+    assert data["promise_pay_date"] == "2026-11-10"
+    assert Decimal(data["promise_amount"]) == Decimal("5000000")

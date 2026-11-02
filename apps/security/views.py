@@ -77,4 +77,3 @@ class SecurityViewSet(viewsets.ViewSet):
             dev.delete()
             return Response({"enabled": False})
         return Response({"detail": "Noto'g'ri kod"}, status=400)
-

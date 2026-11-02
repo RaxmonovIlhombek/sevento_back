@@ -81,6 +81,33 @@ class Customer(TimeStampedModel):
     default_due_days = models.PositiveIntegerField(
         null=True, blank=True, help_text="null — sozlamadagi default"
     )
+    primary_branch = models.ForeignKey(
+        "branches.Branch",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="customers",
+        help_text="Asosiy biriktirilgan baza/filial",
+    )
+    channel = models.CharField(
+        max_length=30,
+        blank=True,
+        default="retail",
+        help_text="Mijoz kanali (do'kon, bozor, ulgurji, horeca)",
+    )
+    contact_person = models.CharField(
+        max_length=150, blank=True, help_text="Mas'ul shaxs / do'kondor ismi"
+    )
+    promise_pay_date = models.DateField(
+        null=True, blank=True, help_text="Mijoz to'lov va'dasi sanasi"
+    )
+    promise_amount = models.DecimalField(
+        max_digits=20,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        help_text="Va'da qilingan to'lov summasi",
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:

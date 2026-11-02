@@ -43,7 +43,9 @@ class FiscalPeriodViewSet(viewsets.ModelViewSet):
 
 
 class JournalEntryViewSet(viewsets.ModelViewSet):
-    queryset = JournalEntry.objects.select_related("fiscal_period", "branch", "created_by").prefetch_related("lines__account")
+    queryset = JournalEntry.objects.select_related(
+        "fiscal_period", "branch", "created_by"
+    ).prefetch_related("lines__account")
     serializer_class = JournalEntrySerializer
     permission_classes = [IsAuthenticated]
     filterset_class = JournalEntryFilter
@@ -67,7 +69,9 @@ class JournalEntryViewSet(viewsets.ModelViewSet):
         date = request.data.get("date")
         description = request.data.get("description")
         try:
-            new_entry = reverse_entry(entry=entry, user=request.user, date=date, description=description)
+            new_entry = reverse_entry(
+                entry=entry, user=request.user, date=date, description=description
+            )
         except ValueError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(self.get_serializer(new_entry).data, status=status.HTTP_201_CREATED)

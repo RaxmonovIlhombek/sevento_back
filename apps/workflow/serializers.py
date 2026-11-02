@@ -28,7 +28,16 @@ class ApprovalStepSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ApprovalStep
-        fields = ["id", "approver", "approver_name", "sequence", "decision", "decided_at", "comment", "created_at"]
+        fields = [
+            "id",
+            "approver",
+            "approver_name",
+            "sequence",
+            "decision",
+            "decided_at",
+            "comment",
+            "created_at",
+        ]
 
 
 class ApprovalInstanceSerializer(serializers.ModelSerializer):

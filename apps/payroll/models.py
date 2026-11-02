@@ -17,7 +17,9 @@ class PayrollRun(TimeStampedModel):
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.DRAFT)
     total_gross = models.DecimalField(max_digits=20, decimal_places=4, default=0)
     total_net = models.DecimalField(max_digits=20, decimal_places=4, default=0)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
     paid_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

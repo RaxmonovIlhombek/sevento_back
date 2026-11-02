@@ -27,7 +27,7 @@ def verify_totp(secret, code, window=1, step=30, digits=6):
             msg = struct.pack(">Q", counter)
             h = hmac.new(key, msg, hashlib.sha1).digest()
             o = h[-1] & 0x0F
-            val = (struct.unpack(">I", h[o:o + 4])[0] & 0x7FFFFFFF) % (10 ** digits)
+            val = (struct.unpack(">I", h[o : o + 4])[0] & 0x7FFFFFFF) % (10**digits)
             if f"{val:0{digits}d}" == code:
                 return True
         return False
@@ -36,7 +36,9 @@ def verify_totp(secret, code, window=1, step=30, digits=6):
 
 
 class TwoFactorDevice(TimeStampedModel):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="totp_device")
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="totp_device"
+    )
     secret = models.CharField(max_length=64)
     is_verified = models.BooleanField(default=False)
     last_used_at = models.DateTimeField(null=True, blank=True)

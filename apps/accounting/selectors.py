@@ -11,10 +11,7 @@ def trial_balance(*, fiscal_period=None, branch=None, date_to=None):
         qs = qs.filter(entry__branch=branch)
     if date_to is not None:
         qs = qs.filter(entry__date__lte=date_to)
-    agg = (
-        qs.values("account_id")
-        .annotate(debit=Sum("debit"), credit=Sum("credit"))
-    )
+    agg = qs.values("account_id").annotate(debit=Sum("debit"), credit=Sum("credit"))
     by_account = {row["account_id"]: row for row in agg}
     accounts = Account.objects.filter(is_active=True).order_by("code")
     rows = []

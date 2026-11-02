@@ -27,7 +27,9 @@ class Account(TimeStampedModel):
         "self", null=True, blank=True, on_delete=models.PROTECT, related_name="children"
     )
     is_active = models.BooleanField(default=True)
-    is_postable = models.BooleanField(default=True, help_text="Faqat barg (leaf) hisoblar ga yozuv mumkin")
+    is_postable = models.BooleanField(
+        default=True, help_text="Faqat barg (leaf) hisoblar ga yozuv mumkin"
+    )
     description = models.TextField(blank=True)
 
     class Meta:
@@ -65,9 +67,7 @@ class FiscalPeriod(TimeStampedModel):
     class Meta:
         ordering = ["fiscal_year__year", "number"]
         constraints = [
-            models.UniqueConstraint(
-                fields=["fiscal_year", "number"], name="uniq_fiscal_period"
-            )
+            models.UniqueConstraint(fields=["fiscal_year", "number"], name="uniq_fiscal_period")
         ]
 
     def __str__(self):
@@ -97,9 +97,7 @@ class JournalEntry(TimeStampedModel):
     reversed_by_entry = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.PROTECT, related_name="reversals"
     )
-    created_by = models.ForeignKey(
-        "accounts.User", on_delete=models.PROTECT, related_name="+"
-    )
+    created_by = models.ForeignKey("accounts.User", on_delete=models.PROTECT, related_name="+")
 
     class Meta:
         ordering = ["-date", "-id"]

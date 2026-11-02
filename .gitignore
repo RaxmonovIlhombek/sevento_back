@@ -17,3 +17,7 @@ htmlcov/
 .idea/
 .vscode/
 .DS_Store
+
+# Additional
+.import_linter_cache/
+node_modules/

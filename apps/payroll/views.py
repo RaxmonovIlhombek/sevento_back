@@ -11,7 +11,11 @@ from .serializers import PayrollRunSerializer
 
 
 class PayrollRunViewSet(viewsets.ModelViewSet):
-    queryset = PayrollRun.objects.select_related("branch", "created_by").prefetch_related("payslips__employee").all()
+    queryset = (
+        PayrollRun.objects.select_related("branch", "created_by")
+        .prefetch_related("payslips__employee")
+        .all()
+    )
     serializer_class = PayrollRunSerializer
     permission_classes = [IsAuthenticated]
     filterset_class = PayrollRunFilter

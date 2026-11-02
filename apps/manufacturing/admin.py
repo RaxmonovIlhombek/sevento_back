@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import BOMItem, BillOfMaterials, ProductionOrder
+from .models import BillOfMaterials, BOMItem, ProductionOrder
 
 
 class BOMItemInline(admin.TabularInline):

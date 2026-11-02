@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import BOMItem, BillOfMaterials, ProductionOrder
+from .models import BillOfMaterials, BOMItem, ProductionOrder
 
 
 class BOMItemSerializer(serializers.ModelSerializer):

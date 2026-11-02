@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -57,6 +58,40 @@ class Product(TimeStampedModel):
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
 
+    # 1. Multi-unit & Packaging (Xostavar / Idish-tovoq)
+    box_barcode = models.CharField(
+        max_length=64, blank=True, db_index=True, help_text="Karobka/blok shtrix-kodi"
+    )
+    units_per_box = models.PositiveIntegerField(
+        default=1, help_text="1 karobkada necha dona (qadoq soni)"
+    )
+    box_name = models.CharField(
+        max_length=50, default="Karobka", blank=True, help_text="Qadoq turi (Karobka, Blok, Qop, Palet)"
+    )
+    allow_split_box = models.BooleanField(
+        default=True, help_text="Karobkani ochib donalab sotish mumkin"
+    )
+
+    # 2. Kubatura (m³) va o'lchamlar
+    length_cm = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True, help_text="Uzunligi (sm)"
+    )
+    width_cm = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True, help_text="Kengligi (sm)"
+    )
+    height_cm = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True, help_text="Balandligi (sm)"
+    )
+    volume_m3 = models.DecimalField(
+        max_digits=12, decimal_places=6, null=True, blank=True, help_text="Kubaturasi (m³)"
+    )
+    weight_kg = models.DecimalField(
+        max_digits=10, decimal_places=3, null=True, blank=True, help_text="Og'irligi (kg)"
+    )
+    is_fragile = models.BooleanField(
+        default=False, help_text="Sinuvchan / Nozik tovar (chinni, shisha, posuda)"
+    )
+
     class Meta:
         ordering = ["name"]
         constraints = [
@@ -64,6 +99,12 @@ class Product(TimeStampedModel):
                 fields=["barcode"], condition=~models.Q(barcode=""), name="uniq_product_barcode"
             )
         ]
+
+    def save(self, *args, **kwargs):
+        if self.length_cm and self.width_cm and self.height_cm:
+            vol = (Decimal(str(self.length_cm)) * Decimal(str(self.width_cm)) * Decimal(str(self.height_cm))) / Decimal("1000000")
+            self.volume_m3 = round(vol, 6)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.sku})"
