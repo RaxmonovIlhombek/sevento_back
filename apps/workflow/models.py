@@ -32,7 +32,9 @@ class ApprovalInstance(TimeStampedModel):
         CANCELLED = "cancelled", "Bekor qilindi"
 
     entity_type = models.CharField(max_length=50, db_index=True)
-    entity_id = models.BigIntegerField(db_index=True)
+    # Qo'lda yuborilgan so'rovda bog'langan hujjat yo'q (null)
+    entity_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+    title = models.CharField(max_length=200, blank=True)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     requested_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"

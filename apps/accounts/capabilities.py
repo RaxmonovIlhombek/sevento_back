@@ -21,6 +21,7 @@ CAPABILITIES: tuple[Capability, ...] = (
     Capability("users.manage", "Foydalanuvchi va rollarni boshqarish", "Tizim"),
     Capability("settings.manage", "Tizim sozlamalari", "Tizim"),
     Capability("audit.view", "Audit jurnalini ko'rish", "Tizim"),
+    Capability("workflow.manage", "Tasdiqlash qoidalari va barcha so'rovlar", "Tizim"),
     # katalog
     Capability("catalog.view", "Katalogni ko'rish", "Katalog"),
     Capability("catalog.manage", "Tovar va kategoriyalarni boshqarish", "Katalog"),
