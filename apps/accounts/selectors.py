@@ -56,6 +56,8 @@ def me_payload(user: User) -> dict:
         "username": user.username,
         "full_name": user.full_name,
         "phone": user.phone,
+        "avatar": user.avatar or None,
+        "date_joined": user.date_joined,
         "is_superuser": user.is_superuser,
         "role": {"code": user.role.code, "name": user.role.name} if user.role_id else None,
         "capabilities": sorted(user.get_capabilities()),

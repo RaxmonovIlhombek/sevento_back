@@ -31,6 +31,9 @@ class User(AbstractUser):
 
     full_name = models.CharField("F.I.O.", max_length=150)
     phone = models.CharField(max_length=30, blank=True)
+    # Profil rasmi: brauzerda kichraytirilgan (≈256px) data-URL. Faylga emas, MB ga saqlanadi —
+    # Render kabi doimiy diski yo'q muhitda ham yo'qolmaydi.
+    avatar = models.TextField(blank=True, default="")
     role = models.ForeignKey(
         Role, null=True, blank=True, on_delete=models.PROTECT, related_name="users"
     )

@@ -188,3 +188,43 @@ def test_capabilities_list(seller_client):
     assert response.status_code == 200
     codes = {c["code"] for c in response.json()}
     assert {"sales.create", "users.manage", "audit.view"} <= codes
+
+
+# --- profil rasmi ---
+
+AVATAR_URL = "/api/v1/auth/me/avatar/"
+# 1x1 JPEG (JFIF sarlavhasi bilan boshlanadi)
+JPEG_B64 = "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////"
+GOOD_IMAGE = f"data:image/jpeg;base64,{JPEG_B64}"
+
+
+def test_avatar_set_appears_in_me_and_can_be_removed(seller_client):
+    assert seller_client.get(ME).json()["avatar"] is None
+
+    response = seller_client.put(AVATAR_URL, {"image": GOOD_IMAGE}, format="json")
+    assert response.status_code == 200
+    assert response.json()["avatar"] == GOOD_IMAGE
+    assert seller_client.get(ME).json()["avatar"] == GOOD_IMAGE
+
+    response = seller_client.delete(AVATAR_URL)
+    assert response.status_code == 200
+    assert response.json()["avatar"] is None
+
+
+@pytest.mark.parametrize(
+    "image",
+    [
+        "https://example.com/a.jpg",  # data-URL emas
+        "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=",  # SVG ruxsat etilmaydi
+        "data:image/jpeg;base64,!!!not-base64!!!",
+        "data:image/png;base64,/9j/4AAQSkZJRgABAQEA",  # PNG deb JPEG yuborilgan
+        "data:image/jpeg;base64," + "A" * 250_000,  # juda katta
+    ],
+)
+def test_avatar_rejects_bad_input(seller_client, image):
+    response = seller_client.put(AVATAR_URL, {"image": image}, format="json")
+    assert response.status_code == 400
+
+
+def test_avatar_requires_login(api_client):
+    assert api_client.put(AVATAR_URL, {"image": GOOD_IMAGE}, format="json").status_code == 401

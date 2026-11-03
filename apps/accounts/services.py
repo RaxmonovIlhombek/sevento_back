@@ -291,3 +291,10 @@ def ensure_preset_roles() -> int:
         )
         created += int(was_created)
     return created
+
+
+def set_avatar(*, user: User, image: str) -> User:
+    """Profil rasmini o'rnatadi yoki ("" bo'lsa) o'chiradi."""
+    user.avatar = image
+    user.save(update_fields=["avatar"])
+    return user

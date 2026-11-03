@@ -16,6 +16,7 @@ from . import selectors, services
 from .cookies import delete_refresh_cookie, get_refresh_cookie, set_refresh_cookie
 from .models import Role, User
 from .serializers import (
+    AvatarSerializer,
     CapabilitySerializer,
     ChangePasswordSerializer,
     LoginResponseSerializer,
@@ -99,6 +100,22 @@ class MeView(APIView):
     @extend_schema(responses=MeSerializer, tags=["auth"])
     def get(self, request):
         return Response(MeSerializer(selectors.me_payload(request.user)).data)
+
+
+class MeAvatarView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(request=AvatarSerializer, responses=MeSerializer, tags=["auth"])
+    def put(self, request):
+        serializer = AvatarSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = services.set_avatar(user=request.user, image=serializer.validated_data["image"])
+        return Response(MeSerializer(selectors.me_payload(user)).data)
+
+    @extend_schema(request=None, responses=MeSerializer, tags=["auth"])
+    def delete(self, request):
+        user = services.set_avatar(user=request.user, image="")
+        return Response(MeSerializer(selectors.me_payload(user)).data)
 
 
 class ChangePasswordView(APIView):

@@ -32,6 +32,8 @@ class MeSerializer(serializers.Serializer):
     username = serializers.CharField()
     full_name = serializers.CharField()
     phone = serializers.CharField()
+    avatar = serializers.CharField(allow_null=True)
+    date_joined = serializers.DateTimeField()
     is_superuser = serializers.BooleanField()
     role = RoleBriefSerializer(allow_null=True)
     capabilities = serializers.ListField(child=serializers.CharField())
@@ -205,3 +207,34 @@ def _validate_password(value: str) -> str:
     except DjangoValidationError as exc:
         raise serializers.ValidationError(list(exc.messages), code="password_too_weak") from None
     return value
+
+
+AVATAR_MAX_CHARS = 200_000  # ≈150 KB rasm; brauzer 256px JPEG ni ~20-40 KB qilib yuboradi
+_AVATAR_PREFIXES = {
+    "data:image/jpeg;base64,": (b"\xff\xd8\xff",),
+    "data:image/png;base64,": (b"\x89PNG\r\n\x1a\n",),
+    "data:image/webp;base64,": (b"RIFF",),
+}
+
+
+class AvatarSerializer(serializers.Serializer):
+    image = serializers.CharField(max_length=AVATAR_MAX_CHARS + 100, trim_whitespace=True)
+
+    def validate_image(self, value: str) -> str:
+        import base64
+        import binascii
+
+        prefix = next((p for p in _AVATAR_PREFIXES if value.startswith(p)), None)
+        if prefix is None:
+            raise serializers.ValidationError("Faqat JPEG, PNG yoki WebP rasm yuklash mumkin")
+        magics = _AVATAR_PREFIXES[prefix]
+        payload = value[len(prefix) :]
+        if len(payload) > AVATAR_MAX_CHARS:
+            raise serializers.ValidationError("Rasm juda katta (eng ko'pi bilan ~150 KB)")
+        try:
+            raw = base64.b64decode(payload, validate=True)
+        except (binascii.Error, ValueError):
+            raise serializers.ValidationError("Rasm formati noto'g'ri") from None
+        if not any(raw.startswith(m) for m in magics):
+            raise serializers.ValidationError("Fayl rasm emas")
+        return value
