@@ -51,3 +51,31 @@ class TwoFactorDevice(TimeStampedModel):
             f"otpauth://totp/{issuer}:{self.user.username}?secret={self.secret}"
             f"&issuer={issuer}&algorithm=SHA1&digits=6&period=30"
         )
+
+
+class LoginEvent(models.Model):
+    """Kirish urinishlari (muvaffaqiyatli va xato): kim, qachon, qaysi qurilma va IP dan."""
+
+    class Reason(models.TextChoices):
+        BAD_CREDENTIALS = "bad_credentials", "Login yoki parol xato"
+        INACTIVE = "inactive", "Hisob o'chirilgan"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    username = models.CharField(max_length=150, db_index=True)
+    success = models.BooleanField(default=True, db_index=True)
+    reason = models.CharField(max_length=20, blank=True)
+    ip = models.CharField(max_length=45, blank=True)
+    user_agent = models.CharField(max_length=500, blank=True)
+    browser = models.CharField(max_length=60, blank=True)
+    os = models.CharField(max_length=60, blank=True)
+    device_type = models.CharField(max_length=20, blank=True)  # desktop | mobile | tablet | bot
+    created_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [models.Index(fields=["user", "-created_at"])]
+
+    def __str__(self):
+        return f"{self.username} {'✓' if self.success else '✗'} {self.created_at:%Y-%m-%d %H:%M}"
