@@ -56,3 +56,10 @@ class UserLoginSummarySerializer(serializers.Serializer):
     last_device_type = serializers.CharField(allow_blank=True)
     logins_30d = serializers.IntegerField()
     failed_30d = serializers.IntegerField()
+
+
+class CurrentDeviceSerializer(serializers.Serializer):
+    ip = serializers.CharField(allow_blank=True)
+    browser = serializers.CharField(allow_blank=True)
+    os = serializers.CharField(allow_blank=True)
+    device_type = serializers.CharField(allow_blank=True)

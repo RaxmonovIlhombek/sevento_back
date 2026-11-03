@@ -85,3 +85,18 @@ def test_mine_is_available_to_everyone(seller_client, seller):
     response = seller_client.get("/api/v1/security/logins/mine/")
     assert response.status_code == 200
     assert [r["username"] for r in response.json()] == [seller.username]
+
+
+def test_current_device_is_parsed_from_request(seller_client):
+    response = seller_client.get(
+        "/api/v1/security/logins/current/",
+        HTTP_USER_AGENT=IPHONE,
+        HTTP_X_FORWARDED_FOR="10.7.7.7",
+    )
+    assert response.status_code == 200
+    assert response.json() == {
+        "ip": "10.7.7.7",
+        "browser": "Safari 17",
+        "os": "iOS",
+        "device_type": "mobile",
+    }

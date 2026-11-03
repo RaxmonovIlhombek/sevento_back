@@ -10,10 +10,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from core.api.mixins import CapabilityViewSetMixin
+from core.middleware import get_client_ip
 
+from .devices import parse_user_agent
 from .filters import LoginEventFilter
 from .models import LoginEvent, TwoFactorDevice, _generate_secret, verify_totp
 from .serializers import (
+    CurrentDeviceSerializer,
     LoginEventSerializer,
     TwoFactorCodeSerializer,
     TwoFactorSetupSerializer,
@@ -99,6 +102,7 @@ class LoginEventViewSet(CapabilityViewSetMixin, viewsets.ReadOnlyModelViewSet):
         "retrieve": "users.manage",
         "summary": "users.manage",
         "mine": None,
+        "current": None,
     }
     filterset_class = LoginEventFilter
     search_fields = ["username", "user__full_name", "ip"]
@@ -114,6 +118,13 @@ class LoginEventViewSet(CapabilityViewSetMixin, viewsets.ReadOnlyModelViewSet):
         """Joriy foydalanuvchining o'z kirishlari (so'nggi 50 ta)."""
         rows = self.get_queryset().filter(user=request.user)[:50]
         return Response(LoginEventSerializer(rows, many=True).data)
+
+    @extend_schema(responses=CurrentDeviceSerializer)
+    @action(detail=False, methods=["get"], pagination_class=None)
+    def current(self, request):
+        """Hozir ishlatilayotgan qurilma: brauzer, OS, qurilma turi va IP (shu so'rovdan)."""
+        agent = request.META.get("HTTP_USER_AGENT", "")[:500]
+        return Response({"ip": get_client_ip(request) or "", **parse_user_agent(agent)})
 
     @extend_schema(responses=UserLoginSummarySerializer(many=True))
     @action(detail=False, methods=["get"], pagination_class=None)
