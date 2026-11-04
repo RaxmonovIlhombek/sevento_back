@@ -79,6 +79,14 @@ CAPABILITIES: tuple[Capability, ...] = (
     # yetkazish (kuryer)
     Capability("deliveries.view", "Yetkazishlarni ko'rish (o'ziga biriktirilgan)", "Yetkazish"),
     Capability("deliveries.manage", "Yetkazish holatini yangilash", "Yetkazish"),
+    # buyurtma jarayoni: omborchi → operator → kuryer
+    Capability(
+        "fulfillment.view", "Yetkazish jarayonini kuzatish (nuqtadagi hammasi)", "Yetkazish"
+    ),
+    Capability("fulfillment.pack", "Buyurtmani taxlash (omborchi)", "Yetkazish"),
+    Capability("fulfillment.verify", "Taxlanganini tekshirish (operator)", "Yetkazish"),
+    Capability("fulfillment.manage", "Yetkazishni bekor qilish va boshqarish", "Yetkazish"),
+    Capability("hr.staff.manage", "O'z nuqtasi xodimlarini yollash va boshqarish", "Kadrlar"),
 )
 
 CAPABILITY_CODES: frozenset[str] = frozenset(c.code for c in CAPABILITIES)
@@ -140,6 +148,7 @@ ROLE_PRESETS: dict[str, dict] = {
             "inventory.counts.manage",
             "inventory.writeoffs.manage",
             "reports.view",
+            "fulfillment.pack",
         ],
     },
     "seller": {
@@ -195,6 +204,9 @@ ROLE_PRESETS: dict[str, dict] = {
             "inventory.transfers.create",
             "inventory.transfers.receive",
             "inventory.writeoffs.manage",
+            "fulfillment.view",
+            "fulfillment.manage",
+            "hr.staff.manage",
         ],
     },
     "courier": {
@@ -204,4 +216,37 @@ ROLE_PRESETS: dict[str, dict] = {
             "deliveries.manage",
         ],
     },
+    "operator": {
+        "name": "Operator",
+        "capabilities": [
+            "catalog.view",
+            "inventory.view",
+            "sales.view",
+            "customers.view",
+            "fulfillment.view",
+            "fulfillment.verify",
+        ],
+    },
 }
+
+# Filial buxgalteri: buxgalter huquqlari, lekin faqat biriktirilgan nuqta(lar) ma'lumoti
+ROLE_PRESETS["branch_accountant"] = {
+    "name": "Filial buxgalteri",
+    "capabilities": [
+        c for c in ROLE_PRESETS["accountant"]["capabilities"] if c != "branches.view_all"
+    ],
+}
+
+# Rahbarlar kimni qaysi rolga yollay oladi (filial rahbari — faqat o'z quyi xodimlarini)
+BRANCH_STAFF_ROLES = ("storekeeper", "seller", "operator", "courier", "branch_accountant")
+
+
+def assignable_role_codes(user) -> set[str] | None:
+    """None — har qanday rol; aks holda ruxsat etilgan rol kodlari."""
+    if user.has_capability("users.manage"):
+        return None
+    if user.has_capability("hr.manage"):
+        return {code for code in ROLE_PRESETS if code != "owner"}
+    if user.has_capability("hr.staff.manage"):
+        return set(BRANCH_STAFF_ROLES)
+    return set()

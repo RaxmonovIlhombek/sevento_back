@@ -67,8 +67,17 @@ def cashbox_balance(branch_id: int, currency_code: str) -> "Cashbox | None":
 # --- mijozlar va qarzlar ---
 
 
-def customers_queryset() -> QuerySet[Customer]:
-    return Customer.objects.all()
+def customers_queryset(user=None) -> QuerySet[Customer]:
+    """user berilsa — o'z nuqtalariga biriktirilgan mijozlar (egasi — hammasi).
+
+    Hech qaysi nuqtaga biriktirilmagan (eski) mijozlar umumiy ro'yxatda qoladi, aks holda
+    ularni kassada topib bo'lmaydi; yangi mijoz esa doim yaratgan xodim nuqtasiga yoziladi.
+    """
+    queryset = Customer.objects.all()
+    ids = user.accessible_branch_ids() if user is not None else None
+    if ids is None:
+        return queryset
+    return queryset.filter(Q(primary_branch_id__in=ids) | Q(primary_branch__isnull=True))
 
 
 def customer_balances(customer_ids) -> dict[int, dict[str, Decimal]]:

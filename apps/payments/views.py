@@ -4,7 +4,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from apps.currency import selectors as currency_selectors
@@ -187,6 +187,26 @@ def _customer_info(customers) -> dict[int, dict]:
 
 
 @extend_schema(tags=["payments"])
+def _scope_primary_branch(user, data: dict, *, creating: bool) -> dict:
+    """Filialga biriktirilgan xodim mijozni faqat o'z nuqtasiga yoza oladi.
+
+    Yangi mijozda nuqta ko'rsatilmasa — xodimning asosiy nuqtasi qo'yiladi.
+    """
+    ids = user.accessible_branch_ids()
+    if ids is None:
+        return data
+    data = dict(data)
+    branch = data.get("primary_branch")
+    if branch is not None and branch.pk not in ids:
+        raise PermissionDenied("Bu nuqta uchun ruxsat yo'q")
+    if creating and branch is None:
+        link = user.branch_links.order_by("-is_default", "id").first()
+        if link is None:
+            raise PermissionDenied("Sizga hech qanday nuqta biriktirilmagan")
+        data["primary_branch"] = link.branch
+    return data
+
+
 class CustomerViewSet(
     CapabilityViewSetMixin,
     mixins.ListModelMixin,
@@ -213,7 +233,7 @@ class CustomerViewSet(
     ordering = ["name", "id"]
 
     def get_queryset(self):
-        return selectors.customers_queryset()
+        return selectors.customers_queryset(self.request.user)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -244,7 +264,8 @@ class CustomerViewSet(
     def create(self, request, *args, **kwargs):
         serializer = CustomerWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        customer = services.save_customer(actor=request.user, **serializer.validated_data)
+        data = _scope_primary_branch(request.user, serializer.validated_data, creating=True)
+        customer = services.save_customer(actor=request.user, **data)
         return Response(self._detail(customer), status=status.HTTP_201_CREATED)
 
     @extend_schema(request=CustomerWriteSerializer, responses=CustomerDetailSerializer)
@@ -253,9 +274,8 @@ class CustomerViewSet(
         customer = self.get_object()
         serializer = CustomerWriteSerializer(data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        customer = services.save_customer(
-            actor=request.user, customer=customer, **serializer.validated_data
-        )
+        data = _scope_primary_branch(request.user, serializer.validated_data, creating=False)
+        customer = services.save_customer(actor=request.user, customer=customer, **data)
         return Response(self._detail(customer))
 
     @extend_schema(responses=LedgerEntrySerializer(many=True))
