@@ -6,6 +6,9 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from apps.accounts.capabilities import assignable_role_codes
+from apps.accounts.models import Role
+from apps.branches.models import Branch
 from core.api.permissions import HasCapability, crud_capability_map
 
 from . import services
@@ -15,6 +18,7 @@ from .serializers import (
     DepartmentSerializer,
     EmployeeSerializer,
     EmployeeSerializerScoped,
+    HireOptionsSerializer,
     HireSerializer,
     PositionSerializer,
     TerminateSerializer,
@@ -50,7 +54,13 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     capability_map = crud_capability_map(
         "hr.view",
         "hr.manage",
-        extra={"update": STAFF, "partial_update": STAFF, "hire": STAFF, "terminate": STAFF},
+        extra={
+            "update": STAFF,
+            "partial_update": STAFF,
+            "hire": STAFF,
+            "hire_options": STAFF,
+            "terminate": STAFF,
+        },
     )
     queryset = Employee.objects.select_related("user", "department", "position", "branch").all()
     serializer_class = EmployeeSerializer
@@ -74,6 +84,32 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         services.check_manageable(self.request.user, serializer.instance)
         serializer.save()
+
+    @extend_schema(responses=HireOptionsSerializer)
+    @action(detail=False, methods=["get"], url_path="hire-options", pagination_class=None)
+    def hire_options(self, request):
+        """Yollash formasi uchun: faqat shu foydalanuvchi tanlay oladigan rol va nuqtalar."""
+        user = request.user
+        allowed = assignable_role_codes(user)
+        roles = Role.objects.order_by("name")
+        if allowed is not None:
+            roles = roles.filter(code__in=allowed)
+        branches = Branch.objects.filter(is_active=True).order_by("name")
+        branch_ids = user.accessible_branch_ids()
+        if branch_ids is not None:
+            branches = branches.filter(pk__in=branch_ids)
+        data = {
+            "roles": [{"id": r.pk, "code": r.code, "name": r.name} for r in roles],
+            "branches": [{"id": b.pk, "code": b.code, "name": b.name} for b in branches],
+            "departments": list(
+                Department.objects.filter(is_active=True).order_by("name").values("id", "name")
+            ),
+            "positions": [
+                {"id": p.pk, "name": p.name, "department": p.department_id}
+                for p in Position.objects.filter(is_active=True).order_by("name")
+            ],
+        }
+        return Response(data)
 
     @extend_schema(request=HireSerializer, responses={201: EmployeeSerializer})
     @action(detail=False, methods=["post"])

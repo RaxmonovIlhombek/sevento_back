@@ -109,5 +109,31 @@ class HireSerializer(serializers.Serializer):
         return attrs
 
 
+class _OptionSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class _RoleOptionSerializer(_OptionSerializer):
+    code = serializers.CharField()
+
+
+class _BranchOptionSerializer(_OptionSerializer):
+    code = serializers.CharField()
+
+
+class _PositionOptionSerializer(_OptionSerializer):
+    department = serializers.IntegerField()
+
+
+class HireOptionsSerializer(serializers.Serializer):
+    """Yollash formasi uchun: foydalanuvchi o'zi tanlay oladigan qiymatlar."""
+
+    roles = _RoleOptionSerializer(many=True)
+    branches = _BranchOptionSerializer(many=True)
+    departments = _OptionSerializer(many=True)
+    positions = _PositionOptionSerializer(many=True)
+
+
 class TerminateSerializer(serializers.Serializer):
     termination_date = serializers.DateField(required=False)

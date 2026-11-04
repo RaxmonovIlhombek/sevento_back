@@ -164,3 +164,18 @@ def test_new_roles_exist_with_right_scope(roles):
     assert roles["operator"].capabilities and "fulfillment.verify" in roles["operator"].capabilities
     assert "fulfillment.pack" in roles["storekeeper"].capabilities
     assert Role.objects.filter(code="operator").exists()
+
+
+def test_hire_options_are_scoped(roles, branch, branch2, manager, org, as_user, owner_client):
+    data = as_user(manager).get("/api/v1/hr/employees/hire-options/").json()
+    assert [b["id"] for b in data["branches"]] == [branch2.id]
+    codes = {r["code"] for r in data["roles"]}
+    assert codes == {"storekeeper", "seller", "operator", "courier", "branch_accountant"}
+    assert data["departments"] and data["positions"]
+    owner_data = owner_client.get("/api/v1/hr/employees/hire-options/").json()
+    assert {b["id"] for b in owner_data["branches"]} >= {branch.id, branch2.id}
+    assert "branch_manager" in {r["code"] for r in owner_data["roles"]}
+
+
+def test_hire_options_forbidden_for_seller(seller_client):
+    assert seller_client.get("/api/v1/hr/employees/hire-options/").status_code == 403
