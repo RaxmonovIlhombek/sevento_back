@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -66,7 +67,10 @@ class Product(TimeStampedModel):
         default=1, help_text="1 karobkada necha dona (qadoq soni)"
     )
     box_name = models.CharField(
-        max_length=50, default="Karobka", blank=True, help_text="Qadoq turi (Karobka, Blok, Qop, Palet)"
+        max_length=50,
+        default="Karobka",
+        blank=True,
+        help_text="Qadoq turi (Karobka, Blok, Qop, Palet)",
     )
     allow_split_box = models.BooleanField(
         default=True, help_text="Karobkani ochib donalab sotish mumkin"
@@ -102,7 +106,11 @@ class Product(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         if self.length_cm and self.width_cm and self.height_cm:
-            vol = (Decimal(str(self.length_cm)) * Decimal(str(self.width_cm)) * Decimal(str(self.height_cm))) / Decimal("1000000")
+            vol = (
+                Decimal(str(self.length_cm))
+                * Decimal(str(self.width_cm))
+                * Decimal(str(self.height_cm))
+            ) / Decimal("1000000")
             self.volume_m3 = round(vol, 6)
         super().save(*args, **kwargs)
 

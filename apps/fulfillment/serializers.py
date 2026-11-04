@@ -96,8 +96,11 @@ class NoteSerializer(serializers.Serializer):
     note = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
 
 
-class ReasonSerializer(serializers.Serializer):
+class FulfillmentReasonSerializer(serializers.Serializer):
     reason = serializers.CharField(max_length=255)
+
+
+ReasonSerializer = FulfillmentReasonSerializer
 
 
 class SummarySerializer(serializers.Serializer):

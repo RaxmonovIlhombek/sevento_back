@@ -53,12 +53,16 @@ class ApprovalInstanceViewSet(
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     ordering = ["-created_at"]
 
+    queryset = ApprovalInstance.objects.none()
+
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return ApprovalInstance.objects.none()
         qs = ApprovalInstance.objects.select_related("requested_by", "branch").prefetch_related(
             "steps__approver"
         )
         user = self.request.user
-        if user.has_capability(MANAGE):
+        if getattr(user, "is_authenticated", False) and user.has_capability(MANAGE):
             return qs
         return qs.filter(Q(requested_by=user) | Q(steps__approver=user)).distinct()
 

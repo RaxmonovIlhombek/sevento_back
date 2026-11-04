@@ -248,11 +248,19 @@ Tannarx strategiyasi namunasi (shartnoma):
 class CostingStrategy(Protocol):
     key: str
 
-    def on_receive(self, *, branch_id: int, product_id: int, quantity: Decimal,
-                   unit_cost_base: Decimal, source: DocRef) -> Batch: ...
+    def on_receive(
+        self,
+        *,
+        branch_id: int,
+        product_id: int,
+        quantity: Decimal,
+        unit_cost_base: Decimal,
+        source: DocRef,
+    ) -> Batch: ...
 
-    def allocate_issue(self, *, branch_id: int, product_id: int,
-                       quantity: Decimal) -> list[BatchAllocation]:
+    def allocate_issue(
+        self, *, branch_id: int, product_id: int, quantity: Decimal
+    ) -> list[BatchAllocation]:
         """Chiqim uchun qaysi partiyadan qancha va qanday tannarxda olinishini qaytaradi.
         Partiyalarni select_for_update bilan qulflaydi. Yetmasa InsufficientStock."""
 ```

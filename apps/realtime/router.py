@@ -131,9 +131,9 @@ route(
     "role.updated",
     groups=lambda e: [f"role_{e.code}"],  # type: ignore[attr-defined]
     msg_type="session.revoked",
-    payload=lambda e: {"reason": "permissions_changed"}
-    if "capabilities" in (e.changes or {})
-    else None,  # type: ignore[attr-defined]
+    payload=lambda e: (
+        {"reason": "permissions_changed"} if "capabilities" in (e.changes or {}) else None
+    ),  # type: ignore[attr-defined]
     handler="revoke",
 )
 route(
@@ -324,8 +324,9 @@ route(
 route(
     "transfer.received",
     # farq bo'lsa rahbar (dashboard) ham xabardor bo'ladi — o'sha xabar, takrorsiz
-    groups=lambda e: _transfer_branches(e)
-    + (_capability_users("dashboard.view") if e.has_discrepancy else []),  # type: ignore[attr-defined]
+    groups=lambda e: (
+        _transfer_branches(e) + (_capability_users("dashboard.view") if e.has_discrepancy else [])
+    ),  # type: ignore[attr-defined]
     payload=lambda e: {  # type: ignore[attr-defined]
         **_transfer_payload(e),
         "status": "received",
@@ -339,9 +340,11 @@ route(
 route(
     "transfer.cancelled",
     # qoralama qabul qiluvchiga ko'rinmagan — unga faqat jo'natilgani bekor bo'lsa
-    groups=lambda e: _transfer_branches(e)
-    if e.previous_status == "sent"  # type: ignore[attr-defined]
-    else [f"branch_{e.from_branch_id}"],  # type: ignore[attr-defined]
+    groups=lambda e: (
+        _transfer_branches(e)
+        if e.previous_status == "sent"  # type: ignore[attr-defined]
+        else [f"branch_{e.from_branch_id}"]
+    ),  # type: ignore[attr-defined]
     payload=lambda e: {  # type: ignore[attr-defined]
         **_transfer_payload(e),
         "status": "cancelled",

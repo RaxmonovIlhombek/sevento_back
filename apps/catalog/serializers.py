@@ -228,8 +228,10 @@ class ProductWriteSerializer(serializers.ModelSerializer):
         value = (value or "").strip()
         if not value:
             return ""
-        if hasattr(self, 'initial_data') and value == self.initial_data.get('barcode'):
-            raise serializers.ValidationError("Karobka shtrix-kodi dona shtrix-kodi bilan bir xil bo'lmasin")
+        if hasattr(self, "initial_data") and value == self.initial_data.get("barcode"):
+            raise serializers.ValidationError(
+                "Karobka shtrix-kodi dona shtrix-kodi bilan bir xil bo'lmasin"
+            )
         return value
 
 

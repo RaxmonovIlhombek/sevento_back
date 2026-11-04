@@ -950,6 +950,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/Me'
           description: ''
+  /api/v1/auth/me/avatar/:
+    put:
+      operationId: auth_me_avatar_update
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvatarRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AvatarRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: ''
+    delete:
+      operationId: auth_me_avatar_destroy
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/auth/refresh/:
     post:
       operationId: auth_refresh_create
@@ -2710,6 +2742,324 @@ paths:
                 items:
                   $ref: '#/components/schemas/LatestRate'
           description: ''
+  /api/v1/fulfillment/orders/:
+    get:
+      operationId: fulfillment_orders_list
+      description: 'Yetkazish jarayoni: omborchi taxlaydi → operator tekshiradi →
+        kuryer yetkazadi.'
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: number
+      - in: query
+        name: courier
+        schema:
+          type: number
+      - in: query
+        name: mine
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - cancelled
+            - delivered
+            - on_the_way
+            - packed
+            - pending
+            - ready
+        description: |-
+          * `pending` - Omborchi kutmoqda
+          * `packed` - Taxlandi — operator tekshiradi
+          * `ready` - Tayyor — kuryer kutmoqda
+          * `on_the_way` - Yo'lda
+          * `delivered` - Yetkazildi
+          * `cancelled` - Bekor qilindi
+        explode: true
+        style: form
+      tags:
+      - fulfillment
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFulfillmentList'
+          description: ''
+    post:
+      operationId: fulfillment_orders_create
+      description: 'Yetkazish jarayoni: omborchi taxlaydi → operator tekshiradi →
+        kuryer yetkazadi.'
+      tags:
+      - fulfillment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FulfillmentCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FulfillmentCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FulfillmentDetail'
+          description: ''
+  /api/v1/fulfillment/orders/{id}/:
+    get:
+      operationId: fulfillment_orders_retrieve
+      description: 'Yetkazish jarayoni: omborchi taxlaydi → operator tekshiradi →
+        kuryer yetkazadi.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fulfillment.
+        required: true
+      tags:
+      - fulfillment
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FulfillmentDetail'
+          description: ''
+  /api/v1/fulfillment/orders/{id}/accept/:
+    post:
+      operationId: fulfillment_orders_accept_create
+      description: 'Yetkazish jarayoni: omborchi taxlaydi → operator tekshiradi →
+        kuryer yetkazadi.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fulfillment.
+        required: true
+      tags:
+      - fulfillment
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FulfillmentDetail'
+          description: ''
+  /api/v1/fulfillment/orders/{id}/cancel/:
+    post:
+      operationId: fulfillment_orders_cancel_create
+      description: 'Yetkazish jarayoni: omborchi taxlaydi → operator tekshiradi →
+        kuryer yetkazadi.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fulfillment.
+        required: true
+      tags:
+      - fulfillment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FulfillmentReasonRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FulfillmentReasonRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FulfillmentDetail'
+          description: ''
+  /api/v1/fulfillment/orders/{id}/deliver/:
+    post:
+      operationId: fulfillment_orders_deliver_create
+      description: 'Yetkazish jarayoni: omborchi taxlaydi → operator tekshiradi →
+        kuryer yetkazadi.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fulfillment.
+        required: true
+      tags:
+      - fulfillment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FulfillmentDetail'
+          description: ''
+  /api/v1/fulfillment/orders/{id}/pack/:
+    post:
+      operationId: fulfillment_orders_pack_create
+      description: 'Yetkazish jarayoni: omborchi taxlaydi → operator tekshiradi →
+        kuryer yetkazadi.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fulfillment.
+        required: true
+      tags:
+      - fulfillment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FulfillmentDetail'
+          description: ''
+  /api/v1/fulfillment/orders/{id}/reject/:
+    post:
+      operationId: fulfillment_orders_reject_create
+      description: 'Yetkazish jarayoni: omborchi taxlaydi → operator tekshiradi →
+        kuryer yetkazadi.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fulfillment.
+        required: true
+      tags:
+      - fulfillment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FulfillmentReasonRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FulfillmentReasonRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FulfillmentDetail'
+          description: ''
+  /api/v1/fulfillment/orders/{id}/verify/:
+    post:
+      operationId: fulfillment_orders_verify_create
+      description: 'Yetkazish jarayoni: omborchi taxlaydi → operator tekshiradi →
+        kuryer yetkazadi.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this fulfillment.
+        required: true
+      tags:
+      - fulfillment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FulfillmentDetail'
+          description: ''
+  /api/v1/fulfillment/orders/summary/:
+    get:
+      operationId: fulfillment_orders_summary_retrieve
+      description: 'Yetkazish jarayoni: omborchi taxlaydi → operator tekshiradi →
+        kuryer yetkazadi.'
+      tags:
+      - fulfillment
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Summary'
+          description: ''
   /api/v1/health/:
     get:
       operationId: health_retrieve
@@ -3012,10 +3362,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmployeeRequest'
+              $ref: '#/components/schemas/EmployeeSerializerScopedRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmployeeRequest'
+              $ref: '#/components/schemas/EmployeeSerializerScopedRequest'
         required: true
       security:
       - jwtAuth: []
@@ -3024,7 +3374,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Employee'
+                $ref: '#/components/schemas/EmployeeSerializerScoped'
           description: ''
     patch:
       operationId: hr_employees_partial_update
@@ -3041,10 +3391,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedEmployeeRequest'
+              $ref: '#/components/schemas/PatchedEmployeeSerializerScopedRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedEmployeeRequest'
+              $ref: '#/components/schemas/PatchedEmployeeSerializerScopedRequest'
       security:
       - jwtAuth: []
       responses:
@@ -3052,7 +3402,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Employee'
+                $ref: '#/components/schemas/EmployeeSerializerScoped'
           description: ''
     delete:
       operationId: hr_employees_destroy
@@ -3070,6 +3420,76 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/hr/employees/{id}/terminate/:
+    post:
+      operationId: hr_employees_terminate_create
+      description: 'Ishdan bo''shatish: tizimga kirish ham o''chiriladi.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this employee.
+        required: true
+      tags:
+      - hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TerminateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+  /api/v1/hr/employees/hire/:
+    post:
+      operationId: hr_employees_hire_create
+      description: 'Yangi xodim: login, rol va nuqta bilan birga yaratiladi.'
+      tags:
+      - hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HireRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HireRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+          description: ''
+  /api/v1/hr/employees/hire-options/:
+    get:
+      operationId: hr_employees_hire_options_retrieve
+      description: 'Yollash formasi uchun: faqat shu foydalanuvchi tanlay oladigan
+        rol va nuqtalar.'
+      tags:
+      - hr
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HireOptions'
+          description: ''
   /api/v1/hr/positions/:
     get:
       operationId: hr_positions_list
@@ -7845,6 +8265,223 @@ paths:
               schema:
                 $ref: '#/components/schemas/TwoFactorStatus'
           description: ''
+  /api/v1/security/logins/:
+    get:
+      operationId: security_logins_list
+      description: Kirish tarixi. Ro'yxat va xulosa — `users.manage`; `mine` — har
+        kim o'zinikini ko'radi.
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: device_type
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: success
+        schema:
+          type: boolean
+      - in: query
+        name: user
+        schema:
+          type: integer
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLoginEventList'
+          description: ''
+  /api/v1/security/logins/{id}/:
+    get:
+      operationId: security_logins_retrieve
+      description: Kirish tarixi. Ro'yxat va xulosa — `users.manage`; `mine` — har
+        kim o'zinikini ko'radi.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this login event.
+        required: true
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginEvent'
+          description: ''
+  /api/v1/security/logins/current/:
+    get:
+      operationId: security_logins_current_retrieve
+      description: 'Hozir ishlatilayotgan qurilma: brauzer, OS, qurilma turi va IP
+        (shu so''rovdan).'
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentDevice'
+          description: ''
+  /api/v1/security/logins/mine/:
+    get:
+      operationId: security_logins_mine_list
+      description: Joriy foydalanuvchining o'z kirishlari (so'nggi 50 ta).
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: device_type
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: success
+        schema:
+          type: boolean
+      - in: query
+        name: user
+        schema:
+          type: integer
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLoginEventList'
+          description: ''
+  /api/v1/security/logins/summary/:
+    get:
+      operationId: security_logins_summary_list
+      description: 'Har bir foydalanuvchi: oxirgi kirish, qurilma, IP va oxirgi 30
+        kundagi kirishlar soni.'
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: device_type
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: success
+        schema:
+          type: boolean
+      - in: query
+        name: user
+        schema:
+          type: integer
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserLoginSummary'
+          description: ''
   /api/v1/settings/:
     get:
       operationId: settings_list
@@ -8113,6 +8750,8 @@ paths:
   /api/v1/workflow/instances/:
     get:
       operationId: workflow_instances_list
+      description: So'rovlar. Oddiy foydalanuvchi faqat o'zi yuborgan yoki tasdiqlovchi
+        bo'lganini ko'radi.
       parameters:
       - in: query
         name: branch
@@ -8141,6 +8780,16 @@ paths:
         schema:
           type: integer
       - in: query
+        name: scope
+        schema:
+          type: string
+          enum:
+          - assigned
+          - mine
+        description: |-
+          * `assigned` - assigned
+          * `mine` - mine
+      - in: query
         name: status
         schema:
           type: string
@@ -8167,16 +8816,18 @@ paths:
           description: ''
     post:
       operationId: workflow_instances_create
+      description: So'rovlar. Oddiy foydalanuvchi faqat o'zi yuborgan yoki tasdiqlovchi
+        bo'lganini ko'radi.
       tags:
       - workflow
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApprovalInstanceRequest'
+              $ref: '#/components/schemas/CreateRequestRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ApprovalInstanceRequest'
+              $ref: '#/components/schemas/CreateRequestRequest'
         required: true
       security:
       - jwtAuth: []
@@ -8190,6 +8841,8 @@ paths:
   /api/v1/workflow/instances/{id}/:
     get:
       operationId: workflow_instances_retrieve
+      description: So'rovlar. Oddiy foydalanuvchi faqat o'zi yuborgan yoki tasdiqlovchi
+        bo'lganini ko'radi.
       parameters:
       - in: path
         name: id
@@ -8208,82 +8861,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApprovalInstance'
           description: ''
-    put:
-      operationId: workflow_instances_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this approval instance.
-        required: true
-      tags:
-      - workflow
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApprovalInstanceRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ApprovalInstanceRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApprovalInstance'
-          description: ''
-    patch:
-      operationId: workflow_instances_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this approval instance.
-        required: true
-      tags:
-      - workflow
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedApprovalInstanceRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedApprovalInstanceRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApprovalInstance'
-          description: ''
-    delete:
-      operationId: workflow_instances_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this approval instance.
-        required: true
-      tags:
-      - workflow
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
   /api/v1/workflow/instances/{id}/approve/:
     post:
       operationId: workflow_instances_approve_create
+      description: So'rovlar. Oddiy foydalanuvchi faqat o'zi yuborgan yoki tasdiqlovchi
+        bo'lganini ko'radi.
       parameters:
       - in: path
         name: id
@@ -8297,11 +8879,33 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApprovalInstanceRequest'
+              $ref: '#/components/schemas/DecisionRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ApprovalInstanceRequest'
+              $ref: '#/components/schemas/DecisionRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalInstance'
+          description: ''
+  /api/v1/workflow/instances/{id}/cancel/:
+    post:
+      operationId: workflow_instances_cancel_create
+      description: So'rovlar. Oddiy foydalanuvchi faqat o'zi yuborgan yoki tasdiqlovchi
+        bo'lganini ko'radi.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approval instance.
         required: true
+      tags:
+      - workflow
       security:
       - jwtAuth: []
       responses:
@@ -8314,6 +8918,8 @@ paths:
   /api/v1/workflow/instances/{id}/reject/:
     post:
       operationId: workflow_instances_reject_create
+      description: So'rovlar. Oddiy foydalanuvchi faqat o'zi yuborgan yoki tasdiqlovchi
+        bo'lganini ko'radi.
       parameters:
       - in: path
         name: id
@@ -8327,11 +8933,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApprovalInstanceRequest'
+              $ref: '#/components/schemas/DecisionRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ApprovalInstanceRequest'
-        required: true
+              $ref: '#/components/schemas/DecisionRequest'
       security:
       - jwtAuth: []
       responses:
@@ -8341,9 +8946,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApprovalInstance'
           description: ''
+  /api/v1/workflow/instances/summary/:
+    get:
+      operationId: workflow_instances_summary_retrieve
+      description: 'Menyu/tablar uchun sonlar: menga kelgan va o''zim yuborgan kutilayotganlar.'
+      tags:
+      - workflow
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowSummary'
+          description: ''
   /api/v1/workflow/rules/:
     get:
       operationId: workflow_rules_list
+      description: 'Qoidalar: faqat rahbar (workflow.manage) ko''radi va boshqaradi.'
       parameters:
       - in: query
         name: entity_type
@@ -8384,6 +9005,7 @@ paths:
           description: ''
     post:
       operationId: workflow_rules_create
+      description: 'Qoidalar: faqat rahbar (workflow.manage) ko''radi va boshqaradi.'
       tags:
       - workflow
       requestBody:
@@ -8407,6 +9029,7 @@ paths:
   /api/v1/workflow/rules/{id}/:
     get:
       operationId: workflow_rules_retrieve
+      description: 'Qoidalar: faqat rahbar (workflow.manage) ko''radi va boshqaradi.'
       parameters:
       - in: path
         name: id
@@ -8427,6 +9050,7 @@ paths:
           description: ''
     put:
       operationId: workflow_rules_update
+      description: 'Qoidalar: faqat rahbar (workflow.manage) ko''radi va boshqaradi.'
       parameters:
       - in: path
         name: id
@@ -8456,6 +9080,7 @@ paths:
           description: ''
     patch:
       operationId: workflow_rules_partial_update
+      description: 'Qoidalar: faqat rahbar (workflow.manage) ko''radi va boshqaradi.'
       parameters:
       - in: path
         name: id
@@ -8484,6 +9109,7 @@ paths:
           description: ''
     delete:
       operationId: workflow_rules_destroy
+      description: 'Qoidalar: faqat rahbar (workflow.manage) ko''radi va boshqaradi.'
       parameters:
       - in: path
         name: id
@@ -8721,28 +9347,39 @@ components:
           readOnly: true
         entity_type:
           type: string
-          maxLength: 50
+          readOnly: true
+        type_label:
+          type: string
+          readOnly: true
         entity_id:
           type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
+          readOnly: true
+          nullable: true
+        title:
+          type: string
+          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/ApprovalInstanceStatusEnum'
           readOnly: true
         requested_by:
           type: integer
+          readOnly: true
         requested_by_name:
           type: string
           readOnly: true
         branch:
           type: integer
+          readOnly: true
           nullable: true
+        branch_name:
+          type: string
+          readOnly: true
         amount:
           type: string
           format: decimal
           pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
         decided_at:
           type: string
           format: date-time
@@ -8750,10 +9387,21 @@ components:
           nullable: true
         notes:
           type: string
+          readOnly: true
         steps:
           type: array
           items:
             $ref: '#/components/schemas/ApprovalStep'
+          readOnly: true
+        current_approver_name:
+          type: string
+          nullable: true
+          readOnly: true
+        can_decide:
+          type: boolean
+          readOnly: true
+        can_cancel:
+          type: boolean
           readOnly: true
         created_at:
           type: string
@@ -8764,43 +9412,25 @@ components:
           format: date-time
           readOnly: true
       required:
+      - amount
+      - branch
+      - branch_name
+      - can_cancel
+      - can_decide
       - created_at
+      - current_approver_name
       - decided_at
       - entity_id
       - entity_type
       - id
+      - notes
       - requested_by
       - requested_by_name
       - status
       - steps
+      - title
+      - type_label
       - updated_at
-    ApprovalInstanceRequest:
-      type: object
-      properties:
-        entity_type:
-          type: string
-          minLength: 1
-          maxLength: 50
-        entity_id:
-          type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
-        requested_by:
-          type: integer
-        branch:
-          type: integer
-          nullable: true
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
-        notes:
-          type: string
-      required:
-      - entity_id
-      - entity_type
-      - requested_by
     ApprovalInstanceStatusEnum:
       enum:
       - pending
@@ -8822,6 +9452,9 @@ components:
         entity_type:
           type: string
           maxLength: 50
+        type_label:
+          type: string
+          readOnly: true
         min_amount:
           type: string
           format: decimal
@@ -8834,6 +9467,9 @@ components:
         branch:
           type: integer
           nullable: true
+        branch_name:
+          type: string
+          readOnly: true
         approver:
           type: integer
         approver_name:
@@ -8841,9 +9477,8 @@ components:
           readOnly: true
         sequence:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
         created_at:
@@ -8857,9 +9492,11 @@ components:
       required:
       - approver
       - approver_name
+      - branch_name
       - created_at
       - entity_type
       - id
+      - type_label
       - updated_at
     ApprovalRuleRequest:
       type: object
@@ -8884,9 +9521,8 @@ components:
           type: integer
         sequence:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
       required:
@@ -8905,11 +9541,10 @@ components:
           readOnly: true
         sequence:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         decision:
-          $ref: '#/components/schemas/DecisionEnum'
+          $ref: '#/components/schemas/ApprovalStepDecisionEnum'
         decided_at:
           type: string
           format: date-time
@@ -8925,26 +9560,16 @@ components:
       - approver_name
       - created_at
       - id
-    ApprovalStepRequest:
-      type: object
-      properties:
-        approver:
-          type: integer
-        sequence:
-          type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
-        decision:
-          $ref: '#/components/schemas/DecisionEnum'
-        decided_at:
-          type: string
-          format: date-time
-          nullable: true
-        comment:
-          type: string
-      required:
-      - approver
+    ApprovalStepDecisionEnum:
+      enum:
+      - pending
+      - approved
+      - rejected
+      type: string
+      description: |-
+        * `pending` - Kutilmoqda
+        * `approved` - Tasdiqlandi
+        * `rejected` - Rad etildi
     AuditLog:
       type: object
       properties:
@@ -9004,6 +9629,15 @@ components:
       - ip
       - payload
       - request_id
+    AvatarRequest:
+      type: object
+      properties:
+        image:
+          type: string
+          minLength: 1
+          maxLength: 200100
+      required:
+      - image
     BOMItem:
       type: object
       properties:
@@ -9405,6 +10039,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CashShiftStatusEnum'
           readOnly: true
+          default: open
         opened_by_name:
           type: string
           readOnly: true
@@ -9598,9 +10233,8 @@ components:
           nullable: true
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
         created_at:
@@ -9629,9 +10263,8 @@ components:
           nullable: true
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
       required:
@@ -9788,6 +10421,30 @@ components:
             $ref: '#/components/schemas/CountedLineRequest'
       required:
       - items
+    CreateRequestRequest:
+      type: object
+      properties:
+        entity_type:
+          $ref: '#/components/schemas/EntityTypeEnum'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        branch:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          default: ''
+          maxLength: 2000
+      required:
+      - amount
+      - entity_type
+      - title
     CreditStatus:
       type: object
       properties:
@@ -9835,16 +10492,14 @@ components:
           maxLength: 10
         decimal_places:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_base:
           type: boolean
           description: Tannarx, foyda va kredit limiti shu valyutada (sozlama currency.base_code).
@@ -9892,19 +10547,33 @@ components:
           maxLength: 10
         decimal_places:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
       required:
       - code
       - name
+    CurrentDevice:
+      type: object
+      properties:
+        ip:
+          type: string
+        browser:
+          type: string
+        os:
+          type: string
+        device_type:
+          type: string
+      required:
+      - browser
+      - device_type
+      - ip
+      - os
     CurrentPrice:
       type: object
       properties:
@@ -10594,16 +11263,13 @@ components:
       - open
       - overdue
       - overdue_count
-    DecisionEnum:
-      enum:
-      - pending
-      - approved
-      - rejected
-      type: string
-      description: |-
-        * `pending` - Kutilmoqda
-        * `approved` - Tasdiqlandi
-        * `rejected` - Rad etildi
+    DecisionRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+          default: ''
+          maxLength: 1000
     Department:
       type: object
       properties:
@@ -10778,6 +11444,125 @@ components:
       - hire_date
       - position
       - user
+    EmployeeSerializerScoped:
+      type: object
+      description: Tahrirlashda yangi nuqta foydalanuvchi doirasida bo'lishi shart.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+        user_username:
+          type: string
+          readOnly: true
+        user_full_name:
+          type: string
+          readOnly: true
+        employee_number:
+          type: string
+          maxLength: 40
+        department:
+          type: integer
+        department_name:
+          type: string
+          readOnly: true
+        position:
+          type: integer
+        position_name:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+        branch_name:
+          type: string
+          readOnly: true
+        hire_date:
+          type: string
+          format: date
+        termination_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/EmployeeStatusEnum'
+        base_salary:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        phone:
+          type: string
+          maxLength: 30
+        address:
+          type: string
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - branch
+      - branch_name
+      - created_at
+      - department
+      - department_name
+      - employee_number
+      - hire_date
+      - id
+      - position
+      - position_name
+      - updated_at
+      - user
+      - user_full_name
+      - user_username
+    EmployeeSerializerScopedRequest:
+      type: object
+      description: Tahrirlashda yangi nuqta foydalanuvchi doirasida bo'lishi shart.
+      properties:
+        user:
+          type: integer
+        employee_number:
+          type: string
+          minLength: 1
+          maxLength: 40
+        department:
+          type: integer
+        position:
+          type: integer
+        branch:
+          type: integer
+        hire_date:
+          type: string
+          format: date
+        termination_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/EmployeeStatusEnum'
+        base_salary:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+        phone:
+          type: string
+          maxLength: 30
+        address:
+          type: string
+        notes:
+          type: string
+      required:
+      - branch
+      - department
+      - employee_number
+      - hire_date
+      - position
+      - user
     EmployeeStatusEnum:
       enum:
       - active
@@ -10788,6 +11573,22 @@ components:
         * `active` - Faol
         * `on_leave` - Ta'tilda
         * `terminated` - Ishdan bo'shatilgan
+    EntityTypeEnum:
+      enum:
+      - discount
+      - writeoff
+      - expense
+      - refund
+      - purchase
+      - other
+      type: string
+      description: |-
+        * `discount` - discount
+        * `writeoff` - writeoff
+        * `expense` - expense
+        * `refund` - refund
+        * `purchase` - purchase
+        * `other` - other
     ErrorBody:
       type: object
       properties:
@@ -10989,9 +11790,8 @@ components:
           readOnly: true
         number:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         start_date:
           type: string
           format: date
@@ -11024,9 +11824,8 @@ components:
           type: integer
         number:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         start_date:
           type: string
           format: date
@@ -11048,9 +11847,8 @@ components:
           readOnly: true
         year:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         start_date:
           type: string
           format: date
@@ -11079,9 +11877,8 @@ components:
       properties:
         year:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         start_date:
           type: string
           format: date
@@ -11102,6 +11899,338 @@ components:
       description: |-
         * `pdf` - PDF
         * `xlsx` - Excel
+    Fulfillment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sale:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/FulfillmentStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        address:
+          type: string
+          readOnly: true
+        contact_phone:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        reject_reason:
+          type: string
+          readOnly: true
+        customer_name:
+          type: string
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        packed_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        packed_by_name:
+          type: string
+          readOnly: true
+        packed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        verified_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        verified_by_name:
+          type: string
+          readOnly: true
+        verified_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        courier:
+          type: integer
+          readOnly: true
+          nullable: true
+        courier_name:
+          type: string
+          readOnly: true
+        accepted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        delivered_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        delivered_note:
+          type: string
+          readOnly: true
+        cancelled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        cancel_reason:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - accepted_at
+      - address
+      - branch
+      - branch_name
+      - cancel_reason
+      - cancelled_at
+      - contact_phone
+      - courier
+      - courier_name
+      - created_at
+      - currency_code
+      - customer_name
+      - delivered_at
+      - delivered_note
+      - id
+      - note
+      - number
+      - packed_at
+      - packed_by
+      - packed_by_name
+      - reject_reason
+      - sale
+      - status
+      - status_label
+      - total
+      - updated_at
+      - verified_at
+      - verified_by
+      - verified_by_name
+    FulfillmentCreateRequest:
+      type: object
+      properties:
+        sale:
+          type: integer
+        address:
+          type: string
+          default: ''
+          maxLength: 255
+        contact_phone:
+          type: string
+          default: ''
+          maxLength: 30
+        note:
+          type: string
+          default: ''
+          maxLength: 255
+      required:
+      - sale
+    FulfillmentDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sale:
+          type: integer
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        branch:
+          type: integer
+          readOnly: true
+        branch_name:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/FulfillmentStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        address:
+          type: string
+          readOnly: true
+        contact_phone:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        reject_reason:
+          type: string
+          readOnly: true
+        customer_name:
+          type: string
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          readOnly: true
+        currency_code:
+          type: string
+          readOnly: true
+        packed_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        packed_by_name:
+          type: string
+          readOnly: true
+        packed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        verified_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        verified_by_name:
+          type: string
+          readOnly: true
+        verified_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        courier:
+          type: integer
+          readOnly: true
+          nullable: true
+        courier_name:
+          type: string
+          readOnly: true
+        accepted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        delivered_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        delivered_note:
+          type: string
+          readOnly: true
+        cancelled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        cancel_reason:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+          readOnly: true
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Step'
+          readOnly: true
+      required:
+      - accepted_at
+      - address
+      - branch
+      - branch_name
+      - cancel_reason
+      - cancelled_at
+      - contact_phone
+      - courier
+      - courier_name
+      - created_at
+      - currency_code
+      - customer_name
+      - delivered_at
+      - delivered_note
+      - id
+      - items
+      - note
+      - number
+      - packed_at
+      - packed_by
+      - packed_by_name
+      - reject_reason
+      - sale
+      - status
+      - status_label
+      - steps
+      - total
+      - updated_at
+      - verified_at
+      - verified_by
+      - verified_by_name
+    FulfillmentReasonRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 255
+      required:
+      - reason
+    FulfillmentStatusEnum:
+      enum:
+      - pending
+      - packed
+      - ready
+      - on_the_way
+      - delivered
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Omborchi kutmoqda
+        * `packed` - Taxlandi — operator tekshiradi
+        * `ready` - Tayyor — kuryer kutmoqda
+        * `on_the_way` - Yo'lda
+        * `delivered` - Yetkazildi
+        * `cancelled` - Bekor qilindi
     Health:
       type: object
       properties:
@@ -11115,6 +12244,86 @@ components:
       - db
       - redis
       - status
+    HireOptions:
+      type: object
+      description: 'Yollash formasi uchun: foydalanuvchi o''zi tanlay oladigan qiymatlar.'
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/_RoleOption'
+        branches:
+          type: array
+          items:
+            $ref: '#/components/schemas/_BranchOption'
+        departments:
+          type: array
+          items:
+            $ref: '#/components/schemas/_Option'
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/_PositionOption'
+      required:
+      - branches
+      - departments
+      - positions
+      - roles
+    HireRequest:
+      type: object
+      description: 'Yangi xodim: login + rol + nuqta + ish joyi bitta formada.'
+      properties:
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+          maxLength: 128
+        phone:
+          type: string
+          default: ''
+          maxLength: 30
+        role:
+          type: integer
+        branch:
+          type: integer
+        department:
+          type: integer
+        position:
+          type: integer
+        employee_number:
+          type: string
+          default: ''
+          maxLength: 40
+        hire_date:
+          type: string
+          format: date
+        base_salary:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
+          default: '0.0000'
+        address:
+          type: string
+          default: ''
+        notes:
+          type: string
+          default: ''
+      required:
+      - branch
+      - department
+      - full_name
+      - password
+      - position
+      - role
+      - username
     IncomingTransfers:
       type: object
       properties:
@@ -11147,6 +12356,21 @@ components:
       - incoming_transfers
       - low_stock
       - stock_value
+    Item:
+      type: object
+      properties:
+        product_name:
+          type: string
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        unit:
+          type: string
+          default: ''
+      required:
+      - product_name
+      - quantity
     JournalEntry:
       type: object
       properties:
@@ -11367,9 +12591,12 @@ components:
           type: string
           maxLength: 30
         email:
-          type: string
-          format: email
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         source:
           type: string
           maxLength: 100
@@ -11410,9 +12637,12 @@ components:
           type: string
           maxLength: 30
         email:
-          type: string
-          format: email
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         source:
           type: string
           maxLength: 100
@@ -11553,6 +12783,60 @@ components:
       required:
       - product
       - quantity
+    LoginEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+          nullable: true
+        username:
+          type: string
+          readOnly: true
+        user_full_name:
+          type: string
+          readOnly: true
+        role_name:
+          type: string
+          readOnly: true
+        success:
+          type: boolean
+          readOnly: true
+        reason:
+          type: string
+          readOnly: true
+        ip:
+          type: string
+          readOnly: true
+        browser:
+          type: string
+          readOnly: true
+        os:
+          type: string
+          readOnly: true
+        device_type:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - browser
+      - created_at
+      - device_type
+      - id
+      - ip
+      - os
+      - reason
+      - role_name
+      - success
+      - user
+      - user_full_name
+      - username
     LoginRequest:
       type: object
       properties:
@@ -11588,6 +12872,12 @@ components:
           type: string
         phone:
           type: string
+        avatar:
+          type: string
+          nullable: true
+        date_joined:
+          type: string
+          format: date-time
         is_superuser:
           type: boolean
         role:
@@ -11606,8 +12896,10 @@ components:
           type: boolean
       required:
       - all_branches
+      - avatar
       - branches
       - capabilities
+      - date_joined
       - full_name
       - id
       - is_superuser
@@ -11664,6 +12956,13 @@ components:
       description: |-
         * `debit` - Debet
         * `credit` - Kredit
+    NoteRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          default: ''
+          maxLength: 255
     NoticeRequest:
       type: object
       properties:
@@ -12191,6 +13490,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FiscalYear'
+    PaginatedFulfillmentList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fulfillment'
     PaginatedJournalEntryList:
       type: object
       required:
@@ -12266,6 +13590,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LedgerEntry'
+    PaginatedLoginEventList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 2
+        page_size:
+          type: integer
+          example: 25
+        total_pages:
+          type: integer
+          example: 5
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoginEvent'
     PaginatedNotificationList:
       type: object
       required:
@@ -12767,29 +14116,6 @@ components:
         owner:
           type: integer
           nullable: true
-    PatchedApprovalInstanceRequest:
-      type: object
-      properties:
-        entity_type:
-          type: string
-          minLength: 1
-          maxLength: 50
-        entity_id:
-          type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
-        requested_by:
-          type: integer
-        branch:
-          type: integer
-          nullable: true
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,16}(?:\.\d{0,4})?$
-        notes:
-          type: string
     PatchedApprovalRuleRequest:
       type: object
       properties:
@@ -12813,9 +14139,8 @@ components:
           type: integer
         sequence:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
     PatchedBillOfMaterialsRequest:
@@ -12880,9 +14205,8 @@ components:
           nullable: true
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
     PatchedCurrencyRequest:
@@ -12901,16 +14225,14 @@ components:
           maxLength: 10
         decimal_places:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
     PatchedDealRequest:
       type: object
       properties:
@@ -12960,8 +14282,9 @@ components:
           nullable: true
         is_active:
           type: boolean
-    PatchedEmployeeRequest:
+    PatchedEmployeeSerializerScopedRequest:
       type: object
+      description: Tahrirlashda yangi nuqta foydalanuvchi doirasida bo'lishi shart.
       properties:
         user:
           type: integer
@@ -13017,9 +14340,8 @@ components:
           type: integer
         number:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         start_date:
           type: string
           format: date
@@ -13033,9 +14355,8 @@ components:
       properties:
         year:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         start_date:
           type: string
           format: date
@@ -13076,9 +14397,12 @@ components:
           type: string
           maxLength: 30
         email:
-          type: string
-          format: email
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         source:
           type: string
           maxLength: 100
@@ -13123,9 +14447,8 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
     PatchedPayrollRunRequest:
       type: object
       properties:
@@ -13163,9 +14486,8 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
     PatchedProductWriteRequest:
       type: object
       properties:
@@ -13201,9 +14523,8 @@ components:
           maxLength: 64
         units_per_box:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           description: 1 karobkada necha dona (qadoq soni)
         box_name:
           type: string
@@ -13320,9 +14641,8 @@ components:
           maxLength: 50
         decimal_places:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
     PatchedUserWriteRequest:
@@ -13668,9 +14988,8 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
       required:
       - code
       - id
@@ -13698,9 +15017,8 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
       required:
       - code
       - name
@@ -14042,9 +15360,8 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         created_at:
           type: string
           format: date-time
@@ -14074,9 +15391,8 @@ components:
           type: boolean
         sort_order:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
       required:
       - code
       - name
@@ -14320,9 +15636,8 @@ components:
           maxLength: 64
         units_per_box:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           description: 1 karobkada necha dona (qadoq soni)
         box_name:
           type: string
@@ -14403,9 +15718,8 @@ components:
           maxLength: 64
         units_per_box:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 2147483647
           minimum: 0
-          format: int64
           description: 1 karobkada necha dona (qadoq soni)
         box_name:
           type: string
@@ -16397,6 +17711,41 @@ components:
         * `negotiation` - Muzokara
         * `won` - Yutildi
         * `lost` - Yo'qotildi
+    Step:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/FulfillmentStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        actor:
+          type: integer
+          readOnly: true
+          nullable: true
+        actor_name:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actor
+      - actor_name
+      - at
+      - id
+      - note
+      - status
+      - status_label
     StockCountCreateRequest:
       type: object
       properties:
@@ -16519,6 +17868,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/StockCountStatusEnum'
           readOnly: true
+          default: draft
         status_display:
           type: string
           readOnly: true
@@ -16768,6 +18118,28 @@ components:
       - type_display
       - unit_code
       - unit_cost_base
+    Summary:
+      type: object
+      properties:
+        pending:
+          type: integer
+        packed:
+          type: integer
+        ready:
+          type: integer
+        on_the_way:
+          type: integer
+        delivered:
+          type: integer
+        cancelled:
+          type: integer
+      required:
+      - cancelled
+      - delivered
+      - on_the_way
+      - packed
+      - pending
+      - ready
     SummaryCurrency:
       type: object
       properties:
@@ -16901,6 +18273,12 @@ components:
         value: {}
       required:
       - value
+    TerminateRequest:
+      type: object
+      properties:
+        termination_date:
+          type: string
+          format: date
     Ticket:
       type: object
       properties:
@@ -17338,9 +18716,8 @@ components:
           maxLength: 50
         decimal_places:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
         created_at:
@@ -17370,9 +18747,8 @@ components:
           maxLength: 50
         decimal_places:
           type: integer
-          maximum: 9223372036854775807
+          maximum: 32767
           minimum: 0
-          format: int64
         is_active:
           type: boolean
       required:
@@ -17478,6 +18854,51 @@ components:
       - id
       - is_default
       - name
+    UserLoginSummary:
+      type: object
+      description: Har bir foydalanuvchining oxirgi kirishi — 'kim qachon va qaysi
+        qurilmadan kirgan'.
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        full_name:
+          type: string
+        role_name:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+        last_ip:
+          type: string
+        last_browser:
+          type: string
+        last_os:
+          type: string
+        last_device_type:
+          type: string
+        logins_30d:
+          type: integer
+        failed_30d:
+          type: integer
+      required:
+      - failed_30d
+      - full_name
+      - id
+      - is_active
+      - last_browser
+      - last_device_type
+      - last_ip
+      - last_login
+      - last_os
+      - logins_30d
+      - role_name
+      - username
     UserWrite:
       type: object
       properties:
@@ -17545,6 +18966,16 @@ components:
       - password
       - role
       - username
+    WorkflowSummary:
+      type: object
+      properties:
+        assigned:
+          type: integer
+        mine_pending:
+          type: integer
+      required:
+      - assigned
+      - mine_pending
     WriteOffDetail:
       type: object
       description: inventory.view_cost huquqi bo'lmasa tannarx maydonlari javobdan
@@ -17845,6 +19276,55 @@ components:
       - branch
       - items
       - reason
+    _BranchOption:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+      required:
+      - code
+      - id
+      - name
+    _Option:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+      - id
+      - name
+    _PositionOption:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        department:
+          type: integer
+      required:
+      - department
+      - id
+      - name
+    _RoleOption:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+      required:
+      - code
+      - id
+      - name
   securitySchemes:
     jwtAuth:
       type: http

@@ -46,6 +46,7 @@ class Event:
     aggregate_type: str
     aggregate_id: int
 
+
 @dataclass(frozen=True, kw_only=True)
 class SaleCompleted(Event):
     name = "sale.completed"
@@ -56,7 +57,7 @@ class SaleCompleted(Event):
     currency: str
     total_base: Decimal
     debt_amount: Decimal
-    items: list[dict]   # [{product_id, quantity, unit_price, cost_base}]
+    items: list[dict]  # [{product_id, quantity, unit_price, cost_base}]
 ```
 
 Nomlash: `<aggregat>.<o'tgan zamon fe'l>`, kichik harf, nuqta bilan.

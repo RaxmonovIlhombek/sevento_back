@@ -88,7 +88,7 @@ class SalesSummaryReport(BaseReport):
             row["returns"] = money(r["total_base"])
             row["returns_cost"] = money(r["cost_base"])
         result = []
-        for key in sorted(groups, key=lambda k: (str(groups[k]["group"]) if k else "")):
+        for key in sorted(groups, key=lambda k: str(groups[k]["group"]) if k else ""):
             row = groups[key]
             net = row["revenue"] - row["returns"]
             cost = row["cost"] - row["returns_cost"]

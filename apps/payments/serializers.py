@@ -230,8 +230,12 @@ class CustomerWriteSerializer(serializers.Serializer):
     primary_branch = serializers.PrimaryKeyRelatedField(
         queryset=branch_selectors.active_branches(), required=False, allow_null=True
     )
-    channel = serializers.CharField(max_length=30, required=False, allow_blank=True, default="retail")
-    contact_person = serializers.CharField(max_length=150, required=False, allow_blank=True, default="")
+    channel = serializers.CharField(
+        max_length=30, required=False, allow_blank=True, default="retail"
+    )
+    contact_person = serializers.CharField(
+        max_length=150, required=False, allow_blank=True, default=""
+    )
     promise_pay_date = serializers.DateField(required=False, allow_null=True)
     promise_amount = serializers.DecimalField(
         max_digits=20, decimal_places=4, required=False, allow_null=True
