@@ -41,6 +41,23 @@ class HasCapability(BasePermission):
         return getattr(view, "required_capability", None)
 
 
+def crud_capability_map(view_cap: str, manage_cap: str, extra: dict | None = None) -> dict:
+    """ModelViewSet uchun: o'qish — view_cap, yozish/o'chirish — manage_cap.
+
+    extra — maxsus @action lar uchun (masalan {"pay": "payroll.manage"}).
+    """
+    mapping = {
+        "list": view_cap,
+        "retrieve": view_cap,
+        "create": manage_cap,
+        "update": manage_cap,
+        "partial_update": manage_cap,
+        "destroy": manage_cap,
+    }
+    mapping.update(extra or {})
+    return mapping
+
+
 def capability_required(code: str) -> type[BasePermission]:
     """APIView uchun: permission_classes = [IsAuthenticated, capability_required("audit.view")]."""
 

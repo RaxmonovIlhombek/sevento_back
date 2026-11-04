@@ -5,6 +5,8 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.api.permissions import HasCapability, crud_capability_map
+
 from .filters import AccountFilter, JournalEntryFilter
 from .models import Account, FiscalPeriod, FiscalYear, JournalEntry
 from .selectors import trial_balance
@@ -18,9 +20,10 @@ from .services import post_entry, reverse_entry
 
 
 class AccountViewSet(viewsets.ModelViewSet):
+    capability_map = crud_capability_map("accounting.view", "accounting.manage")
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasCapability]
     filterset_class = AccountFilter
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["code", "name"]
@@ -29,25 +32,36 @@ class AccountViewSet(viewsets.ModelViewSet):
 
 
 class FiscalYearViewSet(viewsets.ModelViewSet):
+    capability_map = crud_capability_map("accounting.view", "accounting.manage")
     queryset = FiscalYear.objects.all()
     serializer_class = FiscalYearSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasCapability]
     ordering = ["-year"]
 
 
 class FiscalPeriodViewSet(viewsets.ModelViewSet):
+    capability_map = crud_capability_map("accounting.view", "accounting.manage")
     queryset = FiscalPeriod.objects.select_related("fiscal_year").all()
     serializer_class = FiscalPeriodSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasCapability]
     ordering = ["fiscal_year__year", "number"]
 
 
 class JournalEntryViewSet(viewsets.ModelViewSet):
+    capability_map = crud_capability_map(
+        "accounting.view",
+        "accounting.manage",
+        extra={
+            "post": "accounting.manage",
+            "reverse": "accounting.manage",
+            "trial_balance": "accounting.view",
+        },
+    )
     queryset = JournalEntry.objects.select_related(
         "fiscal_period", "branch", "created_by"
     ).prefetch_related("lines__account")
     serializer_class = JournalEntrySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasCapability]
     filterset_class = JournalEntryFilter
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["number", "description"]

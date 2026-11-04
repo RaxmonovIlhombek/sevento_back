@@ -3,15 +3,18 @@ from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticated
 
+from core.api.permissions import HasCapability, crud_capability_map
+
 from .filters import ActivityFilter, DealFilter, LeadFilter
 from .models import Activity, Deal, Lead
 from .serializers import ActivitySerializer, DealSerializer, LeadSerializer
 
 
 class LeadViewSet(viewsets.ModelViewSet):
+    capability_map = crud_capability_map("crm.view", "crm.manage")
     queryset = Lead.objects.all()
     serializer_class = LeadSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasCapability]
     filterset_class = LeadFilter
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["name", "company", "phone", "email"]
@@ -19,9 +22,10 @@ class LeadViewSet(viewsets.ModelViewSet):
 
 
 class DealViewSet(viewsets.ModelViewSet):
+    capability_map = crud_capability_map("crm.view", "crm.manage")
     queryset = Deal.objects.select_related("lead", "customer", "owner", "branch").all()
     serializer_class = DealSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasCapability]
     filterset_class = DealFilter
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["name"]
@@ -29,9 +33,10 @@ class DealViewSet(viewsets.ModelViewSet):
 
 
 class ActivityViewSet(viewsets.ModelViewSet):
+    capability_map = crud_capability_map("crm.view", "crm.manage")
     queryset = Activity.objects.select_related("lead", "deal", "owner").all()
     serializer_class = ActivitySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasCapability]
     filterset_class = ActivityFilter
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["subject"]

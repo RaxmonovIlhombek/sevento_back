@@ -61,6 +61,24 @@ CAPABILITIES: tuple[Capability, ...] = (
     Capability("reports.view", "Hisobotlar", "Hisobotlar"),
     Capability("reports.financial", "Moliyaviy hisobotlar (foyda, tannarx, kassa)", "Hisobotlar"),
     Capability("dashboard.view", "Rahbar dashboardi", "Hisobotlar"),
+    # kadrlar
+    Capability("hr.view", "Xodimlar va bo'limlarni ko'rish", "Kadrlar"),
+    Capability("hr.manage", "Xodimlar va bo'limlarni boshqarish", "Kadrlar"),
+    Capability("payroll.view", "Ish haqi ro'yxatini ko'rish", "Kadrlar"),
+    Capability("payroll.manage", "Ish haqi hisoblash va to'lash", "Kadrlar"),
+    # moliya (buxgalteriya)
+    Capability("accounting.view", "Hisob rejasi, jurnal va sinov balansi", "Moliya"),
+    Capability("accounting.manage", "Buxgalteriya yozuvlarini kiritish va o'zgartirish", "Moliya"),
+    # CRM va ishlab chiqarish
+    Capability("crm.view", "Lidlar va bitimlarni ko'rish", "CRM"),
+    Capability("crm.manage", "Lidlar va bitimlarni boshqarish", "CRM"),
+    Capability(
+        "manufacturing.view", "BOM va ishlab chiqarish buyurtmalarini ko'rish", "Ishlab chiqarish"
+    ),
+    Capability("manufacturing.manage", "Ishlab chiqarishni boshqarish", "Ishlab chiqarish"),
+    # yetkazish (kuryer)
+    Capability("deliveries.view", "Yetkazishlarni ko'rish (o'ziga biriktirilgan)", "Yetkazish"),
+    Capability("deliveries.manage", "Yetkazish holatini yangilash", "Yetkazish"),
 )
 
 CAPABILITY_CODES: frozenset[str] = frozenset(c.code for c in CAPABILITIES)
@@ -140,6 +158,50 @@ ROLE_PRESETS: dict[str, dict] = {
             "customers.view",
             "customers.manage",
             "debts.view",
+        ],
+    },
+    "hr_manager": {
+        "name": "Kadrlar bo'limi (HR)",
+        "capabilities": [
+            "branches.view_all",
+            "hr.view",
+            "hr.manage",
+            "payroll.view",
+            "payroll.manage",
+        ],
+    },
+    "branch_manager": {
+        "name": "Filial rahbari",
+        "capabilities": [
+            "catalog.view",
+            "inventory.view",
+            "purchasing.view",
+            "sales.view",
+            "sales.create",
+            "sales.discount",
+            "sales.returns.create",
+            "sales.credit",
+            "payments.view",
+            "payments.receive",
+            "cashbox.view",
+            "cashbox.manage",
+            "customers.view",
+            "customers.manage",
+            "debts.view",
+            "reports.view",
+            "dashboard.view",
+            "hr.view",
+            "inventory.counts.manage",
+            "inventory.transfers.create",
+            "inventory.transfers.receive",
+            "inventory.writeoffs.manage",
+        ],
+    },
+    "courier": {
+        "name": "Dastavka (kuryer)",
+        "capabilities": [
+            "deliveries.view",
+            "deliveries.manage",
         ],
     },
 }
