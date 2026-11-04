@@ -395,3 +395,19 @@ route(
         "error": e.error,
     },
 )
+
+
+# --- Yetkazish jarayoni: omborchi → operator → kuryer ---
+# Faqat ekranni yangilash uchun minimal payload; ro'yxatni har kim o'z huquqiga ko'ra
+# API dan qayta o'qiydi (selectors.fulfillments_queryset), shuning uchun nuqta guruhi yetarli.
+route(
+    "fulfillment.status_changed",
+    groups=_branch_group,
+    payload=lambda e: {  # type: ignore[attr-defined]
+        "branch_id": e.branch_id,
+        "fulfillment_id": e.fulfillment_id,
+        "number": e.number,
+        "status": e.status,
+        "previous_status": e.previous_status,
+    },
+)
