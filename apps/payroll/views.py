@@ -5,19 +5,26 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.api.permissions import HasCapability, crud_capability_map
+
 from .filters import PayrollRunFilter
 from .models import PayrollRun, Payslip
 from .serializers import PayrollRunSerializer
 
 
 class PayrollRunViewSet(viewsets.ModelViewSet):
+    capability_map = crud_capability_map(
+        "payroll.view",
+        "payroll.manage",
+        extra={"calculate": "payroll.manage", "pay": "payroll.manage"},
+    )
     queryset = (
         PayrollRun.objects.select_related("branch", "created_by")
         .prefetch_related("payslips__employee")
         .all()
     )
     serializer_class = PayrollRunSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasCapability]
     filterset_class = PayrollRunFilter
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     ordering = ["-period_end"]

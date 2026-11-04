@@ -7,6 +7,7 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.api.permissions import HasCapability, crud_capability_map
 from core.models import DocumentSequence
 
 from .filters import BillOfMaterialsFilter, ProductionOrderFilter
@@ -15,11 +16,12 @@ from .serializers import BillOfMaterialsSerializer, ProductionOrderSerializer
 
 
 class BillOfMaterialsViewSet(viewsets.ModelViewSet):
+    capability_map = crud_capability_map("manufacturing.view", "manufacturing.manage")
     queryset = BillOfMaterials.objects.select_related("product").prefetch_related(
         "items__component"
     )
     serializer_class = BillOfMaterialsSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasCapability]
     filterset_class = BillOfMaterialsFilter
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["name", "product__name"]
@@ -27,11 +29,16 @@ class BillOfMaterialsViewSet(viewsets.ModelViewSet):
 
 
 class ProductionOrderViewSet(viewsets.ModelViewSet):
+    capability_map = crud_capability_map(
+        "manufacturing.view",
+        "manufacturing.manage",
+        extra={"release": "manufacturing.manage", "complete": "manufacturing.manage"},
+    )
     queryset = ProductionOrder.objects.select_related(
         "product", "bom", "branch", "created_by"
     ).all()
     serializer_class = ProductionOrderSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasCapability]
     filterset_class = ProductionOrderFilter
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["number", "product__name"]
