@@ -180,7 +180,7 @@ ROLE_PRESETS: dict[str, dict] = {
         ],
     },
     "branch_manager": {
-        "name": "Filial rahbari",
+        "name": "Rahbar",
         "capabilities": [
             "catalog.view",
             "inventory.view",
