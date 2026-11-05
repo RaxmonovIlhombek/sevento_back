@@ -2778,6 +2778,10 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: sale
+        schema:
+          type: number
       - name: search
         required: false
         in: query
