@@ -14,8 +14,8 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
-# Cross-origin (Netlify <-> Render) uchun cookie SameSite=None, Secure=True bo'lishi shart
-# CORS_ALLOWED_ORIGINS muhit o'zgaruvchisidan (CORS_ALLOWED_ORIGINS=https://sevento.netlify.app)
+# Cross-origin (Netlify / Cloudflare Pages <-> Render) uchun cookie SameSite=None, Secure=True bo'lishi shart
+# CORS_ALLOWED_ORIGINS muhit o'zgaruvchisidan (CORS_ALLOWED_ORIGINS=https://sevento.pages.dev)
 JWT_REFRESH_COOKIE = {
     "name": env("JWT_REFRESH_COOKIE_NAME", default="sevento_refresh"),
     "secure": True,
